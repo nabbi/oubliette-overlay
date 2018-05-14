@@ -1,0 +1,2 @@
+**boetcc
+ initd script umask 0002 for rrdcache intergration
