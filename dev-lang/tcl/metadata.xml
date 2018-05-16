@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<description>
+	<longdescription>
 		Oubliette - ebuild version bump from Gentoo repository
-	</description>
+	</longdescription>
 	<maintainer type="project">
 		<email>tcltk@gentoo.org</email>
 		<name>TCL/TK Herd.</name>
