@@ -18,7 +18,7 @@ SRC_URI="https://core.tcl.tk/tdom/tarball/${MY_PV}/${MY_P}.tar.gz"
 LICENSE="MPL-1.1"
 SLOT="0"
 KEYWORDS="~alpha amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~sparc x86 ~amd64-fbsd ~amd64-linux ~x86-linux"
-IUSE="static-libs threads"
+IUSE="static-libs"
 
 DEPEND="
 	dev-lang/tcl:0=
@@ -50,7 +50,6 @@ src_prepare() {
 
 src_configure() {
 	local myeconfargs=(
-		$(use_enable threads)
 		--enable-shared
 		--disable-tdomalloc
 		--with-expat
