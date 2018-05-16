@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 2017-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
@@ -18,8 +18,6 @@ IUSE="examples"
 DEPEND="
 	dev-python/setuptools[${PYTHON_USEDEP}]
 "
-
-
 python_install_all() {
 	distutils-r1_python_install_all
 	if use examples; then
