@@ -22,6 +22,7 @@ KEYWORDS="~alpha amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-fbsd ~x86-fbsd ~amd64-
 RDEPEND="
 	=dev-tcltk/tdbc-1.0.6
 	>=dev-lang/tcl-8.6
+	virtual/mysql
 	"
 DEPEND="${RDEPEND}"
 
