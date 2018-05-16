@@ -5,18 +5,20 @@ EAPI=5
 
 inherit eutils virtualx
 MY_PN="TDBC"
-#This is the 1.0.6 commit version
+#TDBC - 1.0.6 2018-01-05 commit version
 MY_PV="2386d26cfb"
+#TEA tclconfig - 3.12 2016-03-11 commit version
+TEA_V="0a530cebd7"
 MY_P=${MY_PN}-${MY_PV}
 
-DESCRIPTION="Tcl Database Connectivity"
+DESCRIPTION="Tcl Database Connectivity Core"
 HOMEPAGE="http://tdbc.tcl.tk/"
 SRC_URI="http://tdbc.tcl.tk/index.cgi/tarball/${MY_PV}/${MY_P}.tar.gz
-	https://core.tcl.tk/tclconfig/tarball/0a530cebd7/TEA+%28tclconfig%29+Source+Code-0a530cebd7.tar.gz"
+	https://core.tcl.tk/tclconfig/tarball/${TEA_V}/TEA+%28tclconfig%29+Source+Code-${TEA_V}.tar.gz"
 
-LICENSE="OTHER"
+LICENSE="tcltk"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux ~x86-macos"
+KEYWORDS="~alpha amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux ~x86-macos"
 
 RDEPEND="
 	>=dev-lang/tcl-8.6
@@ -26,12 +28,9 @@ DEPEND="${RDEPEND}"
 S="${WORKDIR}/${MY_PN}"
 
 src_unpack() {
+	#this is ugly. tclconfig is packaged seperatly from tdbc
 	unpack ${A}
-	echo ${WORKDIR}
-	ln -s "${WORKDIR}/TDBC-2386d26cfb" ${MY_PN}
-	ln -s "${WORKDIR}/TEA__tclconfig__Source_Code-0a530cebd7" ${MY_PN}/tclconfig
+	ln -s "${WORKDIR}/TDBC-${MY_PV}" ${MY_PN}
+	ln -s "${WORKDIR}/TEA__tclconfig__Source_Code-${TEA_V}" ${MY_PN}/tclconfig
 }
 
-#src_compile() {
-#	make all || die
-#}

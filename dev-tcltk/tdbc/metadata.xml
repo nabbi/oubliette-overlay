@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<description>
+	Oubliette - new ebuild package
+	</description>
+	<longdescription>
+	https://core.tcl.tk/tdbc/
+	Tcl Database Connectivity TDBC Core
+</pkgmetadata>
