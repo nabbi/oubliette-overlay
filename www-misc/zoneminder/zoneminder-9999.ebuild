@@ -15,7 +15,6 @@ EAPI=6
 
 inherit versionator perl-functions readme.gentoo-r1 cmake-utils depend.apache flag-o-matic systemd git-r3
 
-
 MY_CRUD_VERSION="3.1.0"
 
 DESCRIPTION="Capture, analyse, record and monitor any cameras attached to your system"
