@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-<description>
-        Oubliette - ebuild version bump from Gentoo repository
-</description>
+	<longdescription>
+	Oubliette - ebuild version bump from Gentoo repository
+	</longdescription>
 	<maintainer type="project">
-		<email>tcltk@gentoo.org</email>
-		<name>Gentoo Tcltk Project</name>
+	<email>tcltk@gentoo.org</email>
+	<name>Gentoo Tcltk Project</name>
 	</maintainer>
 	<upstream>
-		<remote-id type="sourceforge">tls</remote-id>
+	<remote-id type="sourceforge">tls</remote-id>
 	</upstream>
 </pkgmetadata>

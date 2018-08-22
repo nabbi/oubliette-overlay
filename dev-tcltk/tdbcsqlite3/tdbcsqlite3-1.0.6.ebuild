@@ -38,4 +38,3 @@ src_unpack() {
 src_configure() {
 	econf "--with-tdbc=/usr/lib64/tdbc1.0.6/"
 }
-

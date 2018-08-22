@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<description>
-	Oubliette - new ebuild package
-	</description>
 	<longdescription>
+	Oubliette - new ebuild package
+	
 	https://core.tcl.tk/tdbcmysql/
 	Tcl Database Connectivity TDBC MySQL Driver
+	</longdescription>
 </pkgmetadata>

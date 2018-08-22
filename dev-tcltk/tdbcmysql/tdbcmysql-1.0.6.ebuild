@@ -17,7 +17,7 @@ SRC_URI="https://core.tcl.tk/tdbcmysql/tarball/${MY_PV}/tdbc__mysql-${MY_PV}.tar
 
 LICENSE="tcltk"
 SLOT="0"
-KEYWORDS="~alpha amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux ~x86-macos"
+KEYWORDS="~alpha amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~x86-fbsd ~amd64-linux ~x86-linux ~x86-macos"
 
 RDEPEND="
 	=dev-tcltk/tdbc-1.0.6
@@ -38,4 +38,3 @@ src_unpack() {
 src_configure() {
 	econf "--with-tdbc=/usr/lib64/tdbc1.0.6/"
 }
-

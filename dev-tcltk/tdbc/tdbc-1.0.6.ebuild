@@ -33,4 +33,3 @@ src_unpack() {
 	ln -s "${WORKDIR}/TDBC-${MY_PV}" ${MY_PN}
 	ln -s "${WORKDIR}/TEA__tclconfig__Source_Code-${TEA_V}" ${MY_PN}/tclconfig
 }
-
