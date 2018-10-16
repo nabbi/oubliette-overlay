@@ -14,12 +14,16 @@ LICENSE="GPL-2"
 KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~ppc ~x86"
 IUSE="imagemagick mysql postgres sqlite"
 
-RDEPEND=">=dev-lang/php-5.5.9[json,mysql?,postgres?,session,xml,xmlreader]
+RDEPEND=">=dev-lang/php-7.0.0[json,mysql?,postgres?,session,xml,xmlreader]
 	imagemagick? ( || ( media-gfx/imagemagick media-gfx/graphicsmagick[imagemagick] ) )
 	!imagemagick? ( dev-lang/php[gd] )
+	mysql? (
+		>=dev-db/mariadb-5.5.8
+		>=dev-db/mysql-5.5.8
+		)
 	sqlite? (
-		dev-db/sqlite:3[fts3(+)]
-		>=dev-lang/php-5.5.9[pdo]
+		>=dev-db/sqlite-3.3.7[fts3(+)]
+		>=dev-lang/php-7.0.0[pdo]
 		|| ( dev-lang/php[sqlite] dev-lang/php[sqlite3] )
 	)
 	virtual/httpd-php"
