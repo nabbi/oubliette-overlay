@@ -18,8 +18,7 @@ RDEPEND=">=dev-lang/php-7.0.0[json,mysql?,postgres?,session,xml,xmlreader]
 	imagemagick? ( || ( media-gfx/imagemagick media-gfx/graphicsmagick[imagemagick] ) )
 	!imagemagick? ( dev-lang/php[gd] )
 	mysql? (
-		>=dev-db/mariadb-5.5.8
-		>=dev-db/mysql-5.5.8
+		|| ( >=dev-db/mariadb-5.5.8 >=dev-db/mysql-5.5.8 )
 		)
 	sqlite? (
 		>=dev-db/sqlite-3.3.7[fts3(+)]
