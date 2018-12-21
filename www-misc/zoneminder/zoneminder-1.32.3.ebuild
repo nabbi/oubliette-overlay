@@ -1,4 +1,4 @@
-# Copyright 1999-2018 Gentoo Foundation
+# Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 # TO DO:
@@ -13,16 +13,18 @@
 
 EAPI=6
 
-inherit versionator perl-functions readme.gentoo-r1 cmake-utils depend.apache flag-o-matic systemd git-r3
+inherit versionator perl-functions readme.gentoo-r1 cmake-utils depend.apache flag-o-matic systemd
+
+MY_PN="zoneminder"
 
 MY_CRUD_VERSION="3.1.0"
 
 DESCRIPTION="Capture, analyse, record and monitor any cameras attached to your system"
 HOMEPAGE="http://www.zoneminder.com/"
 SRC_URI="
+	https://github.com/${MY_PN}/${MY_PN}/archive/${PV}.tar.gz -> ${P}.tar.gz
 	https://github.com/FriendsOfCake/crud/archive/v${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz
 "
-EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder.git"
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64"
@@ -51,7 +53,7 @@ DEPEND="
 	dev-perl/Sys-MemInfo
 	dev-perl/URI-Encode
 	dev-perl/libwww-perl
-	dev-php/pecl-apcu:*
+	dev-perl/Number-Bytes-Human
 	sys-auth/polkit
 	sys-libs/zlib
 	virtual/ffmpeg
@@ -79,11 +81,12 @@ RDEPEND="${DEPEND}"
 # webserver in global scope (/etc/zm.conf etc), so we hardcode apache here.
 need_apache
 
+S=${WORKDIR}/${MY_PN}-${PV}
+
 PATCHES=(
+	"${FILESDIR}/${PN}-1.26.5"-automagic.patch
+#	"${FILESDIR}/${PN}-1.28.1"-mysql_include_path.patch
 	"${FILESDIR}/${PN}-1.30.2"-diskspace.patch
-	"${FILESDIR}/${PN}-1.30.4"-path_zms.patch
-	"${FILESDIR}/${PN}-1.30.4"-glibc226.patch
-	"${FILESDIR}/${PN}-1.30.4"-gcc7.patch
 )
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
@@ -93,12 +96,14 @@ src_prepare() {
 
 	rmdir "${S}/web/api/app/Plugin/Crud" || die
 	mv "${WORKDIR}/crud-${MY_CRUD_VERSION}" "${S}/web/api/app/Plugin/Crud" || die
+	#thowing syntax errors during qa checks
+	rm "${S}/conf.d/README" || die
 }
 
 src_configure() {
 	append-cxxflags -D__STDC_CONSTANT_MACROS
 	perl_set_version
-	export TZ=UTC # bug 630470
+
 	mycmakeargs=(
 		-DZM_PERL_SUBPREFIX=${VENDOR_LIB#/usr}
 		-DZM_TMPDIR=/var/tmp/zm
@@ -117,7 +122,6 @@ src_configure() {
 	)
 
 	cmake-utils_src_configure
-
 }
 
 src_install() {
@@ -154,7 +158,7 @@ src_install() {
 	# systemd unit file
 	systemd_dounit "${FILESDIR}"/zoneminder.service
 
-	cp "${FILESDIR}"/10_zoneminder.conf "${T}"/10_zoneminder.conf || die
+	cp "${FILESDIR}"/10_zoneminder.conf-r1 "${T}"/10_zoneminder.conf || die
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
 
 	dodoc AUTHORS BUGS ChangeLog INSTALL NEWS README.md TODO "${T}"/10_zoneminder.conf
