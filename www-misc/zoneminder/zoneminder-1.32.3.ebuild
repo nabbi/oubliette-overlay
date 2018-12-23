@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 2018 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # TO DO:
@@ -13,7 +13,7 @@
 
 EAPI=6
 
-inherit versionator perl-functions readme.gentoo-r1 cmake-utils depend.apache flag-o-matic systemd
+inherit perl-functions readme.gentoo-r1 cmake-utils depend.apache flag-o-matic systemd
 
 MY_PN="zoneminder"
 
@@ -54,6 +54,7 @@ DEPEND="
 	dev-perl/URI-Encode
 	dev-perl/libwww-perl
 	dev-perl/Number-Bytes-Human
+	dev-perl/JSON-MaybeXS
 	sys-auth/polkit
 	sys-libs/zlib
 	virtual/ffmpeg
