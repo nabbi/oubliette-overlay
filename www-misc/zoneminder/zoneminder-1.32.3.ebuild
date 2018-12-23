@@ -3,19 +3,19 @@
 
 # TO DO:
 # * dependencies of unknown status:
-#	dev-perl/Device-SerialPort
-# 	dev-perl/MIME-Lite
-# 	dev-perl/MIME-tools
-# 	dev-perl/PHP-Serialization
-# 	virtual/perl-Archive-Tar
-# 	virtual/perl-libnet
-# 	virtual/perl-Module-Load
+#       dev-perl/Device-SerialPort
+#       dev-perl/MIME-Lite
+#       dev-perl/MIME-tools
+#       dev-perl/PHP-Serialization
+#       virtual/perl-Archive-Tar
+#       virtual/perl-libnet
+#       virtual/perl-Module-Load
 
 EAPI=6
 
-inherit perl-functions readme.gentoo-r1 cmake-utils depend.apache flag-o-matic systemd
+inherit versionator perl-functions readme.gentoo-r1 cmake-utils depend.apache flag-o-matic systemd
 
-MY_PN="zoneminder"
+MY_PN="ZoneMinder"
 
 MY_CRUD_VERSION="3.1.0"
 
@@ -28,7 +28,7 @@ SRC_URI="
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64"
-IUSE="curl ffmpeg gcrypt gnutls +mmap +ssl libressl vlc"
+IUSE="curl encode ffmpeg gcrypt gnutls +mmap +ssl libressl vlc"
 SLOT="0"
 
 REQUIRED_USE="
@@ -36,45 +36,47 @@ REQUIRED_USE="
 "
 
 DEPEND="
-	app-eselect/eselect-php[apache2]
-	dev-lang/perl:=
-	dev-lang/php:*[apache2,cgi,curl,gd,inifile,pdo,mysql,mysqli,sockets]
-	dev-libs/libpcre
-	dev-perl/Archive-Zip
-	dev-perl/Class-Std-Fast
-	dev-perl/Data-Dump
-	dev-perl/Date-Manip
-	dev-perl/Data-UUID
-	dev-perl/DBD-mysql
-	dev-perl/DBI
-	dev-perl/IO-Socket-Multicast
-	dev-perl/SOAP-WSDL
-	dev-perl/Sys-CPU
-	dev-perl/Sys-MemInfo
-	dev-perl/URI-Encode
-	dev-perl/libwww-perl
-	dev-perl/Number-Bytes-Human
-	dev-perl/JSON-MaybeXS
-	sys-auth/polkit
-	sys-libs/zlib
-	virtual/ffmpeg
-	virtual/httpd-php:*
-	virtual/jpeg:0
-	virtual/mysql
-	virtual/perl-ExtUtils-MakeMaker
-	virtual/perl-Getopt-Long
-	virtual/perl-Sys-Syslog
-	virtual/perl-Time-HiRes
-	www-servers/apache
-	curl? ( net-misc/curl )
-	gcrypt? ( dev-libs/libgcrypt:0= )
-	gnutls? ( net-libs/gnutls )
-	mmap? ( dev-perl/Sys-Mmap )
-	ssl? (
-		!libressl? ( dev-libs/openssl:0= )
-		libressl? ( dev-libs/libressl:0= )
-	)
-	vlc? ( media-video/vlc[live] )
+app-eselect/eselect-php[apache2]
+dev-lang/perl:=
+dev-lang/php:*[apache2,cgi,curl,gd,inifile,pdo,mysql,mysqli,sockets]
+dev-libs/libpcre
+dev-perl/Archive-Zip
+dev-perl/Class-Std-Fast
+dev-perl/Data-Dump
+dev-perl/Date-Manip
+dev-perl/Data-UUID
+dev-perl/DBD-mysql
+dev-perl/DBI
+dev-perl/IO-Socket-Multicast
+dev-perl/SOAP-WSDL
+dev-perl/Sys-CPU
+dev-perl/Sys-MemInfo
+dev-perl/URI-Encode
+dev-perl/libwww-perl
+dev-perl/Number-Bytes-Human
+dev-perl/JSON-MaybeXS
+dev-php/pecl-apcu:*
+sys-auth/polkit
+sys-libs/zlib
+ffmpeg? ( virtual/ffmpeg )
+encode? ( media-libs/libmp4v2 )
+virtual/httpd-php:*
+virtual/jpeg:0
+virtual/mysql
+virtual/perl-ExtUtils-MakeMaker
+virtual/perl-Getopt-Long
+virtual/perl-Sys-Syslog
+virtual/perl-Time-HiRes
+www-servers/apache
+curl? ( net-misc/curl )
+gcrypt? ( dev-libs/libgcrypt:0= )
+gnutls? ( net-libs/gnutls )
+mmap? ( dev-perl/Sys-Mmap )
+ssl? (
+	!libressl? ( dev-libs/openssl:0= )
+	libressl? ( dev-libs/libressl:0= )
+)
+vlc? ( media-video/vlc[live] )
 "
 RDEPEND="${DEPEND}"
 
@@ -82,12 +84,7 @@ RDEPEND="${DEPEND}"
 # webserver in global scope (/etc/zm.conf etc), so we hardcode apache here.
 need_apache
 
-S=${WORKDIR}/${MY_PN}-${PV}
-
 PATCHES=(
-	"${FILESDIR}/${PN}-1.26.5"-automagic.patch
-#	"${FILESDIR}/${PN}-1.28.1"-mysql_include_path.patch
-	"${FILESDIR}/${PN}-1.30.2"-diskspace.patch
 )
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
@@ -97,14 +94,13 @@ src_prepare() {
 
 	rmdir "${S}/web/api/app/Plugin/Crud" || die
 	mv "${WORKDIR}/crud-${MY_CRUD_VERSION}" "${S}/web/api/app/Plugin/Crud" || die
-	#thowing syntax errors during qa checks
-	rm "${S}/conf.d/README" || die
+	rm "${WORKDIR}/${P}/conf.d/README" || die
 }
 
 src_configure() {
 	append-cxxflags -D__STDC_CONSTANT_MACROS
 	perl_set_version
-
+	export TZ=UTC # bug 630470
 	mycmakeargs=(
 		-DZM_PERL_SUBPREFIX=${VENDOR_LIB#/usr}
 		-DZM_TMPDIR=/var/tmp/zm
@@ -123,6 +119,7 @@ src_configure() {
 	)
 
 	cmake-utils_src_configure
+
 }
 
 src_install() {
@@ -142,7 +139,12 @@ src_install() {
 	fowners -R apache:apache /var/lib/zoneminder
 	dosym /var/lib/zoneminder/images ${MY_ZM_WEBDIR}/images
 	dosym /var/lib/zoneminder/events ${MY_ZM_WEBDIR}/events
+	dosym /var/cache/zoneminder ${MY_ZM_WEBDIR}/cache
 	dosym /var/lib/zoneminder/api_tmp ${MY_ZM_WEBDIR}/api/app/tmp
+
+	# the cache directory
+	keepdir /var/cache/zoneminder
+	fowners apache:apache /var/cache/zoneminder
 
 	# bug 523058
 	keepdir ${MY_ZM_WEBDIR}/temp
@@ -159,7 +161,7 @@ src_install() {
 	# systemd unit file
 	systemd_dounit "${FILESDIR}"/zoneminder.service
 
-	cp "${FILESDIR}"/10_zoneminder.conf-r1 "${T}"/10_zoneminder.conf || die
+	cp "${FILESDIR}"/10_zoneminder.conf "${T}"/10_zoneminder.conf || die
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
 
 	dodoc AUTHORS BUGS ChangeLog INSTALL NEWS README.md TODO "${T}"/10_zoneminder.conf
