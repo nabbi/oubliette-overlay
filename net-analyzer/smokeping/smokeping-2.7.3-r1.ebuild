@@ -1,4 +1,4 @@
-# Copyright 1999-2018 Gentoo Authors
+# Copyright 2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -17,7 +17,7 @@ IUSE="apache2 curl dig echoping ipv6 radius"
 DEPEND="
 	>=dev-lang/perl-5.8.8-r8
 	>=dev-perl/SNMP_Session-1.13
-	>=net-analyzer/fping-2.4_beta2-r2[suid]
+	>=net-analyzer/fping-4.1[suid]
 	>=net-analyzer/rrdtool-1.2[graph,perl]
 	dev-perl/CGI
 	dev-perl/CGI-Session

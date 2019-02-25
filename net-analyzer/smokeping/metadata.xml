@@ -9,6 +9,7 @@
 Oubliette - ebuild version bump from Gentoo repository with bug fixes
 Fixes Bug #651212
 Fixes Bug #651646
+Upsteam depends on fping >=3.16, bumped to 4.1
 </longdescription>
 <use>
 <flag name="dig">Install <pkg>net-dns/bind-tools</pkg> for dig functionality</flag>
