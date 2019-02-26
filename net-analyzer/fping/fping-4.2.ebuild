@@ -13,7 +13,7 @@ KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~ppc ~ppc64 ~sparc ~x86 ~x86-fbs
 IUSE="ipv6 suid"
 
 PATCHES=(
-	"${FILESDIR}"/${PN}-4.1-ipv6.patch
+	"${FILESDIR}"/${PN}-4.2-ipv6.patch
 )
 
 src_configure() {
