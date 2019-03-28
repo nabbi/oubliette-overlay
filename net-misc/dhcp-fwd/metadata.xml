@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<maintainer type="person">
+<email>nic@boet.cc</email>
+</maintainer>
+<longdescription lang="en">
+Oubliette - new package
+
+</longdescription>
+<use>
+<flag name="diet">compiles with diet libc</flag>
+<flag name="logging">compiles with logging support</flag>
+</use>
+</pkgmetadata>
