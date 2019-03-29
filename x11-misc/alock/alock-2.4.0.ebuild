@@ -30,7 +30,7 @@ DEPEND="dev-libs/libgcrypt:0
 RDEPEND="${DEPEND}"
 
 src_prepare() {
-	epatch "${FILESDIR}/${P}-xlib-null-pointer.patch"
+	epatch "${FILESDIR}/${PN}-xlib-null-pointer.patch"
 
 	default
 

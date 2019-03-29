@@ -3,7 +3,7 @@
 <pkgmetadata>
 	<!-- maintainer-needed -->
 	<longdescription>
-	Oubliette - ebuild version bump from Gentoo repository
+	Oubliette - ebuild version bump from hossie overlay
 		An extremely simple screen locking utility based on xtrlock. Supports
 		multiple hash-types, shadow passwords, and PAM.
 		forked from mgumz/alock
