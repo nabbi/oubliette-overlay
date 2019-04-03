@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<!-- maintainer-needed -->
+	<longdescription>
+	Oubliette - ebuild version bump from Gentoo repository
+	
+	This is the PAM to RADIUS authentication module. It allows any
+	PAM-capable machine to become a RADIUS client for authentication
+	and accounting requests.
+	</longdescription>
+</pkgmetadata>
