@@ -126,8 +126,8 @@ src_configure() {
 		-DZM_NO_CURL="$(usex curl OFF ON)"
 		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
 		-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="$(usex ssl OFF ON)"
-		-DHAVE_GNUTLS="$(usex gnutls ON OFF)"
-		-DHAVE_GCRYPT="$(usex gcrypt ON OFF)"
+		-DHAVE_LIBGNUTLS="$(usex gnutls ON OFF)"
+		-DHAVE_LIBGCRYPT="$(usex gcrypt ON OFF)"
 	)
 
 	cmake-utils_src_configure
