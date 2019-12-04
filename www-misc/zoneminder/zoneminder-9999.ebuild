@@ -17,7 +17,7 @@ inherit eapi7-ver perl-functions readme.gentoo-r1 cmake-utils depend.apache flag
 
 MY_PN="ZoneMinder"
 
-DESCRIPTION="Capture, analyse, record and monitor any cameras attached to your system"
+DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
 
 if [[ ${PV} == 9999 ]]; then
