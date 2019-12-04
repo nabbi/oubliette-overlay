@@ -24,11 +24,11 @@ if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
 else
-	MY_CRUD_VERSION="5.4.6"
+	MY_CRUD_VERSION="3.1.0-zm"
 	MY_CAKEPHP_VERSION="1.0-zm"
 	SRC_URI="
 		https://github.com/ZoneMinder/zoneminder/archive/${PV}.tar.gz
-		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz
+		https://github.com/ZoneMinder/crud/archive/${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz
 		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_VERSION}.tar.gz -> CakePHP-Enum-Behavior-${MY_CAKEPHP_VERSION}.tar.gz
 		"
 fi

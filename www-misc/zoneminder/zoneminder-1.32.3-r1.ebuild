@@ -17,18 +17,18 @@ inherit eapi7-ver perl-functions readme.gentoo-r1 cmake-utils depend.apache flag
 
 MY_PN="ZoneMinder"
 
-DESCRIPTION="Capture, analyse, record and monitor any cameras attached to your system"
+DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
 else
-	MY_CRUD_VERSION="5.4.6"
+	MY_CRUD_VERSION="3.1.0-zm"
 	MY_CAKEPHP_VERSION="1.0-zm"
 	SRC_URI="
 		https://github.com/ZoneMinder/zoneminder/archive/${PV}.tar.gz
-		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz
+		https://github.com/ZoneMinder/crud/archive/${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz
 		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_VERSION}.tar.gz -> CakePHP-Enum-Behavior-${MY_CAKEPHP_VERSION}.tar.gz
 		"
 fi
