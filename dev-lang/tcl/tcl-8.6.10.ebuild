@@ -23,7 +23,6 @@ SPARENT="${WORKDIR}/${MY_P}"
 S="${SPARENT}"/unix
 
 PATCHES=(
-	"${FILESDIR}"/${PN}-8.5.13-multilib.patch
 	"${FILESDIR}"/${PN}-8.6.8-conf.patch # Bug 125971
 )
 
