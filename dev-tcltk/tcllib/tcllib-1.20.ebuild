@@ -24,9 +24,8 @@ DEPEND="${RDEPEND}"
 DOCS=(
 	ChangeLog DESCRIPTION.txt README.md
 	devdoc/critcl-tcllib.txt devdoc/dirlayout_install.txt
-	devdoc/indexing.txt devdoc/installation.txt
+	devdoc/indexing.txt devdoc/README.developer
 )
-HTML_DOCS=( devdoc/devguide.html devdoc/releaseguide.html )
 
 src_prepare() {
 	default
