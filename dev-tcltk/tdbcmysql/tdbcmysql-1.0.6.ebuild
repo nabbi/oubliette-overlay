@@ -1,4 +1,4 @@
-# Copyright 1999-2018 Gentoo Foundation
+# Copyright 2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -17,10 +17,10 @@ SRC_URI="https://core.tcl.tk/tdbcmysql/tarball/${MY_PV}/tdbc__mysql-${MY_PV}.tar
 
 LICENSE="tcltk"
 SLOT="0"
-KEYWORDS="~alpha amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~x86-fbsd ~amd64-linux ~x86-linux ~x86-macos"
+KEYWORDS="amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-linux ~x86-linux ~x86-macos"
 
 RDEPEND="
-	=dev-tcltk/tdbc-1.0.6
+	~dev-tcltk/tdbc-1.0.6
 	>=dev-lang/tcl-8.6
 	virtual/mysql
 	"
