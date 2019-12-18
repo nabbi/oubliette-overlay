@@ -20,6 +20,11 @@ DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/Postman/app"
 
+src_prepare() {
+	mv _Postman Postman
+	default
+}
+
 src_install() {
 	insinto /opt/${MY_PN}
 	doins -r *
