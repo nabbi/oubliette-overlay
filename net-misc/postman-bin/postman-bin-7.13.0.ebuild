@@ -1,43 +1,38 @@
-# Copyright 2019 Gentoo Authors
+# Copyright 1999-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=6
+MY_PN=${PN/-bin/}
 
-inherit desktop xdg
-
-MY_PN="${PN/-bin/}"
+inherit eutils
 
 DESCRIPTION="Supercharge your API workflow"
-HOMEPAGE="https://www.getpostman.com"
-SRC_URI="
-	amd64? ( https://dl.pstmn.io/download/version/${PV}/linux64 -> ${P}-amd64.tar.gz )
-"
+HOMEPAGE="https://www.getpostman.com/"
+SRC_URI="https://dl.pstmn.io/download/version/${PV}/linux64 -> ${P}.tar.gz"
 
+KEYWORDS="~amd64"
 LICENSE="MPL-2.0"
 SLOT="0"
-KEYWORDS="~amd64"
-RESTRICT="mirror strip"
+IUSE=""
 
-DEPEND=""
-RDEPEND="${DEPEND}"
+RDEPEND="gnome-base/gconf"
+DEPEND="${RDEPEND}"
 
-S="${WORKDIR}/${MY_PN^}/app"
-
-src_prepare() {
-	mv _Postman Postman
-	default
-}
+S="${WORKDIR}/Postman/app"
 
 src_install() {
-	mkdir -p "${ED}/opt/${MY_PN}"
-	cp -r . "${ED}/opt/${MY_PN}"
-	newicon -s 128 resources/app/assets/icon.png ${MY_PN}.png
-	dobin "${FILESDIR}/${MY_PN}"
+	insinto /opt/${MY_PN}
+	doins -r *
+
+	exeinto /opt/${MY_PN}
+	doexe Postman
+
+	dosym ../../opt/${MY_PN}/Postman /usr/bin/${MY_PN}
+
+	newicon -s 128 "${S}/resources/app/assets/icon.png" postman.png
+
 	make_desktop_entry "postman" \
 		"Postman" \
-		 "postman" \
-		 "Development" \
-		 "Type=Application" \
-		 "Categories=Development;IDE;" \
-		 "Comment=Build, test, and document your APIs faster"
+		"/usr/share/icons/hicolor/128x128/apps/postman.png" \
+		"Development"
 }
