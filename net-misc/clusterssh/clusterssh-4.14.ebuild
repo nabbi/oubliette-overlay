@@ -30,6 +30,7 @@ RDEPEND="
 	dev-perl/Tk
 	dev-perl/Config-Simple
 	dev-perl/X11-Protocol
+	dev-perl/X11-Protocol-Other
 	dev-perl/XML-Simple
 	x11-apps/xlsfonts
 	x11-terms/xterm"
