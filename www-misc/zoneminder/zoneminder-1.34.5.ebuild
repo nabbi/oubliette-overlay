@@ -62,6 +62,7 @@ dev-perl/URI-Encode
 dev-perl/libwww-perl
 dev-perl/Number-Bytes-Human
 dev-perl/JSON-MaybeXS
+dev-perl/Crypt-Eksblowfish
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
