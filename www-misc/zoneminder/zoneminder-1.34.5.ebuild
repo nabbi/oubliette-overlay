@@ -11,7 +11,6 @@
 #       virtual/perl-libnet
 #       virtual/perl-Module-Load
 #
-#	dev-perl/Module-Install should be depend in dev-perl/HTTP-Lite
 
 EAPI=6
 
@@ -36,7 +35,7 @@ else
 fi
 
 LICENSE="GPL-2"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="curl encode ffmpeg gcrypt gnutls +mmap +ssl libressl vlc"
 SLOT="0"
 
@@ -67,7 +66,6 @@ dev-perl/JSON-MaybeXS
 dev-perl/Crypt-Eksblowfish
 dev-perl/Data-Entropy
 dev-perl/HTTP-Lite
-dev-perl/Module-Install
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
