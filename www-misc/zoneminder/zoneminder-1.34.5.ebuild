@@ -4,7 +4,6 @@
 # TO DO:
 # * dependencies of unknown status:
 #       dev-perl/Device-SerialPort
-#       dev-perl/MIME-Lite
 #       dev-perl/MIME-tools
 #       dev-perl/PHP-Serialization
 #       virtual/perl-Archive-Tar
@@ -66,6 +65,7 @@ dev-perl/JSON-MaybeXS
 dev-perl/Crypt-Eksblowfish
 dev-perl/Data-Entropy
 dev-perl/HTTP-Lite
+dev-perl/MIME-Lite
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
