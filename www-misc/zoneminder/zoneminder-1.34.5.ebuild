@@ -10,6 +10,8 @@
 #       virtual/perl-Archive-Tar
 #       virtual/perl-libnet
 #       virtual/perl-Module-Load
+#
+#	dev-perl/Module-Install should be depend in dev-perl/HTTP-Lite
 
 EAPI=6
 
@@ -64,6 +66,8 @@ dev-perl/Number-Bytes-Human
 dev-perl/JSON-MaybeXS
 dev-perl/Crypt-Eksblowfish
 dev-perl/Data-Entropy
+dev-perl/HTTP-Lite
+dev-perl/Module-Install
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
