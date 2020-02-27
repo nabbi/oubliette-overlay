@@ -179,7 +179,7 @@ src_install() {
 	if [[ ${PV} == 9999 ]]; then
 		dodoc README.md "${T}"/10_zoneminder.conf
 	else
-		    dodoc CHANGELOG.md CONTRIBUTING.md README.md TODO "${T}"/10_zoneminder.conf
+		    dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
 	fi
 
 	perl_delete_packlist
