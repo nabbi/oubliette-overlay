@@ -96,6 +96,7 @@ RDEPEND="${DEPEND}"
 need_apache
 
 PATCHES=(
+	"${FILESDIR}/zoneminder-1.34.5-my_bool.patch"
 )
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
