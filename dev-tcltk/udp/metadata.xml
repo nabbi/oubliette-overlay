@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription>
+	Oubliette - new ebuild package
+	
+	https://core.tcl-lang.org/tcludp/home
+	This package provides UDP sockets for Tcl.
+	</longdescription>
+</pkgmetadata>
