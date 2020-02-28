@@ -8,6 +8,7 @@ MY_P=${MY_PN}-${MY_PV}
 
 DESCRIPTION="provides UDP sockets for Tcl"
 HOMEPAGE="https://core.tcl-lang.org/tcludp/home"
+SRC_URI=""
 
 LICENSE="tcltk"
 SLOT="0"
@@ -22,6 +23,8 @@ RDEPEND="
 	>=dev-lang/tcl-8.6
 	"
 DEPEND="${RDEPEND}"
+
+PROPERTIES="live"
 
 S="${WORKDIR}/${PN}"
 
