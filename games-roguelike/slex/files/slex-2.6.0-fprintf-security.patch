@@ -1,0 +1,2296 @@
+diff --git a/src/dungeon.c b/src/dungeon.c
+index 0e476c48..3b3b6063 100644
+--- a/src/dungeon.c
++++ b/src/dungeon.c
+@@ -103,7 +103,7 @@ dumpit()
+ 		    DD.flags.hellish    ? " hellish"    : "");
+ 	    getchar();
+ 	}
+-	fprintf(stderr,"\nSpecial levels:\n");
++	fprintf(stderr,"%s","\nSpecial levels:\n");
+ 	for(x = sp_levchn; x; x = x->next) {
+ 	    fprintf(stderr, "%s (%d): ", x->proto, x->rndlevs);
+ 	    fprintf(stderr, "on %d, %d; ", x->dlevel.dnum, x->dlevel.dlevel);
+@@ -114,7 +114,7 @@ dumpit()
+ 		    x->flags.town       ? " town"       : "");
+ 	    getchar();
+ 	}
+-	fprintf(stderr,"\nBranches:\n");
++	fprintf(stderr,"%s","\nBranches:\n");
+ 	for (br = branches; br; br = br->next) {
+ 	    fprintf(stderr, "%d: %s, end1 %d %d, end2 %d %d, %s\n",
+ 		br->id,
+@@ -128,7 +128,7 @@ dumpit()
+ 		br->end1_up ? "end1 up" : "end1 down");
+ 	}
+ 	getchar();
+-	fprintf(stderr,"\nDone\n");
++	fprintf(stderr,"%s","\nDone\n");
+ 	getchar();
+ }
+ #endif
+@@ -632,7 +632,7 @@ place_level(proto_index, pd)
+ 	fprintf(stderr,"%s: trying %d [ ", lev->proto, lev->dlevel.dlevel);
+ 	for (i = 1; i <= MAXLEVEL; i++)
+ 	    if (map[i]) fprintf(stderr,"%d ", i);
+-	fprintf(stderr,"]\n");
++	fprintf(stderr,"%s","]\n");
+ #endif
+ 	if (place_level(proto_index+1, pd)) return TRUE;
+ 	map[lev->dlevel.dlevel] = FALSE;	/* this choice didn't work */
+diff --git a/src/livelog.c b/src/livelog.c
+index d7e27c92..4fadd832 100644
+--- a/src/livelog.c
++++ b/src/livelog.c
+@@ -139,7 +139,7 @@ void livelog_write_string(char* buffer) {
+ 		if(!(livelogfile = fopen_datafile_area(LOGAREA, LIVELOGFILE, "a", SCOREPREFIX))) {
+ 			pline("Cannot open live log file!");
+ 		} else {
+-			fprintf(livelogfile, buffer);
++			fprintf(livelogfile,"%s", buffer);
+ 			(void) fclose(livelogfile);
+ 		}
+ 		unlock_file_area(LOGAREA, LIVELOGFILE);
+diff --git a/src/recover.c b/src/recover.c
+index cdf282f4..5ddfacd2 100644
+--- a/src/recover.c
++++ b/src/recover.c
+@@ -207,7 +207,7 @@ int ifd, ofd;
+ 		nfrom = read(ifd, buf, BUFSIZ);
+ 		nto = write(ofd, buf, nfrom);
+ 		if (nto != nfrom) {
+-			fprintf(stderr, "file copy failed!\n");
++			fprintf(stderr,"%s", "file copy failed!\n");
+ 			exit(EXIT_FAILURE);
+ 		}
+ 	} while (nfrom == BUFSIZ);
+@@ -236,8 +236,8 @@ const char *directory;
+  	    if(errno == EACCES) {
+ 	  	fprintf(stderr,
+ 			"\nThere are files from a game in progress under your name.");
+-		fprintf(stderr,"\nThe files are locked or inaccessible.");
+-		fprintf(stderr,"\nPerhaps the other game is still running?\n");
++		fprintf(stderr,"%s","\nThe files are locked or inaccessible.");
++		fprintf(stderr,"%s","\nPerhaps the other game is still running?\n");
+ 	    } else
+ 	  	fprintf(stderr,
+ 			"\nTrouble accessing level 0 (errno = %d).\n", errno);
+diff --git a/src/topten.c b/src/topten.c
+index 7d8b4d20..d61a8bfc 100644
+--- a/src/topten.c
++++ b/src/topten.c
+@@ -400,7 +400,7 @@ struct toptenentry *tt;
+ 
+   fprintf(rfile, XLOG_SEP "flags=0x%lx", encodexlogflags());
+ 
+-  (void)fprintf(rfile, "\n");
++  (void)fprintf(rfile,"%s", "\n");
+ 
+ }
+ 
+diff --git a/sys/amiga/cvtsnd.c b/sys/amiga/cvtsnd.c
+index 0e5f9c59..48ce61bf 100644
+--- a/sys/amiga/cvtsnd.c
++++ b/sys/amiga/cvtsnd.c
+@@ -50,11 +50,11 @@ main(int ac, char **av)
+ 	exit(20);
+     }
+     if (!(in = fopen(av[1], "r"))) {
+-	fprintf(stderr, "Can't open input file\n");
++	fprintf(stderr,"%s", "Can't open input file\n");
+ 	exit(20);
+     }
+     if (!(out = fopen(av[2], "w"))) {
+-	fprintf(stderr, "Can't open output file\n");
++	fprintf(stderr,"%s", "Can't open output file\n");
+ 	exit(20);
+     }
+ 
+diff --git a/sys/amiga/xpm2iff.c b/sys/amiga/xpm2iff.c
+index 82bbb019..8b701f05 100644
+--- a/sys/amiga/xpm2iff.c
++++ b/sys/amiga/xpm2iff.c
+@@ -257,7 +257,7 @@ conv_image(){
+ 	    int slot;
+ 	    int color = xb[col];
+ 	    if(!ttable[color].flag){
+-		fprintf(stderr, "Bad image data\n");
++		fprintf(stderr,"%s", "Bad image data\n");
+ 	    }
+ 	    slot = ttable[color].slot;
+ 	    for(planeno = 0; planeno<nplanes; planeno++){
+diff --git a/sys/msdos/tile2bin.c b/sys/msdos/tile2bin.c
+index 9e326755..fa7dadd7 100644
+--- a/sys/msdos/tile2bin.c
++++ b/sys/msdos/tile2bin.c
+@@ -89,7 +89,7 @@ char *argv[];
+ 	char *paletteptr;
+ 
+ 	if (argc != 1) {
+-		fprintf(stderr, "usage: tile2bin (from the util directory)\n");
++		fprintf(stderr,"%s", "usage: tile2bin (from the util directory)\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+@@ -207,7 +207,7 @@ struct tibhdr_struct *tibhdr;
+ {
+ 
+ 	if (fseek(fileptr,0L,SEEK_SET)) {
+-		fprintf(stderr, "Error writing header to tile file\n");
++		fprintf(stderr,"%s", "Error writing header to tile file\n");
+ 	}
+ 	fwrite(tibhdr, sizeof(struct tibhdr_struct), 1, fileptr);
+ }
+@@ -234,7 +234,7 @@ pixel (*pixels)[MAX_TILE_X];
+ 					break;
+ 			}
+ 			if (k >= num_colors)
+-				fprintf(stderr, "color not in colormap!\n");
++				fprintf(stderr,"%s", "color not in colormap!\n");
+ #ifdef PACKED_FILE
+ 			packtile[j][i] = k;
+ #endif
+diff --git a/sys/msdos/txt2bmp.c b/sys/msdos/txt2bmp.c
+index b31583e9..a4c31419 100644
+--- a/sys/msdos/txt2bmp.c
++++ b/sys/msdos/txt2bmp.c
+@@ -259,20 +259,20 @@ char *argv[];
+         
+         if (util_mode != 'c') {
+ 	    if (argv[1][2] == '1' && argv[1][3] == '6') {
+-    		fprintf(stderr, "Using 16x16 text tile files\n");
++    		fprintf(stderr,"%s", "Using 16x16 text tile files\n");
+     		(void) fflush(stderr);
+ 		tilefiles = tilefiles16;
+ 		strcpy(bigtile_file, bigtile_file16);
+ 	    } else if (argv[1][2] == '3' && 
+ 		    	(argv[1][3] == 'D' || argv[1][3] == 'd')) {
+-    		fprintf(stderr, "Using 48x64 text tile files\n");
++    		fprintf(stderr,"%s", "Using 48x64 text tile files\n");
+     		(void) fflush(stderr);
+ 		tilefiles = tilefiles3d;
+ 		strcpy(bigtile_file, bigtile_file3d);
+ 		trans_background = TRUE;
+ 	    } else {
+ 	       	/* Default mode is 32 */
+-    		fprintf(stderr, "Using 32x32 text tile files\n");
++    		fprintf(stderr,"%s", "Using 32x32 text tile files\n");
+     		(void) fflush(stderr);
+ 		tilefiles = tilefiles32;
+ 		strcpy(bigtile_file, bigtile_file32);
+@@ -294,14 +294,14 @@ char *argv[];
+ 		perror(index_file);
+ 		exit(EXIT_FAILURE);
+ 	    }
+-	    fprintf(ofp,Dont_Edit_Index);   
++	    fprintf(ofp,"%s",Dont_Edit_Index);   
+         } else if (util_mode == 'h') {
+ 	    if (!(ofp = fopen(allegfx_file, WRTMODE))) {
+ 		perror(allegfx_file);
+ 		exit(EXIT_FAILURE);
+ 	    }
+-    	    fprintf(ofp,"/*\tSCCS Id: @(#)allegfx.h\t3.2\t96/05/17 */\n\n");
+-	    fprintf(ofp,Dont_Edit_Code);	    
++    	    fprintf(ofp,"%s","/*\tSCCS Id: @(#)allegfx.h\t3.2\t96/05/17 */\n\n");
++	    fprintf(ofp,"%s",Dont_Edit_Code);	    
+ 	    fprintf(ofp,"/*\tNOTE: This file is completely obselete! */\n"
+ 		"/*\tI have no idea why you made it */\n\n");
+         } else if (util_mode == 'b' || util_mode == 'c') {
+diff --git a/sys/share/dgn_yacc.c b/sys/share/dgn_yacc.c
+index 72a21924..4a53a215 100644
+--- a/sys/share/dgn_yacc.c
++++ b/sys/share/dgn_yacc.c
+@@ -346,7 +346,7 @@ init_dungeon()
+ 	if(++n_dgns > MAXDUNGEON) {
+ 	    (void) fprintf(stderr, "FATAL - Too many dungeons (limit: %d).\n",
+ 		    MAXDUNGEON);
+-	    (void) fprintf(stderr, "To increase the limit edit MAXDUNGEON in global.h\n");
++	    (void) fprintf(stderr,"%s", "To increase the limit edit MAXDUNGEON in global.h\n");
+ 	    exit(EXIT_FAILURE);
+ 	}
+ 
+diff --git a/sys/share/uudecode.c b/sys/share/uudecode.c
+index 75e86f99..c78f231d 100644
+--- a/sys/share/uudecode.c
++++ b/sys/share/uudecode.c
+@@ -109,7 +109,7 @@ char **argv;
+ 	/* search for header line */
+ 	for (;;) {
+ 		if (fgets(buf, sizeof buf, in) == NULL) {
+-			fprintf(stderr, "No begin line\n");
++			fprintf(stderr,"%s", "No begin line\n");
+ 			exit(3);
+ 		}
+ 		if (strncmp(buf, "begin ", 6) == 0)
+@@ -127,7 +127,7 @@ char **argv;
+ 
+ 		sl = index(dest, '/');
+ 		if (sl == NULL) {
+-			fprintf(stderr, "Illegal ~user\n");
++			fprintf(stderr,"%s", "Illegal ~user\n");
+ 			exit(3);
+ 		}
+ 		*sl++ = 0;
+@@ -160,7 +160,7 @@ char **argv;
+ 	decode(in, out);
+ 
+ 	if (fgets(buf, sizeof buf, in) == NULL || strcmp(buf, "end\n")) {
+-		fprintf(stderr, "No end line\n");
++		fprintf(stderr,"%s", "No end line\n");
+ 		exit(5);
+ 	}
+ 	exit(0);
+diff --git a/sys/winnt/mapimail.c b/sys/winnt/mapimail.c
+index 989f0240..70d90522 100644
+--- a/sys/winnt/mapimail.c
++++ b/sys/winnt/mapimail.c
+@@ -265,11 +265,11 @@ char *mID;
+ 	tmpID[0] = '\0';
+ 
+ #ifdef MAPI_VERBOSE
+-	if (debugmapi) fprintf(dbgfile, "MAPI_mail_check() ");
++	if (debugmapi) fprintf(dbgfile,"%s", "MAPI_mail_check() ");
+ #endif
+ 	if (mail_fetched) {
+ #ifdef MAPI_VERBOSE
+-	if (debugmapi) fprintf(dbgfile, "returning FALSE (buffer occupied)\n");
++	if (debugmapi) fprintf(dbgfile,"%s", "returning FALSE (buffer occupied)\n");
+ #endif
+ 		return FALSE; /* buffer occupied, don't bother */
+ 	}
+@@ -280,13 +280,13 @@ char *mID;
+ 	if (status == SUCCESS_SUCCESS) {
+ 		strcpy(mID, tmpID);
+ #ifdef MAPI_VERBOSE
+-	if (debugmapi) fprintf(dbgfile, "returning TRUE\n");
++	if (debugmapi) fprintf(dbgfile,"%s", "returning TRUE\n");
+ #endif
+ 		return TRUE;
+ 	}
+ 	if (status == MAPI_E_NO_MESSAGES) {
+ #ifdef MAPI_VERBOSE
+-		if (debugmapi) fprintf(dbgfile, "returning FALSE\n");
++		if (debugmapi) fprintf(dbgfile,"%s", "returning FALSE\n");
+ #endif
+ 		return FALSE;
+ 	}
+@@ -304,7 +304,7 @@ char *mID;
+ 	unsigned long status;
+ 
+ #ifdef MAPI_VERBOSE
+-	if (debugmapi) fprintf(dbgfile, "MAPI_mail_fetch() ");
++	if (debugmapi) fprintf(dbgfile,"%s", "MAPI_mail_fetch() ");
+ #endif
+ 	/*
+ 	 *  Update context right away so we don't loop if there
+@@ -314,7 +314,7 @@ char *mID;
+ 
+ 	if (mail_fetched) {
+ #ifdef MAPI_VERBOSE
+-	if (debugmapi) fprintf(dbgfile, "returning FALSE (buffer occupied)\n");
++	if (debugmapi) fprintf(dbgfile,"%s", "returning FALSE (buffer occupied)\n");
+ #endif
+ 		 return FALSE;  /* buffer occupied */
+ 	}
+@@ -342,14 +342,14 @@ char *mID;
+ 		status = fpMAPIFreeBuffer(MAPIMessage);
+ 		InterlockedIncrement(&mail_fetched);
+ #ifdef MAPI_VERBOSE
+-		if (debugmapi) fprintf(dbgfile, "returning TRUE\n");
++		if (debugmapi) fprintf(dbgfile,"%s", "returning TRUE\n");
+ #endif
+ 		return TRUE;
+ 	}
+ #ifdef MAPI_VERBOSE
+ 	else
+ 		if (debugmapi) fprintf(dbgfile,"MAPIRead failed, status = %d\n", status);
+-	if (debugmapi) fprintf(dbgfile, "returning FALSE (failed)\n");
++	if (debugmapi) fprintf(dbgfile,"%s", "returning FALSE (failed)\n");
+ #endif
+ 	return FALSE;
+ }
+@@ -455,7 +455,7 @@ int InitMAPI()
+ 
+ #ifdef MAPI_VERBOSE
+     if (debugmapi) {
+-	fprintf(dbgfile,"Entry Points:\n");
++	fprintf(dbgfile,"%s","Entry Points:\n");
+     	fprintf(dbgfile,"MAPILogon      = %p\n",fpMAPILogon);
+     	fprintf(dbgfile,"MAPILogoff     = %p\n",fpMAPILogoff);
+     	fprintf(dbgfile,"MAPIFindNext   = %p\n",fpMAPIFindNext);
+diff --git a/util/dgn_main.c b/util/dgn_main.c
+index b6a4c756..a6681ed2 100644
+--- a/util/dgn_main.c
++++ b/util/dgn_main.c
+@@ -154,7 +154,7 @@ char **argv;
+ 	    }
+ 	}
+ 	if (fout && fout != stdout && fclose(fout) < 0) {
+-	    fprintf(stderr, "Can't finish output file.");
++	    fprintf(stderr,"%s", "Can't finish output file.");
+ 	    perror(outfile);
+ 	    errors_encountered = TRUE;
+ 	}
+diff --git a/util/makedefs.c b/util/makedefs.c
+index aeb83a90..07382dba 100644
+--- a/util/makedefs.c
++++ b/util/makedefs.c
+@@ -361,7 +361,7 @@ char	*options;
+ 	    }
+ 	    options++;
+ 	}
+-	if (more_than_one) fprintf(stderr, "Completed.\n");	/* feedback */
++	if (more_than_one) fprintf(stderr,"%s", "Completed.\n");	/* feedback */
+ 
+ }
+ 
+@@ -401,7 +401,7 @@ do_rumors()
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	sprintf(infile, DATA_IN_TEMPLATE, RUMOR_FILE);
+ 	strcat(infile, ".tru");
+@@ -612,8 +612,8 @@ int verinfo;
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,"/*\tSCCS Id: @(#)date.h\t3.4\t2002/02/03 */\n\n");
+-	fprintf(ofp,Dont_Edit_Code);
++	fprintf(ofp,"%s","/*\tSCCS Id: @(#)date.h\t3.4\t2002/02/03 */\n\n");
++	fprintf(ofp,"%s",Dont_Edit_Code);
+ 
+ #ifdef KR1ED
+ 	(void) time(&clocktim);
+@@ -633,7 +633,7 @@ int verinfo;
+ 		fprintf(ofp,"#define BUILD_DATE \"%s\"\n", cbuf);
+ 		fprintf(ofp,"#define BUILD_TIME (%ldL)\n", clocktim);
+ 	}
+-	fprintf(ofp,"\n");
++	fprintf(ofp,"%s","\n");
+ 	fprintf(ofp,"#define VERSION_NUMBER 0x%08lx%s\n",
+ 		version.incarnation, ul_sfx);
+ 	fprintf(ofp,"#define VERSION_FEATURES 0x%08lx%s\n",
+@@ -646,7 +646,7 @@ int verinfo;
+ 		version.entity_count, ul_sfx);
+ 	fprintf(ofp,"#define VERSION_SANITY2 0x%08lx%s\n",
+ 		version.struct_sizes, ul_sfx);
+-	fprintf(ofp,"\n");
++	fprintf(ofp,"%s","\n");
+ 	fprintf(ofp,"#define VERSION_STRING \"%s\"\n", version_string(buf));
+ 	if (!verinfo)
+ 		fprintf(ofp,"#define VERSION_ID \\\n \"%s\"\n",
+@@ -654,7 +654,7 @@ int verinfo;
+ #ifdef AMIGA
+ 	{
+ 	struct tm *tm = localtime((time_t *) &clocktim);
+-	fprintf(ofp,"#define AMIGA_VERSION_STRING ");
++	fprintf(ofp,"%s","#define AMIGA_VERSION_STRING ");
+ 	fprintf(ofp,"\"\\0$VER: NetHack %d.%d.%d (%d.%d.%d)\"\n",
+ 		VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL,
+ 		tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
+@@ -972,14 +972,14 @@ do_options()
+ #endif
+ #endif
+ #if defined(ALPHA)
+-	fprintf(ofp, " [alpha]\n");
++	fprintf(ofp,"%s", " [alpha]\n");
+ #elif defined(BETA)
+-	fprintf(ofp, " [beta]\n");
++	fprintf(ofp,"%s", " [beta]\n");
+ #else
+-	fprintf(ofp, "\n");
++	fprintf(ofp,"%s", "\n");
+ #endif
+ 
+-	fprintf(ofp,"\nOptions compiled into this edition:\n");
++	fprintf(ofp,"%s","\nOptions compiled into this edition:\n");
+ 
+ 	length = COLNO + 1;	/* force 1st item onto new line */
+ 	for (i = 0; i < SIZE(build_opts); i++) {
+@@ -987,12 +987,12 @@ do_options()
+ 	    if (length + strlen(str) > COLNO - 5)
+ 		fprintf(ofp,"\n%s", indent),  length = strlen(indent);
+ 	    else
+-		fprintf(ofp," "),  length++;
++		fprintf(ofp,"%s"," "),  length++;
+ 	    fprintf(ofp,"%s", str),  length += strlen(str);
+-	    fprintf(ofp,(i < SIZE(build_opts) - 1) ? "," : "."),  length++;
++	    fprintf(ofp,"%s",(i < SIZE(build_opts) - 1) ? "," : "."),  length++;
+ 	}
+ 
+-	fprintf(ofp,"\n\nSupported windowing systems:\n");
++	fprintf(ofp,"%s","\n\nSupported windowing systems:\n");
+ 
+ 	length = COLNO + 1;	/* force 1st item onto new line */
+ 	for (i = 0; i < SIZE(window_opts) - 1; i++) {
+@@ -1000,12 +1000,12 @@ do_options()
+ 	    if (length + strlen(str) > COLNO - 5)
+ 		fprintf(ofp,"\n%s", indent),  length = strlen(indent);
+ 	    else
+-		fprintf(ofp," "),  length++;
++		fprintf(ofp,"%s"," "),  length++;
+ 	    fprintf(ofp,"%s", str),  length += strlen(str);
+ 	    fprintf(ofp, ","),  length++;
+ 	}
+ 	fprintf(ofp, "\n%swith a default of %s.", indent, DEFAULT_WINDOW_SYS);
+-	fprintf(ofp,"\n\n");
++	fprintf(ofp,"%s","\n\n");
+ 
+ 	fclose(ofp);
+ 	return;
+@@ -1373,7 +1373,7 @@ do_dungeon()
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1414,7 +1414,7 @@ recheck:
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1455,7 +1455,7 @@ recheck2:
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1496,7 +1496,7 @@ recheck3:
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1537,7 +1537,7 @@ recheck4:
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1578,7 +1578,7 @@ recheck5:
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1619,7 +1619,7 @@ recheck6:
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1660,7 +1660,7 @@ recheck7:
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,Dont_Edit_Data);
++	fprintf(ofp,"%s",Dont_Edit_Data);
+ 
+ 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
+ 	    SpinCursor(3);
+@@ -1807,9 +1807,9 @@ do_monstr()
+ 	perror(filename);
+ 	exit(EXIT_FAILURE);
+     }
+-    fprintf(ofp,Dont_Edit_Code);
+-    fprintf(ofp,"#include \"config.h\"\n");
+-    fprintf(ofp,"\nconst int monstr[] = {\n");
++    fprintf(ofp,"%s",Dont_Edit_Code);
++    fprintf(ofp,"%s","#include \"config.h\"\n");
++    fprintf(ofp,"%s","\nconst int monstr[] = {\n");
+     for (ptr = &mons[0], j = 0; ptr->mlet; ptr++) {
+ 
+ 	SpinCursor(3);
+@@ -1820,13 +1820,13 @@ do_monstr()
+     /* might want to insert a final 0 entry here instead of just newline */
+     fprintf(ofp,"%s};\n", (j & 15) ? "\n" : "");
+ 
+-    fprintf(ofp,"\nvoid monstr_init(void);\n");
+-    fprintf(ofp,"\nvoid\n");
+-    fprintf(ofp,"monstr_init()\n");
+-    fprintf(ofp,"{\n");
+-    fprintf(ofp,"    return;\n");
+-    fprintf(ofp,"}\n");
+-    fprintf(ofp,"\n/*monstr.c*/\n");
++    fprintf(ofp,"%s","\nvoid monstr_init(void);\n");
++    fprintf(ofp,"%s","\nvoid\n");
++    fprintf(ofp,"%s","monstr_init()\n");
++    fprintf(ofp,"%s","{\n");
++    fprintf(ofp,"%s","    return;\n");
++    fprintf(ofp,"%s","}\n");
++    fprintf(ofp,"%s","\n/*monstr.c*/\n");
+ 
+     fclose(ofp);
+     return;
+@@ -1847,26 +1847,26 @@ do_permonst()
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,"/*\tSCCS Id: @(#)pm.h\t3.4\t2002/02/03 */\n\n");
+-	fprintf(ofp,Dont_Edit_Code);
+-	fprintf(ofp,"#ifndef PM_H\n#define PM_H\n");
++	fprintf(ofp,"%s","/*\tSCCS Id: @(#)pm.h\t3.4\t2002/02/03 */\n\n");
++	fprintf(ofp,"%s",Dont_Edit_Code);
++	fprintf(ofp,"%s","#ifndef PM_H\n#define PM_H\n");
+ 
+ 	if (strcmp(mons[0].mname, "playermon") != 0)
+-		fprintf(ofp,"\n#define\tPM_PLAYERMON\t(-1)");
++		fprintf(ofp,"%s","\n#define\tPM_PLAYERMON\t(-1)");
+ 
+ 	for (i = 0; mons[i].mlet; i++) {
+ 		SpinCursor(3);
+-		fprintf(ofp,"\n#define\tPM_");
++		fprintf(ofp,"%s","\n#define\tPM_");
+ 		if (mons[i].mlet == S_HUMAN &&
+ 				!strncmp(mons[i].mname, "were", 4))
+-		    fprintf(ofp, "HUMAN_");
++		    fprintf(ofp,"%s", "HUMAN_");
+ 		for (nam = c = tmpdup(mons[i].mname); *c; c++)
+ 		    if (*c >= 'a' && *c <= 'z') *c -= (char)('a' - 'A');
+ 		    else if (*c < 'A' || *c > 'Z') *c = '_';
+ 		fprintf(ofp,"%s\t%d", nam, i);
+ 	}
+ 	fprintf(ofp,"\n\n#define\tNUMMONS\t%d\n", i);
+-	fprintf(ofp,"\n#endif /* PM_H */\n");
++	fprintf(ofp,"%s","\n#endif /* PM_H */\n");
+ 	fclose(ofp);
+ 	return;
+ }
+@@ -2048,7 +2048,7 @@ put_qt_hdrs()
+ 	for(i = 0; i < qt_hdr.n_hdr; i++)
+ 		fprintf(stderr, "%c @ %ld, ", qt_hdr.id[i], qt_hdr.offset[i]);
+ 
+-	fprintf(stderr, "\n");
++	fprintf(stderr,"%s", "\n");
+ #endif
+ 
+ 	/*
+@@ -2162,9 +2162,9 @@ do_objs()
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+ 	}
+-	fprintf(ofp,"/*\tSCCS Id: @(#)onames.h\t3.4\t2002/02/03 */\n\n");
+-	fprintf(ofp,Dont_Edit_Code);
+-	fprintf(ofp,"#ifndef ONAMES_H\n#define ONAMES_H\n\n");
++	fprintf(ofp,"%s","/*\tSCCS Id: @(#)onames.h\t3.4\t2002/02/03 */\n\n");
++	fprintf(ofp,"%s",Dont_Edit_Code);
++	fprintf(ofp,"%s","#ifndef ONAMES_H\n#define ONAMES_H\n\n");
+ 
+ 	for(i = 0; !i || objects[i].oc_class != ILLOBJ_CLASS; i++) {
+ 		SpinCursor(3);
+@@ -2190,18 +2190,18 @@ do_objs()
+ 
+ 		switch (class) {
+ 		    case WAND_CLASS:
+-			fprintf(ofp,"#define\tWAN_"); prefix = 1; break;
++			fprintf(ofp,"%s","#define\tWAN_"); prefix = 1; break;
+ 		    case RING_CLASS:
+-			fprintf(ofp,"#define\tRIN_"); prefix = 1; break;
++			fprintf(ofp,"%s","#define\tRIN_"); prefix = 1; break;
+ 		    case POTION_CLASS:
+-			fprintf(ofp,"#define\tPOT_"); prefix = 1; break;
++			fprintf(ofp,"%s","#define\tPOT_"); prefix = 1; break;
+ 		    case SPBOOK_CLASS:
+-			fprintf(ofp,"#define\tSPE_"); prefix = 1; nspell++; break;
++			fprintf(ofp,"%s","#define\tSPE_"); prefix = 1; nspell++; break;
+ 		    case SCROLL_CLASS:
+-			fprintf(ofp,"#define\tSCR_"); prefix = 1; break;
++			fprintf(ofp,"%s","#define\tSCR_"); prefix = 1; break;
+ 		    case AMULET_CLASS:
+ 			/* avoid trouble with stupid C preprocessors */
+-			fprintf(ofp,"#define\t");
++			fprintf(ofp,"%s","#define\t");
+ 			if(objects[i].oc_material == MT_PLASTIC && objects[i].oc_nutrition == 1) {
+ 			    fprintf(ofp,"FAKE_AMULET_OF_YENDOR\t%d\n", i);
+ 			    prefix = -1;
+@@ -2217,7 +2217,7 @@ do_objs()
+ 			    break;
+ 			}
+ 		    default:
+-			fprintf(ofp,"#define\t");
++			fprintf(ofp,"%s","#define\t");
+ 		}
+ 		if (prefix >= 0)
+ 			fprintf(ofp,"%s\t%d\n", limit(objnam, prefix), i);
+@@ -2233,11 +2233,11 @@ do_objs()
+ 	    sumerr = TRUE;
+ 	}
+ 
+-	fprintf(ofp,"#define\tLAST_GEM\t(JADE)\n");
++	fprintf(ofp,"%s","#define\tLAST_GEM\t(JADE)\n");
+ 	fprintf(ofp,"#define\tMAXSPELL\t%d\n", nspell+1);
+ 	fprintf(ofp,"#define\tNUM_OBJECTS\t%d\n", i);
+ 
+-	fprintf(ofp, "\n/* Artifacts (unique objects) */\n\n");
++	fprintf(ofp,"%s", "\n/* Artifacts (unique objects) */\n\n");
+ 
+ 	for (i = 1; artifact_names[i]; i++) {
+ 		SpinCursor(3);
+@@ -2255,7 +2255,7 @@ do_objs()
+ 	}
+ 
+ 	fprintf(ofp, "#define\tNROFARTIFACTS\t%d\n", i-1);
+-	fprintf(ofp,"\n#endif /* ONAMES_H */\n");
++	fprintf(ofp,"%s","\n#endif /* ONAMES_H */\n");
+ 	fclose(ofp);
+ 	if (sumerr) exit(EXIT_FAILURE);
+ 	return;
+@@ -2316,13 +2316,13 @@ do_vision()
+ 	perror(filename);
+ 	exit(EXIT_FAILURE);
+     }
+-    fprintf(ofp,Dont_Edit_Code);
+-    fprintf(ofp,"#ifdef VISION_TABLES\n");
++    fprintf(ofp,"%s",Dont_Edit_Code);
++    fprintf(ofp,"%s","#ifdef VISION_TABLES\n");
+ #ifdef VISION_TABLES
+     H_close_gen();
+     H_far_gen();
+ #endif /* VISION_TABLES */
+-    fprintf(ofp,"\n#endif /* VISION_TABLES */\n");
++    fprintf(ofp,"%s","\n#endif /* VISION_TABLES */\n");
+     fclose(ofp);
+ 
+     SpinCursor(3);
+@@ -2341,10 +2341,10 @@ do_vision()
+ 	unlink(filename);
+ 	exit(EXIT_FAILURE);
+     }
+-    fprintf(ofp,Dont_Edit_Code);
+-    fprintf(ofp,"#include \"config.h\"\n");
+-    fprintf(ofp,"#ifdef VISION_TABLES\n");
+-    fprintf(ofp,"#include \"vis_tab.h\"\n");
++    fprintf(ofp,"%s",Dont_Edit_Code);
++    fprintf(ofp,"%s","#include \"config.h\"\n");
++    fprintf(ofp,"%s","#ifdef VISION_TABLES\n");
++    fprintf(ofp,"%s","#include \"vis_tab.h\"\n");
+ 
+     SpinCursor(3);
+ 
+@@ -2352,14 +2352,14 @@ do_vision()
+     C_close_gen();
+     C_far_gen();
+     /* KMH -- vis_tab_init() needs prototype */
+-    fprintf(ofp, "\nvoid vis_tab_init);\n"(void);
+-    fprintf(ofp,"\nvoid vis_tab_init() { return; }\n");
++    fprintf(ofp,"%s", "\nvoid vis_tab_init);\n"(void);
++    fprintf(ofp,"%s","\nvoid vis_tab_init() { return; }\n");
+ #endif /* VISION_TABLES */
+ 
+     SpinCursor(3);
+ 
+-    fprintf(ofp,"\n#endif /* VISION_TABLES */\n");
+-    fprintf(ofp,"\n/*vis_tab.c*/\n");
++    fprintf(ofp,"%s","\n#endif /* VISION_TABLES */\n");
++    fprintf(ofp,"%s","\n/*vis_tab.c*/\n");
+ 
+     fclose(ofp);
+     return;
+@@ -2422,34 +2422,34 @@ do_vision()
+ static void
+ H_close_gen()
+ {
+-    fprintf(ofp,"\n/* Close */\n");
++    fprintf(ofp,"%s","\n/* Close */\n");
+     fprintf(ofp,"#define CLOSE_MAX_SB_DY %2d\t/* |src row - block row| - 1\t*/\n",
+ 	    TEST_HEIGHT-1);
+     fprintf(ofp,"#define CLOSE_MAX_SB_DX %2d\t/* |src col - block col|\t*/\n",
+ 	    TEST_WIDTH);
+     fprintf(ofp,"#define CLOSE_MAX_BC_DY %2d\t/* |block row - check row|\t*/\n",
+ 	    TEST_HEIGHT);
+-    fprintf(ofp,"typedef struct {\n");
+-    fprintf(ofp,"    unsigned char close[CLOSE_MAX_SB_DX][CLOSE_MAX_BC_DY];\n");
+-    fprintf(ofp,"} close2d;\n");
+-    fprintf(ofp,"extern close2d close_table[CLOSE_MAX_SB_DY];\n");
++    fprintf(ofp,"%s","typedef struct {\n");
++    fprintf(ofp,"%s","    unsigned char close[CLOSE_MAX_SB_DX][CLOSE_MAX_BC_DY];\n");
++    fprintf(ofp,"%s","} close2d;\n");
++    fprintf(ofp,"%s","extern close2d close_table[CLOSE_MAX_SB_DY];\n");
+     return;
+ }
+ 
+ static void
+ H_far_gen()
+ {
+-    fprintf(ofp,"\n/* Far */\n");
++    fprintf(ofp,"%s","\n/* Far */\n");
+     fprintf(ofp,"#define FAR_MAX_SB_DY %2d\t/* |src row - block row|\t*/\n",
+ 	    TEST_HEIGHT);
+     fprintf(ofp,"#define FAR_MAX_SB_DX %2d\t/* |src col - block col| - 1\t*/\n",
+ 	    TEST_WIDTH-1);
+     fprintf(ofp,"#define FAR_MAX_BC_DY %2d\t/* |block row - check row| - 1\t*/\n",
+ 	    TEST_HEIGHT-1);
+-    fprintf(ofp,"typedef struct {\n");
+-    fprintf(ofp,"    unsigned char far_q[FAR_MAX_SB_DX][FAR_MAX_BC_DY];\n");
+-    fprintf(ofp,"} far2d;\n");
+-    fprintf(ofp,"extern far2d far_table[FAR_MAX_SB_DY];\n");
++    fprintf(ofp,"%s","typedef struct {\n");
++    fprintf(ofp,"%s","    unsigned char far_q[FAR_MAX_SB_DX][FAR_MAX_BC_DY];\n");
++    fprintf(ofp,"%s","} far2d;\n");
++    fprintf(ofp,"%s","extern far2d far_table[FAR_MAX_SB_DY];\n");
+     return;
+ }
+ 
+@@ -2466,10 +2466,10 @@ C_close_gen()
+     block_row = BLOCK_HEIGHT-1;
+     block_col = BLOCK_WIDTH-1;
+ 
+-    fprintf(ofp,"\n#ifndef FAR_TABLE_ONLY\n");
+-    fprintf(ofp,"\nclose2d close_table[CLOSE_MAX_SB_DY] = {\n");
++    fprintf(ofp,"%s","\n#ifndef FAR_TABLE_ONLY\n");
++    fprintf(ofp,"%s","\nclose2d close_table[CLOSE_MAX_SB_DY] = {\n");
+ #ifndef no_vision_progress
+-    fprintf(stderr,"\nclose:");
++    fprintf(stderr,"%s","\nclose:");
+ #endif
+ 
+     for (dy = 1; dy < TEST_HEIGHT; dy++) {
+@@ -2505,10 +2505,10 @@ C_close_gen()
+ 	fprintf(ofp,"  }},\n");
+     }
+ 
+-    fprintf(ofp,"}; /* close_table[] */\n");		/* closing brace for table */
+-    fprintf(ofp,"#endif /* !FAR_TABLE_ONLY */\n");
++    fprintf(ofp,"%s","}; /* close_table[] */\n");		/* closing brace for table */
++    fprintf(ofp,"%s","#endif /* !FAR_TABLE_ONLY */\n");
+ #ifndef no_vision_progress
+-    fprintf(stderr,"\n");
++    fprintf(stderr,"%s","\n");
+ #endif
+     return;
+ }
+@@ -2525,10 +2525,10 @@ C_far_gen()
+     block_row = BLOCK_HEIGHT-1;
+     block_col = BLOCK_WIDTH-1;
+ 
+-    fprintf(ofp,"\n#ifndef CLOSE_TABLE_ONLY\n");
+-    fprintf(ofp,"\nfar2d far_table[FAR_MAX_SB_DY] = {\n");
++    fprintf(ofp,"%s","\n#ifndef CLOSE_TABLE_ONLY\n");
++    fprintf(ofp,"%s","\nfar2d far_table[FAR_MAX_SB_DY] = {\n");
+ #ifndef no_vision_progress
+-    fprintf(stderr,"\n_far_:");
++    fprintf(stderr,"%s","\n_far_:");
+ #endif
+ 
+     for (dy = 0; dy < TEST_HEIGHT; dy++) {
+@@ -2561,10 +2561,10 @@ C_far_gen()
+ 	fprintf(ofp,"  }},\n");
+     }
+ 
+-    fprintf(ofp,"}; /* far_table[] */\n");	/* closing brace for table */
+-    fprintf(ofp,"#endif /* !CLOSE_TABLE_ONLY */\n");
++    fprintf(ofp,"%s","}; /* far_table[] */\n");	/* closing brace for table */
++    fprintf(ofp,"%s","#endif /* !CLOSE_TABLE_ONLY */\n");
+ #ifndef no_vision_progress
+-    fprintf(stderr,"\n");
++    fprintf(stderr,"%s","\n");
+ #endif
+     return;
+ }
+@@ -2672,8 +2672,8 @@ do_filenames()
+ 		perror(filename);
+ 		exit(EXIT_FAILURE);
+     }
+-    fprintf(ofp,"/*\tSCCS Id: @(#)filename.h\t3.2\t96/05/17 */\n\n");
+-    fprintf(ofp,Dont_Edit_Code);
++    fprintf(ofp,"%s","/*\tSCCS Id: @(#)filename.h\t3.2\t96/05/17 */\n\n");
++    fprintf(ofp,"%s",Dont_Edit_Code);
+ 
+ /*OPEN file*/
+     sprintf(infile, INCLUDE_TEMPLATE, FILE_H);
+diff --git a/win/X11/tile2x11.c b/win/X11/tile2x11.c
+index 42a78eb2..7f393d1f 100644
+--- a/win/X11/tile2x11.c
++++ b/win/X11/tile2x11.c
+@@ -78,7 +78,7 @@ merge_text_colormap()
+ 		break;
+ 
+ 	if (j >= MAXCOLORMAPSIZE) {
+-	    fprintf(stderr, "colormap overflow\n");
++	    fprintf(stderr,"%s", "colormap overflow\n");
+ 	    exit(1);
+ 	}
+ 
+@@ -117,7 +117,7 @@ process_file(fname)
+ 	 */
+ 	tile_bytes = malloc(tile_x*tile_y*MAX_GLYPH);
+ 	if (!tile_bytes) {
+-	    fprintf(stderr, "Not enough memory.\n");
++	    fprintf(stderr,"%s", "Not enough memory.\n");
+ 	    exit(1);
+ 	}
+ 	curr_tb = tile_bytes;
+@@ -154,8 +154,8 @@ FILE *fp;
+ 		*curr_tb++ = 1;
+ 	    }
+ 
+-    fprintf(fp, "/* XPM */\n");
+-    fprintf(fp, "static char* nhtiles[] = {\n");
++    fprintf(fp,"%s", "/* XPM */\n");
++    fprintf(fp,"%s", "static char* nhtiles[] = {\n");
+     fprintf(fp, "\"%lu %lu %lu %d\",\n",
+ 		header.tile_width*TILES_PER_ROW,
+ 		header.tile_height*TILES_PER_COL,
+@@ -179,7 +179,7 @@ FILE *fp;
+ 	for (y = 0; y < header.tile_height; y++) {
+ 	    bytes=tile_bytes+(j*TILES_PER_ROW*header.tile_height+y)*
+ 	      header.tile_width;
+-	    fprintf(fp, "\"");
++	    fprintf(fp,"%s", "\"");
+ 	    for (i = 0; i < TILES_PER_ROW; i++) {
+ 		for (x = 0; x < header.tile_width; x++) {
+ 		    if (header.ncolors > 64) {
+@@ -196,7 +196,7 @@ FILE *fp;
+ 	    fprintf(fp, "\",\n");
+ 	}
+ 
+-    return fprintf(fp, "};\n")>=0;
++    return fprintf(fp,"%s", "};\n")>=0;
+ }
+ #endif	/* USE_XPM */
+ 
+@@ -276,24 +276,24 @@ main(argc, argv)
+ 
+ #ifdef USE_XPM
+     if (xpm_write(fp) == 0) {
+-	fprintf(stderr, "can't write XPM file\n");
++	fprintf(stderr,"%s", "can't write XPM file\n");
+ 	exit(1);
+     }
+ #else
+     if (fwrite_tile_header(&header, fp) == 0) {
+-	fprintf(stderr, "can't write output header\n");
++	fprintf(stderr,"%s", "can't write output header\n");
+ 	exit(1);
+ 	}
+ 
+     if (fwrite((char *)x11_colormap, 1, header.ncolors*3, fp) == 0) {
+-	fprintf(stderr, "can't write output colormap\n");
++	fprintf(stderr,"%s", "can't write output colormap\n");
+ 	exit(1);
+     }
+ 
+     if (fwrite((char *)tile_bytes, 1,
+ 	(int) header.ntiles*header.tile_width*header.tile_height, fp) == 0) {
+ 
+-	fprintf(stderr, "can't write tile bytes\n");
++	fprintf(stderr,"%s", "can't write tile bytes\n");
+ 	exit(1);
+     }
+ #endif
+diff --git a/win/gem/tile2img.c b/win/gem/tile2img.c
+index cfa78fd1..1ca55e13 100644
+--- a/win/gem/tile2img.c
++++ b/win/gem/tile2img.c
+@@ -58,7 +58,7 @@ char *argv[];
+ 	int i;
+ 
+ 	if (argc != 2) {
+-		fprintf(stderr, "usage: tile2img outfile.img\n");
++		fprintf(stderr,"%s", "usage: tile2img outfile.img\n");
+ 		exit(EXIT_FAILURE);
+ 	} else
+ 		strcpy(bmpname, argv[1]);
+@@ -147,7 +147,7 @@ pixel (*pixels)[TILE_X];
+ 					break;
+ 		    }
+ 		    if (cur_color >= num_colors)
+-				fprintf(stderr, "color not in colormap!\n");
++				fprintf(stderr,"%s", "color not in colormap!\n");
+ 		    y = cur_y + yoffset;
+ 		    x = cur_x + xoffset;
+ 		    Bild_daten[y][x] =cur_color;
+diff --git a/win/gem/xpm2img.c b/win/gem/xpm2img.c
+index 605d5db0..439374a1 100644
+--- a/win/gem/xpm2img.c
++++ b/win/gem/xpm2img.c
+@@ -32,7 +32,7 @@ char *argv[];
+ 	int row, col, planeno;
+ 	int farben, planes;
+ 	if (argc != 3) {
+-		fprintf(stderr, "usage: tile2img infile.xpm outfile.img\n");
++		fprintf(stderr,"%s", "usage: tile2img infile.xpm outfile.img\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 	initflag = 0;
+@@ -59,12 +59,12 @@ char *argv[];
+ 		for(col = 0;col<width;col++){
+ 			int color = xb[col];
+ 			if(!ttable[color].flag)
+-				fprintf(stderr, "Bad image data\n");
++				fprintf(stderr,"%s", "Bad image data\n");
+ 			Bild_daten[row][col]= ttable[color].slot;
+ 		}
+ 	}
+ 	if(num_colors>256){
+-		fprintf(stderr,"ERROR: zuviele Farben\n");
++		fprintf(stderr,"%s","ERROR: zuviele Farben\n");
+ 		exit(EXIT_FAILURE);
+ 	}else if(num_colors>16){
+ 		farben=256;
+@@ -114,7 +114,7 @@ fopen_xpm_file(const char *fn, const char *mode){
+ /* XXX */
+ 	xpmbuf = malloc(width * 2);
+ 	if(!xpmbuf){
+-		fprintf(stderr,"ERROR: Can't allocate line buffer\n");
++		fprintf(stderr,"%s","ERROR: Can't allocate line buffer\n");
+ 		exit(1);
+ 	}
+ 	if(temp != 1)return FALSE;		/* limitation of this code */
+diff --git a/win/gl/gl_conf.c b/win/gl/gl_conf.c
+index 7c0a0531..6bfa36e8 100644
+--- a/win/gl/gl_conf.c
++++ b/win/gl/gl_conf.c
+@@ -434,7 +434,7 @@ static int write_config_lines(const char *conf_name)
+     {
+       if (within_line)
+       {
+-        fprintf(fp, "\n");
++        fprintf(fp,"%s", "\n");
+         within_line = 0;
+       }
+ 
+@@ -444,7 +444,7 @@ static int write_config_lines(const char *conf_name)
+ 
+     if (within_line && (prev_flags & OFLG_GL) != (opt->flags & OFLG_GL))
+     {
+-      fprintf(fp, "\n");
++      fprintf(fp,"%s", "\n");
+       within_line = 0;
+     }
+ 
+@@ -456,10 +456,10 @@ static int write_config_lines(const char *conf_name)
+ 
+     /* handle booleans */
+     if ((opt->flags & OFLG_Boolean) && opt->value[0] == '0')
+-      fprintf(fp, "!");
++      fprintf(fp,"%s", "!");
+ 
+     assert(opt->name);
+-    fprintf(fp, opt->name);
++    fprintf(fp,"%s", opt->name);
+ 
+     if (! (opt->flags & OFLG_Boolean))
+       fprintf(fp, ":%s", opt->value ? opt->value : "");
+@@ -469,7 +469,7 @@ static int write_config_lines(const char *conf_name)
+   }
+ 
+   if (within_line)
+-    fprintf(fp, "\n");
++    fprintf(fp,"%s", "\n");
+ 
+   fclose(fp);
+ 
+diff --git a/win/gl/gl_opt.c b/win/gl/gl_opt.c
+index fac04d15..3ddca9f8 100644
+--- a/win/gl/gl_opt.c
++++ b/win/gl/gl_opt.c
+@@ -335,7 +335,7 @@ static void show_help_message(void)
+ static void show_version_message(void)
+ {
+ #ifdef VANILLA_GLHACK
+-  fprintf(stderr, "glHack version " GLHACK_VER_STR "\n");
++  fprintf(stderr,"%s", "glHack version " GLHACK_VER_STR "\n");
+ #else
+   fprintf(stderr, "Slash'EM version " VERSION_STRING
+           " (SDL/GL window port)\n");
+diff --git a/win/gl/gl_text.c b/win/gl/gl_text.c
+index 35a39b2d..e450ee00 100644
+--- a/win/gl/gl_text.c
++++ b/win/gl/gl_text.c
+@@ -110,12 +110,12 @@ static void show_aligns(unsigned short *aligns)
+ {
+   int x;
+   
+-  fprintf(stderr, "<");
++  fprintf(stderr,"%s", "<");
+ 
+   for (x=0; x < MAX_ALGN; x++)
+     fprintf(stderr, "%c", aligns[x] ? '|' : ' ');
+    
+-  fprintf(stderr, ">\n");
++  fprintf(stderr,"%s", ">\n");
+ }
+ #endif
+ 
+diff --git a/win/gtk/cc-gtk.c b/win/gtk/cc-gtk.c
+index aaac9cc6..acff3434 100644
+--- a/win/gtk/cc-gtk.c
++++ b/win/gtk/cc-gtk.c
+@@ -36,7 +36,7 @@ int verbose = 0;
+ static void
+ usage()
+ {
+-    fprintf(stderr, "Usage: cc-gtk [-v] [-c|-l] cc [cc options] ...\n");
++    fprintf(stderr,"%s", "Usage: cc-gtk [-v] [-c|-l] cc [cc options] ...\n");
+     exit(1);
+ }
+ 
+@@ -315,7 +315,7 @@ char **argv;
+     nargc = argc - n + pcargc;
+     nargv = (char **)malloc((nargc + 1) * sizeof(char *));
+     if (!nargv) {
+-	fprintf(stderr, "cc-gtk: Not enough memory\n");
++	fprintf(stderr,"%s", "cc-gtk: Not enough memory\n");
+ 	exit(1);
+     }
+     if (mode == M_COMPILE) {
+diff --git a/win/gtk/gtk.c b/win/gtk/gtk.c
+index edc06e94..b8d31c6e 100644
+--- a/win/gtk/gtk.c
++++ b/win/gtk/gtk.c
+@@ -569,13 +569,13 @@ session_window_dump(FILE *fp, int i, const char *tag)
+ {
+     fprintf(fp, "%s(%s): flags:", tag, session_window_info[i].name);
+     if (session_window_info[i].flags & NH_SESSION_RESIZABLE)
+-	fprintf(fp, " resizable");
++	fprintf(fp,"%s", " resizable");
+     if (session_window_info[i].flags & NH_SESSION_USER_POS)
+-	fprintf(fp, " user-pos");
++	fprintf(fp,"%s", " user-pos");
+     if (session_window_info[i].flags & NH_SESSION_USER_SIZE)
+-	fprintf(fp, " user-size");
++	fprintf(fp,"%s", " user-size");
+     if (session_window_info[i].flags & NH_SESSION_PLACED)
+-	fprintf(fp, " placed");
++	fprintf(fp,"%s", " placed");
+     fputc('\n', fp);
+     fprintf(fp, "bounding is %d x %d @ (%d, %d)\n",
+       session_window_info[i].bounding.width,
+@@ -598,13 +598,13 @@ session_window_configure_event(GtkWidget *widget, GdkEventConfigure *event,
+     session_window_dump(stderr, i, "configure start");
+     fprintf(stderr, "event is %d x %d @ (%d, %d)\n",
+       event->width, event->height, event->x, event->y);
+-    fprintf(stderr, "widget state is:");
++    fprintf(stderr,"%s", "widget state is:");
+     if (GTK_WIDGET_MAPPED(widget))
+-	fprintf(stderr, " mapped");
++	fprintf(stderr,"%s", " mapped");
+     if (GTK_WIDGET_REALIZED(widget))
+-	fprintf(stderr, " realized");
++	fprintf(stderr,"%s", " realized");
+     if (GTK_WIDGET_VISIBLE(widget))
+-	fprintf(stderr, " visible");
++	fprintf(stderr,"%s", " visible");
+     fputc('\n', stderr);
+ #endif
+     if (session_window_info[i].flags & NH_SESSION_PLACED) {
+@@ -1168,8 +1168,8 @@ focus_dump(void)
+ {
+     struct focus_hierarchy *fh;
+     GSList *list;
+-    fprintf(stderr,"Focus hierarchy\n");
+-    fprintf(stderr,"Master\t\tHandler\t\tSlaves\n");
++    fprintf(stderr,"%s","Focus hierarchy\n");
++    fprintf(stderr,"%s","Master\t\tHandler\t\tSlaves\n");
+     for(fh = focus_top; fh; fh = fh->next) {
+ 	fprintf(stderr,"%p\t%p\t",fh->master,fh->handler);
+ 	if (fh->slaves)
+@@ -2132,7 +2132,7 @@ GTK_init_nhwindows(char ***capvp)
+   
+     for(i = 0; i < N_NH_COLORS; i++)
+ 	if (!gdk_colormap_alloc_color(cmap, &nh_color[i], FALSE, TRUE))
+-	    fprintf(stderr, "cannot allocate color\n");
++	    fprintf(stderr,"%s", "cannot allocate color\n");
+ 
+     main_vbox = nh_gtk_new_and_add(gtk_vbox_new(FALSE, 0), main_window, "");
+ 
+@@ -2272,8 +2272,8 @@ GTK_exit_nhwindows(const char *str)
+ 	unsigned int w, h, bw, dp;
+ 	XWindowAttributes wa;
+ 	char *type;
+-	fprintf(stderr, "X Drawables not freed:\n");
+-	fprintf(stderr, "XID       Type    Width   Height\n");
++	fprintf(stderr,"%s", "X Drawables not freed:\n");
++	fprintf(stderr,"%s", "XID       Type    Width   Height\n");
+ 	XSetErrorHandler(GTK_X11_error_handler);
+ 	for(i = 0; i < dpy->resource_id; i++) {
+ 	    d = (Drawable)(dpy->resource_base + (i << dpy->resource_shift));
+diff --git a/win/gtk/gtkstatus.c b/win/gtk/gtkstatus.c
+index 7678cc7b..8793373b 100644
+--- a/win/gtk/gtkstatus.c
++++ b/win/gtk/gtkstatus.c
+@@ -133,7 +133,7 @@ static gint nh_light_expose(GtkWidget *widget, GdkEventExpose *expose)
+ 	gc = gdk_gc_new(widget->window);
+ 	cmap = gdk_drawable_get_colormap(widget->window);
+ 	if (!cmap)
+-	    fprintf(stderr, "nh_light_expose: No colormap!\n");
++	    fprintf(stderr,"%s", "nh_light_expose: No colormap!\n");
+ 	color.red = bg = widget->style->bg[GTK_STATE_NORMAL].red;
+ 	color.red += (65535L - bg) * light->contrast / NH_LIGHT_MAX_CONTRAST;
+ 	color.green = bg = widget->style->bg[GTK_STATE_NORMAL].green;
+diff --git a/win/gtk/xshmmap.c b/win/gtk/xshmmap.c
+index 587cc4c8..06723e5b 100644
+--- a/win/gtk/xshmmap.c
++++ b/win/gtk/xshmmap.c
+@@ -282,7 +282,7 @@ expose_event(GtkWidget *widget, GdkEventExpose *event)
+ 	      GDK_RGB_DITHER_NORMAL, 0, 0);
+ 	gdk_gc_set_clip_region(gc, NULL);
+ #ifdef DEBUG
+-	fprintf(stderr, "backing pixmap updated ... ");
++	fprintf(stderr,"%s", "backing pixmap updated ... ");
+ #endif
+     }
+     /* Now update the screen from the backing store */
+@@ -309,7 +309,7 @@ expose_event(GtkWidget *widget, GdkEventExpose *event)
+     xshm.areax = x;
+     xshm.areay = y;
+ #ifdef DEBUG
+-    fprintf(stderr, "screen updated\n");
++    fprintf(stderr,"%s", "screen updated\n");
+ #endif
+     /* And clean up */
+     if (xshm.dirty) {
+@@ -331,9 +331,9 @@ scroll_event(GtkAdjustment *adj, gpointer data)
+     if (!xshm.is_pending) {
+ #ifdef DEBUG
+ 	if (adj == xshm.hadj)
+-	    fprintf(stderr, "Horizontal scroll event\n");
++	    fprintf(stderr,"%s", "Horizontal scroll event\n");
+ 	else
+-	    fprintf(stderr, "Vertical scroll event\n");
++	    fprintf(stderr,"%s", "Vertical scroll event\n");
+ #endif
+ 	view.x = view.y = 0;
+ 	view.width = xshm.hadj->page_size;
+@@ -342,7 +342,7 @@ scroll_event(GtkAdjustment *adj, gpointer data)
+     }
+ #ifdef DEBUG
+     else
+-	fprintf(stderr, "Clipping scroll event\n");
++	fprintf(stderr,"%s", "Clipping scroll event\n");
+ #endif
+ }
+ 
+@@ -402,7 +402,7 @@ xshm_map_size(int mode, int width, int height)
+     }
+     if (mode == XSHM_MAP_PIXBUF) {
+ #ifdef DEBUG
+-	fprintf(stderr, "Map: Switching to pixbuf mode\n");
++	fprintf(stderr,"%s", "Map: Switching to pixbuf mode\n");
+ #endif
+ 	/* We don't really want an alpha channel (it doesn't have
+ 	 * any meaning) but GDK doesn't support alpha -> non-alpha.
+@@ -419,7 +419,7 @@ xshm_map_size(int mode, int width, int height)
+ 	xshm.dirty = gdk_region_rectangle(&rect);
+     } else if (mode == XSHM_MAP_IMAGE) {
+ #ifdef DEBUG
+-	fprintf(stderr, "Map: Switching to image mode\n");
++	fprintf(stderr,"%s", "Map: Switching to image mode\n");
+ #endif
+ 	visual = gdk_drawable_get_visual(xshm.area->window);
+ 	xshm_map_image = gdk_image_new(GDK_IMAGE_SHARED, visual, width, height);
+@@ -440,7 +440,7 @@ xshm_map_size(int mode, int width, int height)
+ 	    xshm.dirty = NULL;
+     } else {
+ #ifdef DEBUG
+-	fprintf(stderr, "Map: Switching to pixmap mode\n");
++	fprintf(stderr,"%s", "Map: Switching to pixmap mode\n");
+ #endif
+ 	xshm.pixmap = gdk_pixmap_new(xshm.area->window, width, height, -1);
+ 	xshm.gc = gdk_gc_new(xshm.pixmap);
+@@ -473,28 +473,28 @@ xshm_map_size(int mode, int width, int height)
+     xshm.map_width = width;
+     xshm.map_height = height;
+ #ifdef DEBUG
+-    fprintf(stderr, "New configuration:\n");
++    fprintf(stderr,"%s", "New configuration:\n");
+     if (xshm_map_image)
+ 	fprintf(stderr, "\txshm_map_image: %d x %d\n",
+ 	  xshm_map_image->width, xshm_map_image->height);
+     else
+-	fprintf(stderr, "\txshm_map_image: none\n");
++	fprintf(stderr,"%s", "\txshm_map_image: none\n");
+     if (xshm_map_pixmap) {
+ 	gdk_drawable_get_size(xshm_map_pixmap, &i, &j);
+ 	fprintf(stderr, "\txshm_map_pixmap: %d x %d\n", i, j);
+     } else
+-	fprintf(stderr, "\txshm_map_pixmap: none\n");
++	fprintf(stderr,"%s", "\txshm_map_pixmap: none\n");
+     if (xshm_map_pixbuf)
+ 	fprintf(stderr, "\txshm_map_pixbuf: %d x %d\n",
+ 	  gdk_pixbuf_get_width(xshm_map_pixbuf),
+ 	  gdk_pixbuf_get_height(xshm_map_pixbuf));
+     else
+-	fprintf(stderr, "\txshm_map_pixbuf: none\n");
++	fprintf(stderr,"%s", "\txshm_map_pixbuf: none\n");
+     if (xshm.pixmap) {
+ 	gdk_drawable_get_size(xshm.pixmap, &i, &j);
+ 	fprintf(stderr, "\tpixmap: %d x %d\n",i, j);
+     } else
+-	fprintf(stderr, "\tpixmap: none\n");
++	fprintf(stderr,"%s", "\tpixmap: none\n");
+     fprintf(stderr, "\tarea: %d x %d\n",
+       (int)xshm.hadj->page_size, (int)xshm.vadj->page_size);
+ #endif
+@@ -591,7 +591,7 @@ void
+ xshm_map_destroy()
+ {
+ #ifdef DEBUG
+-    fprintf(stderr, "Map: Destroy\n");
++    fprintf(stderr,"%s", "Map: Destroy\n");
+ #endif
+     if (xshm.pixmap) {
+ 	gdk_pixmap_unref(xshm.pixmap);
+diff --git a/win/proxy/glyphmap.c b/win/proxy/glyphmap.c
+index 68af9772..91741597 100644
+--- a/win/proxy/glyphmap.c
++++ b/win/proxy/glyphmap.c
+@@ -613,11 +613,11 @@ struct proxycb_get_glyph_mapping_res *mapping;
+     struct proxycb_get_glyph_mapping_res_mapping *m;
+     struct proxycb_get_glyph_mapping_res_submapping *s;
+     struct proxycb_get_glyph_mapping_res_symdef *g;
+-    fprintf(fp, "Glyph mapping:\n");
++    fprintf(fp,"%s", "Glyph mapping:\n");
+     fprintf(fp, "No. glyphs: %d\n", mapping->no_glyph);
+     fprintf(fp, "Transparent RGBsym: 0x%lX\n", mapping->transparent);
+     fprintf(fp, "No. mappings: %d\n", mapping->n_mappings);
+-    fprintf(fp, "Mappings:\n");
++    fprintf(fp,"%s", "Mappings:\n");
+     for(i = 0; i < mapping->n_mappings; i++) {
+ 	m = mapping->mappings + i;
+ 	fprintf(fp, "%-3d Flags: %s\n", i, m->flags);
+@@ -626,13 +626,13 @@ struct proxycb_get_glyph_mapping_res *mapping;
+ 	fprintf(fp, "    RGBsym: 0x%lX\n", m->symdef.rgbsym);
+ 	fprintf(fp, "    Description: %s\n", m->symdef.description);
+ 	fprintf(fp, "    No. sub mappings: %d\n", m->n_submappings);
+-	fprintf(fp, "    Sub mappings:\n");
++	fprintf(fp,"%s", "    Sub mappings:\n");
+ 	for(j = 0; j < m->n_submappings; j++) {
+ 	    s = m->submappings + j;
+ 	    fprintf(fp, "    %-3d RGBsym: 0x%lX\n", j, s->symdef.rgbsym);
+ 	    fprintf(fp, "        Description: %s\n", s->symdef.description);
+ 	    fprintf(fp, "        No. glyphs: %d\n", s->n_glyphs);
+-	    fprintf(fp, "        Glyphs:\n");
++	    fprintf(fp,"%s", "        Glyphs:\n");
+ 	    for(k = 0; k < s->n_glyphs; k++) {
+ 		g = s->glyphs + k;
+ 		fprintf(fp, "        %-3d RGBsym: 0x%lX\n", k, g->rgbsym);
+diff --git a/win/proxy/nhext.c b/win/proxy/nhext.c
+index 46b40008..c7764169 100644
+--- a/win/proxy/nhext.c
++++ b/win/proxy/nhext.c
+@@ -540,7 +540,7 @@ nhext_set_async_masks(int n,unsigned long *masks)
+ 	if (nhext_extend_flags(1 + (n - 1) * 32 + i + 1))
+ 	    impossible("Memory allocation failure in nhext_set_async_masks");
+ #ifdef DEBUG
+-	fprintf(stderr, "nhext: Async IDs:");
++	fprintf(stderr,"%s", "nhext: Async IDs:");
+ #endif
+ 	for(i = 1; i < nhext_n_flags; i++) {
+ 	    if (masks[(i - 1) / 32] & 1L << ((i - 1) & 31))
+@@ -551,12 +551,12 @@ nhext_set_async_masks(int n,unsigned long *masks)
+ #endif
+ 	}
+ #ifdef DEBUG
+-	fprintf(stderr, "\n");
++	fprintf(stderr,"%s", "\n");
+ #endif
+     }
+ #ifdef DEBUG
+     else
+-	fprintf(stderr, "No async IDs\n");
++	fprintf(stderr,"%s", "No async IDs\n");
+ #endif
+ }
+ 
+diff --git a/win/proxy/test_com.c b/win/proxy/test_com.c
+index 46018a3f..109c7040 100644
+--- a/win/proxy/test_com.c
++++ b/win/proxy/test_com.c
+@@ -340,7 +340,7 @@ static int child__wait(options)
+ 		fprintf(stderr, "Child died due to signal %d\n",
+ 		  WTERMSIG(status));
+ 	    else
+-		fprintf(stderr, "Child died for unknown reason\n");
++		fprintf(stderr,"%s", "Child died for unknown reason\n");
+ 	}
+ 	else if (WEXITSTATUS(status))
+ 	    fprintf(stderr, "Child exited with code %d\n", WEXITSTATUS(status));
+diff --git a/win/proxy/test_ext.c b/win/proxy/test_ext.c
+index fa4b66c2..8656a252 100644
+--- a/win/proxy/test_ext.c
++++ b/win/proxy/test_ext.c
+@@ -146,16 +146,16 @@ void server(void)
+     rd = nhext_io_open(parent_read, get_parent_readh(), NHEXT_IO_RDONLY);
+     wr = nhext_io_open(parent_write, get_parent_writeh(), NHEXT_IO_WRONLY);
+     if (!rd || !wr) {
+-	fprintf(stderr, "C Failed to open I/O streams.\n");
++	fprintf(stderr,"%s", "C Failed to open I/O streams.\n");
+ 	exit(1);
+     }
+     (void)nhext_set_errhandler(nhext_error_handler);
+     if (nhext_init(rd, wr, callbacks) < 0) {
+-	fprintf(stderr, "C Failed to initialize NhExt.\n");
++	fprintf(stderr,"%s", "C Failed to initialize NhExt.\n");
+ 	exit(1);
+     }
+     if (nhext_set_protocol(1)) {
+-	fprintf(stderr, "C Failed to select protocol 1.\n");
++	fprintf(stderr,"%s", "C Failed to select protocol 1.\n");
+ 	exit(1);
+     }
+     do {
+@@ -176,24 +176,24 @@ void run_tests(void)
+     winid w;
+     int total;
+     struct test5_request req;
+-    fprintf(stderr, "Test 1...\n");
++    fprintf(stderr,"%s", "Test 1...\n");
+     retval = nhext_rpc(EXT_FID_TEST1, 0, 0);
+     fprintf(stderr, "Test 1 %s.\n", retval ? "passed" : "failed");
+-    fprintf(stderr, "Test 2...\n");
++    fprintf(stderr,"%s", "Test 2...\n");
+     retval = nhext_rpc(EXT_FID_TEST2, 1, EXT_INT(0), 0);
+     fprintf(stderr, "Test 2 %s.\n", retval ? "passed" : "failed");
+-    fprintf(stderr, "Test 3...\n");
++    fprintf(stderr,"%s", "Test 3...\n");
+     retval = nhext_rpc(EXT_FID_TEST3, 1, EXT_INT(67), 1, EXT_INT_P(i));
+     if (i != 68)
+ 	retval = FALSE;
+     fprintf(stderr, "Test 3 %s.\n", retval ? "passed" : "failed");
+-    fprintf(stderr, "Test 4...\n");
++    fprintf(stderr,"%s", "Test 4...\n");
+     retval = nhext_rpc(EXT_FID_TEST4, 1, EXT_STRING("Hello"),
+       1, EXT_STRING_P(s));
+     if (strcmp(s, "<Hello>"))
+ 	retval = FALSE;
+     fprintf(stderr, "Test 4 %s.\n", retval ? "passed" : "failed");
+-    fprintf(stderr, "Test 5...\n");
++    fprintf(stderr,"%s", "Test 5...\n");
+     req.n = 5;
+     req.array = (long *)alloc(req.n * sizeof(long));
+     for(i = 0; i < 5; i++)
+@@ -206,7 +206,7 @@ void run_tests(void)
+ 	retval = FALSE;
+     free(req.array);
+     fprintf(stderr, "Test 5 %s.\n", retval ? "passed" : "failed");
+-    fprintf(stderr, "Test 6...\n");
++    fprintf(stderr,"%s", "Test 6...\n");
+     retval = nhext_rpc(EXT_FID_TEST6,
+       5, EXT_INT(37), EXT_INT(2), EXT_CHAR('l'), EXT_STRING("Shalom"),
+          EXT_BOOLEAN(TRUE),
+@@ -216,7 +216,7 @@ void run_tests(void)
+ 	retval = FALSE;
+     free(s);
+     fprintf(stderr, "Test 6 %s.\n", retval ? "passed" : "failed");
+-    fprintf(stderr, "Test 7...\n");
++    fprintf(stderr,"%s", "Test 7...\n");
+     retval = nhext_rpc(EXT_FID_TEST7, 1, EXT_INT(11), 1, EXT_INT_P(i));
+     if (i != 58)
+ 	retval = FALSE;
+@@ -234,22 +234,22 @@ char **argv;
+ 	exit(0);
+     }
+     if (!child_start(argv[0])) {
+-	fprintf(stderr, "Failed to start child.\n");
++	fprintf(stderr,"%s", "Failed to start child.\n");
+ 	exit(1);
+     }
+     rd = nhext_io_open(debug_read, get_child_readh(), NHEXT_IO_RDONLY);
+     wr = nhext_io_open(debug_write, get_child_writeh(), NHEXT_IO_WRONLY);
+     if (!rd || !wr) {
+-	fprintf(stderr, "Failed to open I/O streams.\n");
++	fprintf(stderr,"%s", "Failed to open I/O streams.\n");
+ 	exit(1);
+     }
+     (void)nhext_set_errhandler(nhext_error_handler);
+     if (nhext_init(rd, wr, callbacks) < 0) {
+-	fprintf(stderr, "Failed to initialize NhExt.\n");
++	fprintf(stderr,"%s", "Failed to initialize NhExt.\n");
+ 	exit(1);
+     }
+     if (nhext_set_protocol(1)) {
+-	fprintf(stderr, "Failed to select protocol 1.\n");
++	fprintf(stderr,"%s", "Failed to select protocol 1.\n");
+ 	exit(1);
+     }
+     run_tests();
+@@ -258,7 +258,7 @@ char **argv;
+     nhext_io_close(rd);
+     nhext_io_close(wr);
+     if (!child_wait()) {
+-	fprintf(stderr, "Error while waiting for child.\n");
++	fprintf(stderr,"%s", "Error while waiting for child.\n");
+ 	exit(1);
+     }
+     exit(0);
+diff --git a/win/proxy/test_io.c b/win/proxy/test_io.c
+index e318fc3d..e269bc38 100644
+--- a/win/proxy/test_io.c
++++ b/win/proxy/test_io.c
+@@ -155,12 +155,12 @@ child(NhExtIO *rio, NhExtIO *wio)
+ 	    }
+ 	}
+ 	if (crc1 != crc) {
+-	    fprintf(stderr, "child: nhext_io_read(random): Bad CRC\n");
++	    fprintf(stderr,"%s", "child: nhext_io_read(random): Bad CRC\n");
+ 	    goto done;
+ 	}
+     }
+     exitcode = 0;
+-    fprintf(stderr, "No errors found on child side\n");
++    fprintf(stderr,"%s", "No errors found on child side\n");
+ done:
+     return exitcode;
+ }
+@@ -234,7 +234,7 @@ parent(NhExtIO *rio, NhExtIO *wio)
+ 	}
+     }
+     exitcode = 0;
+-    fprintf(stderr, "No errors found on parent side\n");
++    fprintf(stderr,"%s", "No errors found on parent side\n");
+ done:
+     return exitcode;
+ }
+@@ -393,7 +393,7 @@ char **argv;
+ 	  NHEXT_IO_RDONLY | NHEXT_IO_NOAUTOFILL);
+ 	wr = nhext_io_open(parent_write, get_parent_writeh(), NHEXT_IO_WRONLY);
+ 	if (!rd || !wr) {
+-	    fprintf(stderr, "C Failed to open I/O streams.\n");
++	    fprintf(stderr,"%s", "C Failed to open I/O streams.\n");
+ 	    exit(1);
+ 	}
+ 	retval = child(rd, wr);
+@@ -402,13 +402,13 @@ char **argv;
+ 	exit(retval);
+     }
+     if (!child_start(argv[0])) {
+-	fprintf(stderr, "Failed to start child.\n");
++	fprintf(stderr,"%s", "Failed to start child.\n");
+ 	exit(1);
+     }
+     rd = nhext_io_open(child_read, get_child_readh(), NHEXT_IO_RDONLY);
+     wr = nhext_io_open(child_write, get_child_writeh(), NHEXT_IO_WRONLY);
+     if (!rd || !wr) {
+-	fprintf(stderr, "Failed to open I/O streams.\n");
++	fprintf(stderr,"%s", "Failed to open I/O streams.\n");
+ 	exit(1);
+     }
+     retval = parent(rd, wr);
+diff --git a/win/proxy/test_xdr.c b/win/proxy/test_xdr.c
+index c8939d41..4fcb1061 100644
+--- a/win/proxy/test_xdr.c
++++ b/win/proxy/test_xdr.c
+@@ -65,7 +65,7 @@ enum nhext_xdr_op op;
+     for(i = 0; i < 8; i++) {
+ 	l = i;
+ 	if (!nhext_xdr_long(xdrs, &l)) {
+-	    fprintf(stderr, "nhext_xdr_long failed\n");
++	    fprintf(stderr,"%s", "nhext_xdr_long failed\n");
+ 	    return FALSE;
+ 	}
+ 	if (op == NHEXT_XDR_DECODE)
+@@ -87,7 +87,7 @@ enum nhext_xdr_op op;
+ 	vector[i] = i;
+     if (!nhext_xdr_vector(xdrs, (char *)vector, SIZE(vector), sizeof(short),
+       (nhext_xdrproc_t)nhext_xdr_short)) {
+-	fprintf(stderr, "nhext_xdr_vector failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_vector failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE) {
+@@ -112,7 +112,7 @@ enum nhext_xdr_op op;
+     {
+ 	array = malloc(5);
+ 	if (!array) {
+-	    fprintf(stderr, "malloc failed\n");
++	    fprintf(stderr,"%s", "malloc failed\n");
+ 	    return FALSE;
+ 	}
+ 	array[0] = 'h'; array[1] = 'e'; array[2] = array[3] = 'l'; array[4] = 'o';
+@@ -122,7 +122,7 @@ enum nhext_xdr_op op;
+ 	array = NULL;
+     if (!nhext_xdr_array(xdrs, (char **)&array, &length, (unsigned int)-1,
+       sizeof(unsigned char), (nhext_xdrproc_t)nhext_xdr_u_char)) {
+-	fprintf(stderr, "nhext_xdr_array failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_array failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE) {
+@@ -137,7 +137,7 @@ enum nhext_xdr_op op;
+     length = 0;
+     if (!nhext_xdr_array(xdrs, (char **)&array, &length, (unsigned int)-1,
+       sizeof(unsigned char), (nhext_xdrproc_t)nhext_xdr_u_char)) {
+-	fprintf(stderr, "nhext_xdr_array failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_array failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE) {
+@@ -148,7 +148,7 @@ enum nhext_xdr_op op;
+ 	putchar('\n');
+     }
+     if (array) {
+-	fprintf(stderr, "nhext_xdr_array allocated on empty array\n");
++	fprintf(stderr,"%s", "nhext_xdr_array allocated on empty array\n");
+ 	return FALSE;
+     }
+     return TRUE;
+@@ -166,7 +166,7 @@ enum nhext_xdr_op op;
+     else
+ 	string = NULL;
+     if (!nhext_xdr_string(xdrs, &string, (unsigned int)-1)) {
+-	fprintf(stderr, "nhext_xdr_string failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_string failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE)
+@@ -177,7 +177,7 @@ enum nhext_xdr_op op;
+     else
+ 	string = NULL;
+     if (!nhext_xdr_string(xdrs, &string, (unsigned int)-1)) {
+-	fprintf(stderr, "nhext_xdr_string failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_string failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE)
+@@ -188,7 +188,7 @@ enum nhext_xdr_op op;
+     else
+ 	string = NULL;
+     if (!nhext_xdr_string(xdrs, &string, (unsigned int)-1)) {
+-	fprintf(stderr, "nhext_xdr_string failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_string failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE)
+@@ -204,14 +204,14 @@ enum nhext_xdr_op op;
+ {
+     nhext_xdr_bool_t bool = TRUE;
+     if (!nhext_xdr_bool(xdrs, &bool)) {
+-	fprintf(stderr, "nhext_xdr_bool failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_bool failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE)
+ 	printf("%s ", bool == TRUE ? "TRUE" : bool == FALSE ? "FALSE" : "???");
+     bool = FALSE;
+     if (!nhext_xdr_bool(xdrs, &bool)) {
+-	fprintf(stderr, "nhext_xdr_bool failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_bool failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE)
+@@ -227,7 +227,7 @@ enum nhext_xdr_op op;
+     enum nhext_xdr_op e;
+     e = NHEXT_XDR_DECODE;
+     if (!nhext_xdr_enum(xdrs, (int *)&e)) {
+-	fprintf(stderr, "nhext_xdr_enum failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_enum failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE)
+@@ -240,7 +240,7 @@ enum nhext_xdr_op op;
+ 	}
+     e = NHEXT_XDR_ENCODE;
+     if (!nhext_xdr_enum(xdrs, (int *)&e)) {
+-	fprintf(stderr, "nhext_xdr_enum failed\n");
++	fprintf(stderr,"%s", "nhext_xdr_enum failed\n");
+ 	return FALSE;
+     }
+     if (op == NHEXT_XDR_DECODE)
+diff --git a/win/proxy/winproxy.c b/win/proxy/winproxy.c
+index 6a2af964..18582c45 100644
+--- a/win/proxy/winproxy.c
++++ b/win/proxy/winproxy.c
+@@ -1106,7 +1106,7 @@ proxy_auth_open()
+ 	    argv = (char **) malloc((argc + 1) * sizeof(char *));
+ 	    if (!argv)
+ 	    {
+-		fprintf(stderr, "Resource failure\n");
++		fprintf(stderr,"%s", "Resource failure\n");
+ 		exit(1);
+ 	    }
+ 	    argv[0] = authentication.prog;
+@@ -1551,6 +1551,6 @@ win_proxy_iteration()
+     int i;
+     i = nhext_svc(proxy_callbacks);
+     if (!i)
+-	fprintf(stderr, "proxy: Ignoring packet with zero ID\n");
++	fprintf(stderr,"%s", "proxy: Ignoring packet with zero ID\n");
+     return i;
+ }
+diff --git a/win/share/bigtile.c b/win/share/bigtile.c
+index 89821aa8..7d4a184e 100644
+--- a/win/share/bigtile.c
++++ b/win/share/bigtile.c
+@@ -140,7 +140,7 @@ char *argv[];
+ 		if (!fopen_text_file(tilefiles[filenum], RDTMODE))
+ 			exit(EXIT_FAILURE);
+ 		if (tile_x * 3 / 2 > MAX_TILE_X || tile_y * 2 > MAX_TILE_Y) {
+-			fprintf(stderr, "tile size too large\n");
++			fprintf(stderr,"%s", "tile size too large\n");
+ 			exit(EXIT_FAILURE);
+ 		}
+ 		if (!fopen_text_file(bigfiles[filenum], WRTMODE))
+diff --git a/win/share/gifread.c b/win/share/gifread.c
+index e49a26df..1e10809c 100644
+--- a/win/share/gifread.c
++++ b/win/share/gifread.c
+@@ -81,14 +81,14 @@ unsigned char	*buf;
+ 	unsigned char	count;
+ 
+ 	if (!ReadOK(fd,&count,1)) {
+-		fprintf(stderr, "error in getting DataBlock size\n");
++		fprintf(stderr,"%s", "error in getting DataBlock size\n");
+ 		return -1;
+ 	}
+ 
+ 	ZeroDataBlock = (count == 0);
+ 
+ 	if ((count != 0) && (!ReadOK(fd, buf, count))) {
+-		fprintf(stderr, "error in reading DataBlock\n");
++		fprintf(stderr,"%s", "error in reading DataBlock\n");
+ 		return -1;
+ 	}
+ 
+@@ -199,12 +199,12 @@ FILE	*fd;
+ 	char		version[4];
+ 
+ 	if (!ReadOK(fd,buf,6)) {
+-		fprintf(stderr, "error reading magic number\n");
++		fprintf(stderr,"%s", "error reading magic number\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+ 	if (strncmp((void *)buf,"GIF",3) != 0) {
+-		fprintf(stderr, "not a GIF file\n");
++		fprintf(stderr,"%s", "not a GIF file\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+@@ -217,7 +217,7 @@ FILE	*fd;
+ 	}
+ 
+ 	if (!ReadOK(fd,buf,7)) {
+-		fprintf(stderr, "failed to read screen descriptor\n");
++		fprintf(stderr,"%s", "failed to read screen descriptor\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+@@ -230,18 +230,18 @@ FILE	*fd;
+ 
+ 	if (BitSet(buf[4], LOCALCOLORMAP)) {	/* Global Colormap */
+ 		if (!ReadColorMap(fd, GifScreen.Colors)) {
+-			fprintf(stderr, "error reading global colormap\n");
++			fprintf(stderr,"%s", "error reading global colormap\n");
+ 			exit(EXIT_FAILURE);
+ 		}
+ 	}
+ 
+ 	if (GifScreen.AspectRatio != 0 && GifScreen.AspectRatio != 49) {
+-		fprintf(stderr, "warning - non-square pixels\n");
++		fprintf(stderr,"%s", "warning - non-square pixels\n");
+ 	}
+ 
+ 	for (;;) {
+ 		if (!ReadOK(fd,&c,1)) {
+-			fprintf(stderr, "EOF / read error on image data\n");
++			fprintf(stderr,"%s", "EOF / read error on image data\n");
+ 			exit(EXIT_FAILURE);
+ 		}
+ 
+@@ -266,7 +266,7 @@ FILE	*fd;
+ 		}
+ 
+ 		if (!ReadOK(fd,buf,9)) {
+-		    fprintf(stderr, "couldn't read left/top/width/height\n");
++		    fprintf(stderr,"%s", "couldn't read left/top/width/height\n");
+ 		    exit(EXIT_FAILURE);
+ 		}
+ 
+@@ -274,17 +274,17 @@ FILE	*fd;
+ 			/* replace global color map with local */
+ 			GifScreen.Colors = 1<<((buf[8]&0x07)+1);
+ 			if (!ReadColorMap(fd, GifScreen.Colors)) {
+-			    fprintf(stderr, "error reading local colormap\n");
++			    fprintf(stderr,"%s", "error reading local colormap\n");
+ 			    exit(EXIT_FAILURE);
+ 			}
+ 
+ 		}
+ 		if (GifScreen.Width != LM_to_uint(buf[4],buf[5])) {
+-			fprintf(stderr, "warning: widths don't match\n");
++			fprintf(stderr,"%s", "warning: widths don't match\n");
+ 			GifScreen.Width = LM_to_uint(buf[4],buf[5]);
+ 		}
+ 		if (GifScreen.Height != LM_to_uint(buf[6],buf[7])) {
+-			fprintf(stderr, "warning: heights don't match\n");
++			fprintf(stderr,"%s", "warning: heights don't match\n");
+ 			GifScreen.Height = LM_to_uint(buf[6],buf[7]);
+ 		}
+ 		GifScreen.Interlace = BitSet(buf[8], INTERLACE);
+@@ -313,7 +313,7 @@ int	flag;
+ 	if ((curbit+code_size) >= lastbit) {
+ 		if (done) {
+ 			if (curbit >= lastbit)
+-				fprintf(stderr, "ran off the end of my bits\n");
++				fprintf(stderr,"%s", "ran off the end of my bits\n");
+ 			return -1;
+ 		}
+ 		buf[0] = buf[last_byte-2];
+@@ -425,7 +425,7 @@ int	input_code_size;
+ 		while (code >= clear_code) {
+ 			*sp++ = table[1][code];
+ 			if (code == table[0][code]) {
+-			    fprintf(stderr, "circular table entry BIG ERROR\n");
++			    fprintf(stderr,"%s", "circular table entry BIG ERROR\n");
+ 			    exit(EXIT_FAILURE);
+ 			}
+ 			code = table[0][code];
+@@ -535,7 +535,7 @@ const char *type;
+ 	int i;
+ 
+ 	if (strcmp(type, RDBMODE)) {
+-		fprintf(stderr, "using reading routine for non-reading?\n");
++		fprintf(stderr,"%s", "using reading routine for non-reading?\n");
+ 		return FALSE;
+ 	}
+ 	gif_file = fopen(filename, type);
+@@ -577,12 +577,12 @@ const char *type;
+ 	**  Initialize the Compression routines
+ 	*/
+ 	if (!ReadOK(gif_file,&input_code_size,1)) {
+-		fprintf(stderr, "EOF / read error on image data\n");
++		fprintf(stderr,"%s", "EOF / read error on image data\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+ 	if (LWZReadByte(gif_file, TRUE, (int)input_code_size) < 0) {
+-		fprintf(stderr, "error reading image\n");
++		fprintf(stderr,"%s", "error reading image\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+@@ -698,12 +698,12 @@ char *argv[];
+ 		argc = SIZE(std_args);
+ 		argv = std_args;
+ 	} else if (argc != 3) {
+-		fprintf(stderr, "usage: gif2txt giffile txtfile\n");
++		fprintf(stderr,"%s", "usage: gif2txt giffile txtfile\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ #else
+ 	if (argc != 4) {
+-		fprintf(stderr, "usage: igif2txt indexfile giffile txtfile\n");
++		fprintf(stderr,"%s", "usage: igif2txt indexfile giffile txtfile\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ #endif
+diff --git a/win/share/magtile.c b/win/share/magtile.c
+index 4788f301..ebfef949 100644
+--- a/win/share/magtile.c
++++ b/win/share/magtile.c
+@@ -104,7 +104,7 @@ char *argv[];
+ 		if (!fopen_text_file(tilefiles[filenum], RDTMODE))
+ 			exit(EXIT_FAILURE);
+ 		if (tile_x * 2 > MAX_TILE_X || tile_y * 2 > MAX_TILE_Y) {
+-			fprintf(stderr, "tile size too large\n");
++			fprintf(stderr,"%s", "tile size too large\n");
+ 			exit(EXIT_FAILURE);
+ 		}
+ 		if (!fopen_text_file(magfiles[filenum], WRTMODE))
+diff --git a/win/share/mapmerge.c b/win/share/mapmerge.c
+index 1fc62ec4..6bd3bdff 100644
+--- a/win/share/mapmerge.c
++++ b/win/share/mapmerge.c
+@@ -13,7 +13,7 @@ char **argv;
+     int i, j, tile_number = 0;
+     char buf[BUFSZ], buf2[BUFSZ];
+     if (argc < 2) {
+-	(void) fprintf(stderr, "usage: mapmerge outfile [infile] ...\n");
++	(void) fprintf(stderr,"%s", "usage: mapmerge outfile [infile] ...\n");
+ 	exit(EXIT_FAILURE);
+     }
+     fpo = fopen(argv[1], "w");
+diff --git a/win/share/ppmwrite.c b/win/share/ppmwrite.c
+index 11fe3257..8d4484e0 100644
+--- a/win/share/ppmwrite.c
++++ b/win/share/ppmwrite.c
+@@ -25,7 +25,7 @@ write_header()
+ {
+ 	if (PpmScreen.Width > 9999 || PpmScreen.Height > 9999) {
+ 		/* Just increase the number of digits written to solve */
+-		fprintf(stderr, "PPM dimensions too large\n");
++		fprintf(stderr,"%s", "PPM dimensions too large\n");
+ 		return FALSE;
+ 	}
+ 	(void) fprintf(ppm_file, "P6 %04d %04d 255\n",
+@@ -55,7 +55,7 @@ const char *type;
+ 	int i;
+ 
+ 	if (strcmp(type, WRBMODE)) {
+-		fprintf(stderr, "using writing routine for non-writing?\n");
++		fprintf(stderr,"%s", "using writing routine for non-writing?\n");
+ 		return FALSE;
+ 	}
+ 
+@@ -68,7 +68,7 @@ const char *type;
+ 	}
+ 
+ 	if (!colorsinmainmap) {
+-		fprintf(stderr, "no colormap set yet\n");
++		fprintf(stderr,"%s", "no colormap set yet\n");
+ 		return FALSE;
+ 	}
+ 
+diff --git a/win/share/tile2bmp.c b/win/share/tile2bmp.c
+index 83e7d5dc..fd585041 100644
+--- a/win/share/tile2bmp.c
++++ b/win/share/tile2bmp.c
+@@ -226,7 +226,7 @@ char *argv[];
+ 	}
+ 
+ 	if (tilecount<1) {
+-	    fprintf(stderr,"No tiles created! (check line end character sequence for your OS).\n");
++	    fprintf(stderr,"%s","No tiles created! (check line end character sequence for your OS).\n");
+ 	    fclose(fp);
+ 	    unlink(bmpname);
+ 		exit(EXIT_FAILURE);
+@@ -362,7 +362,7 @@ pixel (*pixels)[MAX_TILE_X];
+ 		break;
+ 	  }
+ 	  if (cur_color >= colorsinmap)
+-		fprintf(stderr, "color not in colormap!\n");
++		fprintf(stderr,"%s", "color not in colormap!\n");
+ 	  y = (maxbmp_y - 1) - (cur_y + yoffset);
+ #if BITCOUNT==4
+ 	  x = (cur_x / 2) + xoffset;
+diff --git a/win/share/tile2png.c b/win/share/tile2png.c
+index c11ff9ac..6de6e0ef 100644
+--- a/win/share/tile2png.c
++++ b/win/share/tile2png.c
+@@ -90,14 +90,14 @@ void save_png(const char *filename, int width, int height)
+ 
+   if (png_ptr == NULL)
+   {
+-    fprintf(stderr, "tile2png: PNG error (out of memory ?)\n");
++    fprintf(stderr,"%s", "tile2png: PNG error (out of memory ?)\n");
+     goto failed;
+   }
+ 
+   info_ptr = png_create_info_struct(png_ptr);
+   if (info_ptr == NULL)
+   {
+-    fprintf(stderr, "tile2png: PNG error (out of memory ?)\n");
++    fprintf(stderr,"%s", "tile2png: PNG error (out of memory ?)\n");
+     goto failed;
+   }
+ 
+@@ -106,7 +106,7 @@ void save_png(const char *filename, int width, int height)
+    */
+   if (setjmp(png_ptr->jmpbuf))
+   {
+-    fprintf(stderr, "tile2png: Unknown problem while writing PNG.\n");
++    fprintf(stderr,"%s", "tile2png: Unknown problem while writing PNG.\n");
+     goto failed;
+   }
+ 
+@@ -135,7 +135,7 @@ void save_png(const char *filename, int width, int height)
+   row_pointers = (png_bytep *) malloc(height * sizeof(png_bytep));
+   if (!row_pointers)
+   {
+-    fprintf(stderr, "tile2png: Out of memory.\n");
++    fprintf(stderr,"%s", "tile2png: Out of memory.\n");
+     goto failed;
+   }
+    
+@@ -251,7 +251,7 @@ static int convert_tiles(void)
+ 
+     if (ntiles >= MAX_TILE_NUM)
+     {
+-      fprintf(stderr, "tile2png: Too many tiles !!\n");
++      fprintf(stderr,"%s", "tile2png: Too many tiles !!\n");
+       exit(1);
+     }
+   }
+@@ -345,10 +345,10 @@ static void usage(void)
+ {
+   fprintf(stderr, "Usage: tile2png [-o out_file] [-t] [-f] [-a##] [-b######] "
+       "txt_file1 [txt_file2 ...]\n");
+-  fprintf(stderr, "Where: -t enables transparency\n");
+-  fprintf(stderr, "       -f is used for fonts\n");
+-  fprintf(stderr, "       -a gives the number of tiles across\n");
+-  fprintf(stderr, "       -b gives the background (transparent) color\n");
++  fprintf(stderr,"%s", "Where: -t enables transparency\n");
++  fprintf(stderr,"%s", "       -f is used for fonts\n");
++  fprintf(stderr,"%s", "       -a gives the number of tiles across\n");
++  fprintf(stderr,"%s", "       -b gives the background (transparent) color\n");
+ }
+ 
+ 
+@@ -377,7 +377,7 @@ int main(int argc, const char **argv)
+         outname = argv[++argn];
+       else 
+       {
+-        fprintf(stderr, "tile2png: -o option needs an argument\n");
++        fprintf(stderr,"%s", "tile2png: -o option needs an argument\n");
+         exit(EXIT_FAILURE);
+       }
+       argn++;
+@@ -392,12 +392,12 @@ int main(int argc, const char **argv)
+         num_across = atoi(argv[++argn]);
+       else 
+       {
+-        fprintf(stderr, "tile2png: -a option needs an argument\n");
++        fprintf(stderr,"%s", "tile2png: -a option needs an argument\n");
+         exit(EXIT_FAILURE);
+       }
+       if (num_across < 1)
+       {
+-        fprintf(stderr, "tile2png: bad value for -a option\n");
++        fprintf(stderr,"%s", "tile2png: bad value for -a option\n");
+         exit(EXIT_FAILURE);
+       }
+       argn++;
+@@ -431,7 +431,7 @@ int main(int argc, const char **argv)
+         val = argv[++argn];
+       else 
+       {
+-        fprintf(stderr, "tile2png: -b option needs an argument\n");
++        fprintf(stderr,"%s", "tile2png: -b option needs an argument\n");
+         exit(EXIT_FAILURE);
+       }
+ 
+diff --git a/win/share/tilemap.c b/win/share/tilemap.c
+index 8c01bb01..bc763089 100644
+--- a/win/share/tilemap.c
++++ b/win/share/tilemap.c
+@@ -640,7 +640,7 @@ FILE *ofp;
+ {
+ 	int i, j, k, span, start;
+ 
+-	fprintf(ofp, "\n\n");
++	fprintf(ofp,"%s", "\n\n");
+ 
+ 	j = 0;	/* unnecessary */
+ 	span = -1;
+@@ -670,18 +670,18 @@ FILE *ofp;
+ 		    || substitutes[i].first_glyph != substitutes[j].first_glyph
+ 		    || substitutes[i].last_glyph != substitutes[j].last_glyph) {
+ 		if (i != 0) {	/* finish previous span */
+-		    fprintf(ofp, "\t} else {\n");
++		    fprintf(ofp,"%s", "\t} else {\n");
+ 		    fprintf(ofp, "\t\tfor (i = %d; i <= %d; i++)\n",
+ 					substitutes[j].first_glyph,
+ 					substitutes[j].last_glyph);
+ 		    fprintf(ofp, "\t\t\tglyph2tile[i] = std_tiles%d[i - %d];\n",
+ 					span, substitutes[j].first_glyph);
+-		    fprintf(ofp, "\t}\n\n");
++		    fprintf(ofp,"%s", "\t}\n\n");
+ 		}
+ 		j = i;
+ 		span++;
+ 	    }
+-	    if (i != j) fprintf(ofp, "\t} else ");
++	    if (i != j) fprintf(ofp,"%s", "\t} else ");
+ 	    fprintf(ofp, "\tif (%s) {\n", substitutes[i].level_test);
+ 	    fprintf(ofp, "\t\tfor (i = %d; i <= %d; i++)\n",
+ 				substitutes[i].first_glyph,
+@@ -691,13 +691,13 @@ FILE *ofp;
+ 	    start += substitutes[i].last_glyph - substitutes[i].first_glyph + 1;
+ 	}
+ 	/* finish last span */
+-	fprintf(ofp, "\t} else {\n");
++	fprintf(ofp,"%s", "\t} else {\n");
+ 	fprintf(ofp, "\t\tfor (i = %d; i <= %d; i++)\n",
+ 			    substitutes[j].first_glyph,
+ 			    substitutes[j].last_glyph);
+ 	fprintf(ofp, "\t\t\tglyph2tile[i] = std_tiles%d[i - %d];\n",
+ 			    span, substitutes[j].first_glyph);
+-	fprintf(ofp, "\t}\n\n");
++	fprintf(ofp,"%s", "\t}\n\n");
+ 
+ 	for (i = 0; i < SIZE(epilog); i++) {
+ 		fprintf(ofp, "%s\n", epilog[i]);
+@@ -726,9 +726,9 @@ int main()
+ 	    perror(filename);
+ 	    exit(EXIT_FAILURE);
+     }
+-    fprintf(ofp,"/* This file is automatically generated.  Do not edit. */\n");
+-    fprintf(ofp,"\n#include \"hack.h\"\n\n");
+-    fprintf(ofp,"short glyph2tile[MAX_GLYPH] = {\n");
++    fprintf(ofp,"%s","/* This file is automatically generated.  Do not edit. */\n");
++    fprintf(ofp,"%s","\n#include \"hack.h\"\n\n");
++    fprintf(ofp,"%s","short glyph2tile[MAX_GLYPH] = {\n");
+ 
+     for (i = 0; i < MAX_GLYPH; i++) {
+ 	fprintf(ofp,"%2d,%c", tilemap[i], (i % 12) ? ' ' : '\n');
+@@ -741,7 +741,7 @@ int main()
+     fprintf(ofp,"#define MAXOBJTILE %d\n", lastobjtile);
+     fprintf(ofp,"#define MAXOTHTILE %d\n", lastothtile);
+ 
+-    fprintf(ofp,"\n/*tile.c*/\n");
++    fprintf(ofp,"%s","\n/*tile.c*/\n");
+ 
+     fclose(ofp);
+ 
+@@ -758,7 +758,7 @@ int main()
+ 	    perror(filename);
+ 	    exit(EXIT_FAILURE);
+     }
+-    fprintf(ofp,"/* This file is automatically generated.  Do not edit. */\n");
++    fprintf(ofp,"%s","/* This file is automatically generated.  Do not edit. */\n");
+ 
+     fprintf(ofp,"\n#define TOTAL_TILES_USED %d\n", lastothtile + 1);
+     i = ceil_sqrt(lastothtile + 1);
+@@ -768,7 +768,7 @@ int main()
+     while (fgets(in_line, sizeof in_line, ifp) != 0)
+ 	(void) fputs(in_line, ofp);
+ 
+-    fprintf(ofp,"\n/*tile.h*/\n");
++    fprintf(ofp,"%s","\n/*tile.h*/\n");
+ 
+     fclose(ofp);
+ 
+diff --git a/win/share/tiletext.c b/win/share/tiletext.c
+index 1105ef03..990c29a2 100644
+--- a/win/share/tiletext.c
++++ b/win/share/tiletext.c
+@@ -215,18 +215,18 @@ char name[BUFSZ];
+ 	
+ 	/* look for non-whitespace at each stage */
+ 	if (fscanf(txtfile, "%1s", c) < 0) {
+-		fprintf(stderr, "unexpected EOF\n");
++		fprintf(stderr,"%s", "unexpected EOF\n");
+ 		return FALSE;
+ 	}
+ 	if (c[0] != '{') {
+-		fprintf(stderr, "didn't find expected '{'\n");
++		fprintf(stderr,"%s", "didn't find expected '{'\n");
+ 		return FALSE;
+ 	}
+ 	fmt_string = colorsinmap > 64 ? "%2s" : "%1s";
+ 	for (j = 0; j < tile_y; j++) {
+ 		for (i = 0; i < tile_x; i++) {
+ 			if (fscanf(txtfile, fmt_string, c) < 0) {
+-				fprintf(stderr, "unexpected EOF\n");
++				fprintf(stderr,"%s", "unexpected EOF\n");
+ 				return FALSE;
+ 			}
+ 			if (c[1])
+@@ -249,11 +249,11 @@ char name[BUFSZ];
+ 		}
+ 	}
+ 	if (fscanf(txtfile, "%1s ", c) < 0) {
+-		fprintf(stderr, "unexpected EOF\n");
++		fprintf(stderr,"%s", "unexpected EOF\n");
+ 		return FALSE;
+ 	}
+ 	if (c[0] != '}') {
+-		fprintf(stderr, "didn't find expected '}'\n");
++		fprintf(stderr,"%s", "didn't find expected '}'\n");
+ 		return FALSE;
+ 	}
+ #ifdef _DCC
+@@ -324,9 +324,9 @@ const char *name;
+ 	else
+ 	    fprintf(txtfile, "# %s %d (null)\n", type, number);
+ 
+-	fprintf(txtfile, "{\n");
++	fprintf(txtfile,"%s", "{\n");
+ 	for (j = 0; j < tile_y; j++) {
+-		fprintf(txtfile, "  ");
++		fprintf(txtfile,"%s", "  ");
+ 		for (i = 0; i < tile_x; i++) {
+ 			for (k = 0; k < colorsinmainmap; k++) {
+ 				if (MainColorMap[CM_RED][k] == pixels[j][i].r &&
+@@ -335,12 +335,12 @@ const char *name;
+ 					break;
+ 			}
+ 			if (k >= colorsinmainmap)
+-				fprintf(stderr, "color not in colormap!\n");
++				fprintf(stderr,"%s", "color not in colormap!\n");
+ 			(void) fputs(charcolors[k], txtfile);
+ 		}
+-		fprintf(txtfile, "\n");
++		fprintf(txtfile,"%s", "\n");
+ 	}
+-	fprintf(txtfile, "}\n");
++	fprintf(txtfile,"%s", "}\n");
+ }
+ 
+ static void
+@@ -482,16 +482,16 @@ FILE *txtfile;
+ 	pos = ftell(txtfile);
+ 
+ 	if (fscanf(txtfile, "# %*s %*d (%*[^)]%c",c) <= 0 || c[0] != ')') {
+-		fprintf(stderr, "no tiles in file\n");
++		fprintf(stderr,"%s", "no tiles in file\n");
+ 		return FALSE;
+ 	}
+ 	
+ 	if (fscanf(txtfile, "%1s", c) < 0) {
+-		fprintf(stderr, "unexpected EOF\n");
++		fprintf(stderr,"%s", "unexpected EOF\n");
+ 		return FALSE;
+ 	}
+ 	if (c[0] != '{') {
+-		fprintf(stderr, "didn't find expected '{'\n");
++		fprintf(stderr,"%s", "didn't find expected '{'\n");
+ 		return FALSE;
+ 	}
+ 	do
+@@ -517,7 +517,7 @@ FILE *txtfile;
+ 			ch = getc(txtfile);
+ 		if (colorsinmap > 64) {
+ 			if (i & 1) {
+-				fprintf(stderr, "half a pixel?\n");
++				fprintf(stderr,"%s", "half a pixel?\n");
+ 				return FALSE;
+ 			}
+ 			i /= 2;
+@@ -585,7 +585,7 @@ const char *type;
+ 	}
+ 
+ 	if ((write_mode ? out_file : in_file) != (FILE *)0) {
+-		fprintf(stderr, "can only open one text file at at time\n");
++		fprintf(stderr,"%s", "can only open one text file at at time\n");
+ 		return FALSE;
+ 	}
+ 
+@@ -618,11 +618,11 @@ const char *type;
+ 	} else {
+ 		out_file = fp;
+ 		if (!colorsinmainmap) {
+-			fprintf(stderr, "no colormap set yet\n");
++			fprintf(stderr,"%s", "no colormap set yet\n");
+ 			return FALSE;
+ 		}
+ 		if (tile_x < 0 || tile_y < 0) {
+-			fprintf(stderr, "no tile size set yet\n");
++			fprintf(stderr,"%s", "no tile size set yet\n");
+ 			return FALSE;
+ 		}
+ 		if (!write_text_colormap(out_file))
+diff --git a/win/share/txtbg.c b/win/share/txtbg.c
+index 422cd688..06a7adad 100644
+--- a/win/share/txtbg.c
++++ b/win/share/txtbg.c
+@@ -97,7 +97,7 @@ char **argv;
+     }
+ 
+     if (argc != 3) {
+-	fprintf(stderr, "usage: txtbg [-s<seq>] infile outfile\n");
++	fprintf(stderr,"%s", "usage: txtbg [-s<seq>] infile outfile\n");
+ 	exit(EXIT_FAILURE);
+     }
+ 
+diff --git a/win/share/txtfilt.c b/win/share/txtfilt.c
+index 7878fcd4..744838c2 100644
+--- a/win/share/txtfilt.c
++++ b/win/share/txtfilt.c
+@@ -206,7 +206,7 @@ char **argv;
+ 	    argn ++;
+ 	    if (argn >= argc)
+ 	    {
+-		fprintf(stderr, "txtfilt: -f option requires a match file\n");
++		fprintf(stderr,"%s", "txtfilt: -f option requires a match file\n");
+ 		exit(EXIT_FAILURE);
+ 	    }
+ 	    if (match_load(argv[argn]))
+@@ -219,7 +219,7 @@ char **argv;
+ 	    argn ++;
+ 	    if (argn >= argc)
+ 	    {
+-		fprintf(stderr, "txtfilt: -p option requires a palette file\n");
++		fprintf(stderr,"%s", "txtfilt: -p option requires a palette file\n");
+ 		exit(EXIT_FAILURE);
+ 	    }
+ 	    if (!read_text_file_colormap(argv[argn]))
+diff --git a/win/share/txtmerge.c b/win/share/txtmerge.c
+index 2d3b827d..0eb4d2d7 100644
+--- a/win/share/txtmerge.c
++++ b/win/share/txtmerge.c
+@@ -64,14 +64,14 @@ read_tiles()
+ 		tiles = (struct tile *)realloc(tiles,
+ 		  alloc_tiles * sizeof(*tiles));
+ 	    if (!tiles) {
+-		fprintf(stderr, "Not enough memory\n");
++		fprintf(stderr,"%s", "Not enough memory\n");
+ 		exit(EXIT_FAILURE);
+ 	    }
+ 	    for(i = no_tiles; i < alloc_tiles; i++) {
+ 		tiles[i].bitmap = (pixel *)
+ 		  malloc(tile_x * tile_y * sizeof(pixel));
+ 		if (!tiles[i].bitmap) {
+-		    fprintf(stderr, "Not enough memory\n");
++		    fprintf(stderr,"%s", "Not enough memory\n");
+ 		    exit(EXIT_FAILURE);
+ 		}
+ 	    }
+@@ -89,7 +89,7 @@ read_tiles()
+ 	else {
+ 	    tiles[no_tiles].name = strdup(name);
+ 	    if (!tiles[no_tiles].name) {
+-		fprintf(stderr, "Not enough memory\n");
++		fprintf(stderr,"%s", "Not enough memory\n");
+ 		exit(EXIT_FAILURE);
+ 	    }
+ 	}
+diff --git a/win/share/xpmread.c b/win/share/xpmread.c
+index d4c5f750..1b36ca3b 100644
+--- a/win/share/xpmread.c
++++ b/win/share/xpmread.c
+@@ -29,7 +29,7 @@ char *type;
+     const pixel bg = DEFAULT_BACKGROUND;
+ 
+     if (strcmp(type, RDBMODE)) {
+-	fprintf(stderr, "using reading routine for non-reading?\n");
++	fprintf(stderr,"%s", "using reading routine for non-reading?\n");
+ 	return FALSE;
+     }
+     errorcode = XpmReadFileToXpmImage(filename, &image, &info);
+@@ -186,7 +186,7 @@ char *argv[];
+ 	    else if (argn + 1 < argc)
+ 		tile_x = atoi(argv[++argn]);
+ 	    else {
+-		fprintf(stderr, "xpm2txt: -w option needs an argument\n");
++		fprintf(stderr,"%s", "xpm2txt: -w option needs an argument\n");
+ 		exit(EXIT_FAILURE);
+ 	    }
+ 	    argn ++;
+@@ -197,7 +197,7 @@ char *argv[];
+ 	    else if (argn + 1 < argc)
+ 		tile_y = atoi(argv[++argn]);
+ 	    else {
+-		fprintf(stderr, "xpm2txt: -h option needs an argument\n");
++		fprintf(stderr,"%s", "xpm2txt: -h option needs an argument\n");
+ 		exit(EXIT_FAILURE);
+ 	    }
+ 	    argn ++;
+@@ -211,8 +211,8 @@ char *argv[];
+     }
+     
+     if (argc - argn != (split_mode ? 4 : 2)) {
+-	fprintf(stderr, "usage: xpm2txt [-w#] [-h#] xpmfile txtfile\n");
+-	fprintf(stderr, "       xpm2txt -s xpmfile montxt objtxt othtxt\n");
++	fprintf(stderr,"%s", "usage: xpm2txt [-w#] [-h#] xpmfile txtfile\n");
++	fprintf(stderr,"%s", "       xpm2txt -s xpmfile montxt objtxt othtxt\n");
+ 	exit(EXIT_FAILURE);
+     }
+ 
