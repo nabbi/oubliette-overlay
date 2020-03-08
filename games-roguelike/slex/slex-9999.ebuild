@@ -21,6 +21,11 @@ DEPEND=""
 RDEPEND="${DEPEND}"
 BDEPEND=""
 
+if [[ "${PV}" == "9999" ]]; then
+	PROPERTIES="live"
+fi
+
+
 if [[ ! "${PV}" == "9999" ]]; then
 	S="${WORKDIR}/SLASHEM-Extended-slex-${PV}"
 fi
