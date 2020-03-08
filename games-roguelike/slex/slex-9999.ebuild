@@ -33,11 +33,8 @@ src_prepare() {
 	eapply "${FILESDIR}/${PN}-2.6.0-fprintf-security.patch"
 	eapply "${FILESDIR}/${PN}-2.6.0-integer-format.patch"
 	eapply "${FILESDIR}/${PN}-2.6.0-ncurses-tinfo.patch"
+	eapply "${FILESDIR}/${PN}-2.6.0-gentoo-pathing.patch"
 	eapply_user
-}
-
-src_configure() {
-	./sys/unix/setup.sh
 }
 
 src_compile() {

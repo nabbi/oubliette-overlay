@@ -1,0 +1,13 @@
+diff --git a/sys/unix/GNUmakefile b/sys/unix/GNUmakefile
+index 5ef1945e..1d9f1ed5 100644
+--- a/sys/unix/GNUmakefile
++++ b/sys/unix/GNUmakefile
+@@ -7,7 +7,7 @@ GAME = slex
+ 
+ INSTALL = install
+ 
+-PREFIX = $(HOME)/slex
++PREFIX = /var/games
+ GAMEDIR = $(PREFIX)/slex-$(VERSION)
+ VARDIR = $(GAMEDIR)
+ #MASTERDIR = $(PREFIX)/slexdir
