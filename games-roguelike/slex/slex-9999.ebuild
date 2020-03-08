@@ -31,8 +31,8 @@ fi
 
 src_prepare() {
 	# adjust pathing
-	sed -i -e ":\(^PREFIX\ =\ \).*:d" sys/unix/GNUmakefile
-	sed -i -e "s:\(^GAMEDIR\ =\ \).*:\1${ED}/var/games/:" sys/unix/GNUmakefile
+	sed -i -e "/^PREFIX\ =\ .*/d" sys/unix/GNUmakefile
+	sed -i -e "s:\(^GAMEDIR\ =\ \).*:\1${ED}/var/games/slex:" sys/unix/GNUmakefile
 
 	# include tinfo (ncurses)
 	sed -i -e "s:\(-lncurses\).*:\1\ -ltinfo:" sys/unix/GNUmakefile
