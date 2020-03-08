@@ -6191,3 +6191,178 @@ index e438d76c..adb6a236 100644
  	    break;
  	}
  	if (msg && cansee(x,y)) pline("%s", msg);
+diff --git a/src/mkobj.c b/src/mkobj.c
+index 6e558be2..06141dd7 100644
+--- a/src/mkobj.c
++++ b/src/mkobj.c
+@@ -2814,7 +2814,7 @@ boolean shopinit;
+ 	case COIN_CLASS:
+ 		break;	/* do nothing */
+ 	default:
+-		impossible("impossible mkobj %d, sym '%c'.", otmp->otyp,
++		impossible("impossible mkobj %ld, sym '%c'.", otmp->otyp,
+ 						objects[otmp->otyp].oc_class);
+ 		return (struct obj *)0;
+ 	}
+diff --git a/src/mthrowu.c b/src/mthrowu.c
+index 47e5e422..fddcdc96 100644
+--- a/src/mthrowu.c
++++ b/src/mthrowu.c
+@@ -188,7 +188,7 @@ const char *name;	/* if null, then format `obj' */
+ 			shieldblockrate = 33;
+ 			break;
+ 
+-		default: impossible("Unknown type of shield (%d)", uarms->otyp);
++		default: impossible("Unknown type of shield (%ld)", uarms->otyp);
+ 
+ 		}
+ 
+@@ -977,7 +977,7 @@ boolean verbose;  /* give message(s) even when you can't see what happened */
+ 				shieldblockrate = 43;
+ 				break;
+ 
+-			default: impossible("Unknown type of shield (%d)", blocker->otyp);
++			default: impossible("Unknown type of shield (%ld)", blocker->otyp);
+ 
+ 		}
+ 
+diff --git a/src/music.c b/src/music.c
+index af752a53..e5a7c929 100644
+--- a/src/music.c
++++ b/src/music.c
+@@ -660,7 +660,7 @@ hornchoice:
+ 	    exercise(A_WIS, FALSE);
+ 	    break;
+ 	default:
+-	    impossible("What a weird instrument (%d)!", instr->otyp);
++	    impossible("What a weird instrument (%ld)!", instr->otyp);
+ 	    break;
+ 	}
+ 	return 2;		/* That takes time */
+diff --git a/src/objnam.c b/src/objnam.c
+index 60179a2a..2ed2b2da 100644
+--- a/src/objnam.c
++++ b/src/objnam.c
+@@ -6121,8 +6121,8 @@ register struct obj *obj;
+ 			index(vowels,*(mons[obj->corpsenm].mname)) ? "n" : "",
+ 			mons[obj->corpsenm].mname);
+ 
+-		if (is_lightsaber(obj) && nn && obj->known) sprintf(eos(buf), " (%d)", obj->age);
+-		if (age_is_relative(obj) && nn && obj->known) sprintf(eos(buf), " (%d)", obj->age);
++		if (is_lightsaber(obj) && nn && obj->known) sprintf(eos(buf), " (%ld)", obj->age);
++		if (age_is_relative(obj) && nn && obj->known) sprintf(eos(buf), " (%ld)", obj->age);
+ 
+ 		break;
+ 	    case ARMOR_CLASS:
+@@ -6265,7 +6265,7 @@ register struct obj *obj;
+ 			strcat(buf, dn);
+ 			strcat(buf, " potion");
+ 		}
+-		if (age_is_relative(obj) && nn && obj->known) sprintf(eos(buf), " (%d)", obj->age);
++		if (age_is_relative(obj) && nn && obj->known) sprintf(eos(buf), " (%ld)", obj->age);
+ 		break;
+ 	case SCROLL_CLASS:
+ 		strcpy(buf, "scroll");
+diff --git a/src/potion.c b/src/potion.c
+index 4a41e613..de43db8d 100644
+--- a/src/potion.c
++++ b/src/potion.c
+@@ -1107,7 +1107,7 @@ int type;
+ 	    }
+ 
+ 	    set_itimeout(&Sick, xtime);
+-	    if (Sickopathy) pline("You have %d turns to live.", Sick);
++	    if (Sickopathy) pline("You have %ld turns to live.", Sick);
+ 	    if (type == SICK_VOMITABLE) u.cnd_sickfoodpois++;
+ 	    else u.cnd_sickillness++;
+ 	    u.usick_type |= type;
+diff --git a/src/shk.c b/src/shk.c
+index 4e7260ee..98df76f0 100644
+--- a/src/shk.c
++++ b/src/shk.c
+@@ -2309,7 +2309,7 @@ register struct monst *shkp;	/* if angry, impose a surcharge */
+ 			case 13: /* violet */
+ 			    i = pseudorand ? AMETHYST : FLUORITE;
+ 			    break;
+-			default: impossible("bad glass gem %d?", obj->otyp);
++			default: impossible("bad glass gem %ld?", obj->otyp);
+ 			    i = /*STRANGE_OBJECT*/MORGANITE; /* fail safe - in case of doubt have it be something expensive --Amy */
+ 			    break;
+ 		    }
+diff --git a/src/timeout.c b/src/timeout.c
+index cbcc9228..f76cd9eb 100644
+--- a/src/timeout.c
++++ b/src/timeout.c
+@@ -176,7 +176,7 @@ slime_dialogue()
+ 			if (flags.moreforced && !MessagesSuppressed) display_nhwindow(WIN_MESSAGE, TRUE);    /* --More-- */
+ 
+ 			/* make it more obvious for the player how much time they have left --Amy */
+-			if (i == 0L && Slimed > 1) pline("You have %d turns to live.", Slimed);
++			if (i == 0L && Slimed > 1) pline("You have %ld turns to live.", Slimed);
+ 		}
+ 	    } else
+ 		pline("%s", str);
+@@ -2211,7 +2211,7 @@ nh_timeout()
+ 	if(Strangled) choke_dialogue();
+ 	if (Sick && (moves % 7 == 0) ) {
+ 		pline(Role_if(PM_PIRATE) ? "Ye still feel poxy." : Role_if(PM_KORSAIR) ? "Ye still feel poxy." : (uwep && uwep->oartifact == ART_ARRRRRR_MATEY) ? "Ye still feel poxy." : "You still feel deathly sick.");
+-		if (Sickopathy) pline("You have %d turns to live.", Sick);
++		if (Sickopathy) pline("You have %ld turns to live.", Sick);
+ 	}
+ 	if(u.mtimedone && !--u.mtimedone) {
+ 		if (!Race_if(PM_UNGENOMOLD) && u.polyformed) rehumanize();
+diff --git a/src/topten.c b/src/topten.c
+index d61a8bfc..2caea84a 100644
+--- a/src/topten.c
++++ b/src/topten.c
+@@ -228,7 +228,7 @@ struct toptenentry *tt;
+ 			for(dp = tt->death; *dp; dp++) {
+ 				if(!strncmp(dp, " Conduct=", 9)) {
+ 					dp2 = dp + 9;
+-					sscanf(dp2, "%d", &tt->conduct);
++					sscanf(dp2, "%ld", &tt->conduct);
+ 					/* Find trailing null or space */
+ 					while(*dp2 && *dp2 != ' ')
+ 						dp2++;
+@@ -270,7 +270,7 @@ struct toptenentry *tt;
+ 	/* Add a trailing " Conduct=%d" to tt->death */
+ 	/*if(tt->conduct != 8191) {*/
+ 		cp = tt->death + strlen(tt->death);
+-		sprintf(cp, " Conduct=%d", tt->conduct);
++		sprintf(cp, " Conduct=%ld", tt->conduct);
+ 	/*}*/
+ #endif
+ 
+@@ -337,8 +337,8 @@ struct toptenentry *tt;
+                 XLOG_SEP "maxhp=%d"
+                 XLOG_SEP "deaths=%d"
+                 XLOG_SEP "deathdate=%d"
+-                XLOG_SEP "birthdate=%d"
+-                XLOG_SEP "uid=%d",
++                XLOG_SEP "birthdate=%ld"
++                XLOG_SEP "uid=%ld",
+                 tt->ver_major, tt->ver_minor, tt->patchlevel,
+                 tt->points, tt->deathdnum, tt->deathlev,
+                 tt->maxlvl, tt->hp, tt->maxhp, tt->deaths,
+diff --git a/src/zap.c b/src/zap.c
+index 8dfa8401..1e6eb7da 100644
+--- a/src/zap.c
++++ b/src/zap.c
+@@ -3748,7 +3748,7 @@ smell:
+ 	case SPE_BLANK_PAPER: /* placeholder for T_BLADE_ANGER */
+ 		break;
+ 	default:
+-		impossible("What an interesting effect (%d)", otmp->otyp);
++		impossible("What an interesting effect (%ld)", otmp->otyp);
+ 		break;
+ 	}
+ 	return res;
+@@ -6914,7 +6914,7 @@ boolean ordinary;
+ 		    } while (didmerge);
+ 		    }
+ 		    break;
+-		default: impossible("object %d used?",obj->otyp);
++		default: impossible("object %ld used?",obj->otyp);
+ 		    break;
+ 	}
+ 	return(damage);
