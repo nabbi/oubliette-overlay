@@ -35,10 +35,11 @@ fi
 #src_prepare() {
 #	eapply_user
 #}
-#src_configure() {
-#	econf \
-#		--with-owner=games
-#}
+src_configure() {
+	econf \
+		--with-owner=nethack \
+		--with-group=gamestat
+}
 
 #src_compile() {
 #	emake
