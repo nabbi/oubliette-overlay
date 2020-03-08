@@ -50,6 +50,7 @@ src_compile() {
 }
 
 src_install() {
+	# TODO  slex appears to want all files in the same local dir ?
 	emake -f sys/unix/GNUmakefile install
 
 	keepdir /var/games/slex/save
@@ -58,4 +59,10 @@ src_install() {
 pkg_preinst() {
 	fowners root:gamestat /var/games/slex /var/games/slex/save
 	fperms 2770 /var/games/slex /var/games/slex/save
+}
+
+pkg_postinst() {
+	cd /var/games/slex
+	fowners root:gamestat slex livelog logfile perm record xlogfile
+	fperms g+s /var/games/slex/slex
 }
