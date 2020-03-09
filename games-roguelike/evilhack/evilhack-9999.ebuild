@@ -20,6 +20,7 @@ IUSE="-X"
 
 RDEPEND="acct-group/gamestat
 	sys-libs/ncurses:0=
+	sys-devel/gdb
 	X? (
 		x11-libs/libXaw
 		x11-libs/libXpm
@@ -49,6 +50,7 @@ src_prepare() {
 
 src_compile() {
 	append-cflags -I../include -DDLB -DSECURE -DTIMED_DELAY -DVISION_TABLES -DDUMPLOG -DSCORE_ON_BOTL
+	append-cflags -DLIVELOG_ENABLE
 	append-cflags '-DCOMPRESS=\"${EPREFIX}/bin/gzip\"' '-DCOMPRESS_EXTENSION=\".gz\"'
 	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
 	append-cflags "-DDEF_PAGER=\\\"${PAGER}\\\""
@@ -79,10 +81,10 @@ src_install() {
 	dodoc doc/Guidebook.txt
 
 	insinto /etc
-	newins sys/unix/sysconf nethack.sysconf
+	newins sys/unix/sysconf evilhack.sysconf
 
 	insinto /etc/skel
-	newins "${FILESDIR}/nethack-3.6.0-nethackrc" .nethackrc
+	newins "${FILESDIR}/nethack-3.6.0-nethackrc" .evilhackrc
 
 	if use X ; then
 		cd "${S}/win/X11" || die "Failed to enter win/X11 directory"
