@@ -74,7 +74,7 @@ src_install() {
 
 	mv "${ED}/usr/$(get_libdir)/evilhack/recover" "${ED}/usr/bin/recover-evilhack" || die "Failed to move recover-evilhack"
 
-	doman doc/evilhack.6
+	doman doc/nethack.6
 	newman doc/recover.6 recover-evilhack.6
 	dodoc doc/Guidebook.txt
 
