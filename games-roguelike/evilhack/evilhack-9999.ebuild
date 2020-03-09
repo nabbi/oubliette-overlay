@@ -16,24 +16,14 @@ fi
 LICENSE="nethack"
 SLOT="0"
 KEYWORDS=""
-IUSE="-X"
+IUSE=""
 
 RDEPEND="acct-group/gamestat
 	sys-libs/ncurses:0=
-	sys-devel/gdb
-	X? (
-		x11-libs/libXaw
-		x11-libs/libXpm
-		x11-libs/libXt
-	)"
+	sys-devel/gdb"
 DEPEND="${RDEPEND}
-	X? ( x11-base/xorg-proto )
 	"
-BDEPEND="virtual/pkgconfig
-	X? (
-		x11-apps/bdftopcf
-		x11-apps/mkfontscale
-	)"
+BDEPEND="virtual/pkgconfig"
 
 if [[ ! "${PV}" == "9999" ]]; then
 	PROPERTIES="live"
@@ -44,7 +34,7 @@ src_prepare() {
 	eapply "${FILESDIR}/nethack-3.6.3-recover.patch"
 	eapply_user
 
-	cp "${FILESDIR}/nethack-3.6.3-hint-$(usex X x11 tty)" hint || die "Failed to copy hint file"
+	cp "${FILESDIR}/nethack-3.6.3-hint-tty" hint || die "Failed to copy hint file"
 	sys/unix/setup.sh hint || die "Failed to run setup.sh"
 }
 
@@ -56,7 +46,7 @@ src_compile() {
 	append-cflags "-DDEF_PAGER=\\\"${PAGER}\\\""
 	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
 
-	use X && append-cflags -DX11_GRAPHICS -DUSE_XPM
+	#use X && append-cflags -DX11_GRAPHICS -DUSE_XPM
 
 	LOCAL_MAKEOPTS=(
 		CC="$(tc-getCC)" CFLAGS="${CFLAGS}" LFLAGS="${LDFLAGS}"
@@ -85,23 +75,6 @@ src_install() {
 
 	insinto /etc/skel
 	newins "${FILESDIR}/nethack-3.6.0-nethackrc" .evilhackrc
-
-	if use X ; then
-		cd "${S}/win/X11" || die "Failed to enter win/X11 directory"
-
-		mkdir -p "${ED}/etc/X11/app-defaults/" || die "Failed to make app-defaults directory"
-		mv "${ED}/usr/$(get_libdir)/evilhack/NetHack.ad" "${ED}/etc/X11/app-defaults/" || die "Failed to move NetHack.ad"
-
-		newicon nh_icon.xpm evilhack.xpm
-		make_desktop_entry ${PN} Nethack
-
-		# install evilhack fonts
-		bdftopcf -o nh10.pcf nh10.bdf || die "Converting fonts failed"
-		bdftopcf -o ibm.pcf ibm.bdf || die "Converting fonts failed"
-		insinto "/usr/$(get_libdir)/evilhack/fonts"
-		doins *.pcf
-		mkfontdir "${ED}/usr/$(get_libdir)/evilhack/fonts" || die "mkfontdir failed"
-	fi
 
 	rm -r "${ED}/var/games/evilhack" || die "Failed to clean var/games/evilhack"
 	keepdir /var/games/evilhack/save
