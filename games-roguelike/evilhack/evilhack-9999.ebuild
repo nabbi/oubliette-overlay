@@ -79,10 +79,10 @@ src_install() {
 	dodoc doc/Guidebook.txt
 
 	insinto /etc
-	newins sys/unix/sysconf evilhack.sysconf
+	newins sys/unix/sysconf nethack.sysconf
 
 	insinto /etc/skel
-	newins "${FILESDIR}/${PN}-3.6.0-evilhackrc" .evilhackrc
+	newins "${FILESDIR}/nethack-3.6.0-nethackrc" .nethackrc
 
 	if use X ; then
 		cd "${S}/win/X11" || die "Failed to enter win/X11 directory"
