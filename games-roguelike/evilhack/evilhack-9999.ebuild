@@ -1,0 +1,134 @@
+# Copyright 2020 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=7
+inherit desktop flag-o-matic toolchain-funcs
+
+DESCRIPTION="NetHack 3.6 variant features GruntHack, SporkHack and others with custom content"
+HOMEPAGE="https://evilhackwiki.com/wiki/EvilHack"
+if [[ "${PV}" == "9999" ]]; then
+	inherit git-r3
+	EGIT_REPO_URI="https://github.com/k21971/EvilHack.git"
+else
+	SRC_URI=""
+fi
+
+LICENSE="nethack"
+SLOT="0"
+KEYWORDS=""
+IUSE="-X"
+
+RDEPEND="acct-group/gamestat
+	sys-libs/ncurses:0=
+	X? (
+		x11-libs/libXaw
+		x11-libs/libXpm
+		x11-libs/libXt
+	)"
+DEPEND="${RDEPEND}
+	X? ( x11-base/xorg-proto )
+	"
+BDEPEND="virtual/pkgconfig
+	X? (
+		x11-apps/bdftopcf
+		x11-apps/mkfontscale
+	)"
+
+if [[ ! "${PV}" == "9999" ]]; then
+	PROPERTIES="live"
+	S="${WORKDIR}/evilhack-${PV}"
+fi
+
+src_prepare() {
+	eapply "${FILESDIR}/nethack-3.6.3-recover.patch"
+	eapply_user
+
+	cp "${FILESDIR}/nethack-3.6.3-hint-$(usex X x11 tty)" hint || die "Failed to copy hint file"
+	sys/unix/setup.sh hint || die "Failed to run setup.sh"
+}
+
+src_compile() {
+	append-cflags -I../include -DDLB -DSECURE -DTIMED_DELAY -DVISION_TABLES -DDUMPLOG -DSCORE_ON_BOTL
+	append-cflags '-DCOMPRESS=\"${EPREFIX}/bin/gzip\"' '-DCOMPRESS_EXTENSION=\".gz\"'
+	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
+	append-cflags "-DDEF_PAGER=\\\"${PAGER}\\\""
+	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
+
+	use X && append-cflags -DX11_GRAPHICS -DUSE_XPM
+
+	LOCAL_MAKEOPTS=(
+		CC="$(tc-getCC)" CFLAGS="${CFLAGS}" LFLAGS="${LDFLAGS}"
+		WINTTYLIB="$($(tc-getPKG_CONFIG) --libs ncurses)"
+		HACKDIR="${EPREFIX}/usr/$(get_libdir)/evilhack" INSTDIR="${ED}/usr/$(get_libdir)/evilhack"
+		SHELLDIR="${ED}/usr/bin" VARDIR="${ED}/var/games/evilhack"
+		)
+
+	emake "${LOCAL_MAKEOPTS[@]}" evilhack recover Guidebook spec_levs
+
+	# Upstream still has some parallel compilation bugs
+	emake -j1 "${LOCAL_MAKEOPTS[@]}" all
+}
+
+src_install() {
+	emake "${LOCAL_MAKEOPTS[@]}" install
+
+	mv "${ED}/usr/$(get_libdir)/evilhack/recover" "${ED}/usr/bin/recover-evilhack" || die "Failed to move recover-evilhack"
+
+	doman doc/evilhack.6
+	newman doc/recover.6 recover-evilhack.6
+	dodoc doc/Guidebook.txt
+
+	insinto /etc
+	newins sys/unix/sysconf evilhack.sysconf
+
+	insinto /etc/skel
+	newins "${FILESDIR}/${PN}-3.6.0-evilhackrc" .evilhackrc
+
+	if use X ; then
+		cd "${S}/win/X11" || die "Failed to enter win/X11 directory"
+
+		mkdir -p "${ED}/etc/X11/app-defaults/" || die "Failed to make app-defaults directory"
+		mv "${ED}/usr/$(get_libdir)/evilhack/NetHack.ad" "${ED}/etc/X11/app-defaults/" || die "Failed to move NetHack.ad"
+
+		newicon nh_icon.xpm evilhack.xpm
+		make_desktop_entry ${PN} Nethack
+
+		# install evilhack fonts
+		bdftopcf -o nh10.pcf nh10.bdf || die "Converting fonts failed"
+		bdftopcf -o ibm.pcf ibm.bdf || die "Converting fonts failed"
+		insinto "/usr/$(get_libdir)/evilhack/fonts"
+		doins *.pcf
+		mkfontdir "${ED}/usr/$(get_libdir)/evilhack/fonts" || die "mkfontdir failed"
+	fi
+
+	rm -r "${ED}/var/games/evilhack" || die "Failed to clean var/games/evilhack"
+	keepdir /var/games/evilhack/save
+}
+
+pkg_preinst() {
+	fowners root:gamestat /var/games/evilhack /var/games/evilhack/save
+	fperms 2770 /var/games/evilhack /var/games/evilhack/save
+
+	fowners root:gamestat "/usr/$(get_libdir)/evilhack/evilhack"
+	fperms g+s "/usr/$(get_libdir)/evilhack/evilhack"
+}
+
+pkg_postinst() {
+	cd "${EROOT}/var/games/evilhack" || die "Failed to enter ${EROOT}/var/games/evilhack directory"
+
+	# Those files can't be created earlier because we don't want portage to wipe them during upgrades
+	( umask 007 && touch logfile perm record xlogfile ) || die "Failed to create log files"
+
+	# Instead of using a proper version header in its save files, evilhack checks for incompatibilities
+	# by comparing the mtimes of save files and its own binary. This would require admin interaction even
+	# during upgrades which don't change the file format, so we'll just touch the files and warn the admin
+	# manually in case of compatibility issues.
+	(
+		shopt -s nullglob
+		local saves=( bones* save/* )
+		[[ -n "${saves[*]}" ]] && touch -c "${saves[@]}"
+	) # non-fatal
+
+	elog "A minimal default .evilhackrc has been placed in /etc/skel/"
+	elog "The sysconf file is at /etc/evilhack.sysconf"
+}
