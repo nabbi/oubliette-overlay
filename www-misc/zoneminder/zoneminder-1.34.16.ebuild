@@ -34,7 +34,7 @@ else
 fi
 
 LICENSE="GPL-2"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="curl encode ffmpeg gcrypt gnutls +mmap +ssl libressl vlc"
 SLOT="0"
 
