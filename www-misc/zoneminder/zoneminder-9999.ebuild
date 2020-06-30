@@ -1,4 +1,4 @@
-# Copyright 2019 Gentoo Authors
+# Copyright 2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # TO DO:
@@ -62,6 +62,10 @@ dev-perl/URI-Encode
 dev-perl/libwww-perl
 dev-perl/Number-Bytes-Human
 dev-perl/JSON-MaybeXS
+dev-perl/Crypt-Eksblowfish
+dev-perl/Data-Entropy
+dev-perl/HTTP-Lite
+dev-perl/MIME-Lite
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
@@ -143,7 +147,7 @@ src_install() {
 
 	# the logrotate script
 	insinto /etc/logrotate.d
-	newins distros/ubuntu1204/zoneminder.logrotate zoneminder
+	newins distros/ubuntu2004/zoneminder.logrotate zoneminder
 
 	# now we duplicate the work of zmlinkcontent.sh
 	keepdir /var/lib/zoneminder /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/zoneminder/api_tmp

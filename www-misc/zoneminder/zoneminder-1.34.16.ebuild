@@ -4,12 +4,12 @@
 # TO DO:
 # * dependencies of unknown status:
 #       dev-perl/Device-SerialPort
+#       dev-perl/MIME-Lite
 #       dev-perl/MIME-tools
 #       dev-perl/PHP-Serialization
 #       virtual/perl-Archive-Tar
 #       virtual/perl-libnet
 #       virtual/perl-Module-Load
-#
 
 EAPI=6
 
@@ -96,7 +96,6 @@ RDEPEND="${DEPEND}"
 need_apache
 
 PATCHES=(
-	"${FILESDIR}/zoneminder-1.34.5-my_bool.patch"
 )
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
@@ -148,7 +147,7 @@ src_install() {
 
 	# the logrotate script
 	insinto /etc/logrotate.d
-	newins distros/ubuntu1204/zoneminder.logrotate zoneminder
+	newins distros/ubuntu2004/zoneminder.logrotate zoneminder
 
 	# now we duplicate the work of zmlinkcontent.sh
 	keepdir /var/lib/zoneminder /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/zoneminder/api_tmp
@@ -184,7 +183,7 @@ src_install() {
 	if [[ ${PV} == 9999 ]]; then
 		dodoc README.md "${T}"/10_zoneminder.conf
 	else
-		    dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
+		dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
 	fi
 
 	perl_delete_packlist
