@@ -10,9 +10,9 @@ IUSE="gnome"
 DESCRIPTION="Zoom Meeting Linux Client"
 HOMEPAGE="https://zoom.us/"
 SRC_URI="https://d11yldzmag5yn.cloudfront.net/prod/${PV}/${PN}_x86_64.tar.xz -> ${P}.tar.xz"
-LICENSE="all-rights-reserved"
+LICENSE="Zoom"
 SLOT="0"
-KEYWORDS="amd64"
+KEYWORDS="~amd64"
 
 RDEPEND="
 	app-arch/bzip2
@@ -119,16 +119,13 @@ src_install() {
 	dodir /usr/share/zoom
 	insinto /usr/share/zoom
 	doins -r "${S}"/{json,sip,timezones,translations}
-	doins "${S}"/*.{dat,pak,pcm,pem,properties,sh,txt}
-
-	# fix launcher path, no /opt stuff needed
-	sed -i -e 's,/opt/zoom,/usr/bin,' "${S}"/zoomlinux || die
+	doins "${S}"/*.{dat,pcm,pem,properties,sh,txt}
 
 	exeinto /usr/bin
-	doexe "${S}"/{zoom,ZoomLauncher,zoomlinux}
+	doexe "${S}"/{zoom,ZoomLauncher,zoom.sh,zopen}
 
-	make_desktop_entry "${PN}linux" "Zoom" "${PN}" "AudioVideo;Network" \
-		"Version=1.0\nTerminal=false\nStartupNotify=true\nStartupWMClass=Zoom\nMimeType=x-scheme-handler/zoom\nX-KDE-Protocols=zoom"
+	make_desktop_entry "${PN}" "Zoom" "${PN}" "AudioVideo;Network" \
+	    "Version=1.0\nTerminal=false\nStartupNotify=true\nStartupWMClass=Zoom\nMimeType=x-scheme-handler/zoom\nX-KDE-Protocols=zoom"
 }
 
 pkg_preinst() {
