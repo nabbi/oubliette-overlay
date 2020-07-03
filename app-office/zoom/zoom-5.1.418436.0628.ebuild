@@ -12,7 +12,7 @@ HOMEPAGE="https://zoom.us/"
 SRC_URI="https://d11yldzmag5yn.cloudfront.net/prod/${PV}/${PN}_x86_64.tar.xz -> ${P}.tar.xz"
 LICENSE="Zoom"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 RDEPEND="
 	app-arch/bzip2
