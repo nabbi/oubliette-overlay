@@ -2,13 +2,13 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="project">
-	<email>sci-geosciences@gentoo.org</email>
-	<name>Gentoo Geosciences Project</name>
+		<email>sci-geosciences@gentoo.org</email>
+		<name>Gentoo Geosciences Project</name>
 	</maintainer>
 	<upstream>
-	<remote-id type="github">gpsbabel/gpsbabel</remote-id>
+		<remote-id type="github">gpsbabel/gpsbabel</remote-id>
 	</upstream>
 	<longdescription>
-	Oubliette - ebuild version bump from Gentoo repository
+		Oubliette - ebuild copied from github.com/MeisterP/poncho-overlay
 	</longdescription>
 </pkgmetadata>
