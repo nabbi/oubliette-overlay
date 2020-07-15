@@ -57,7 +57,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-1.5.4-disable_statistic_uploading.patch
 	"${FILESDIR}"/${PN}-1.6.0-disable_update_check.patch
 	"${FILESDIR}"/${PN}-1.5.4-disable_version_check.patch
-	"${FILESDIR}"/${PN}-9999-use_system_shapelib.patch
+#	"${FILESDIR}"/${PN}-9999-use_system_shapelib.patch
 	"${FILESDIR}"/${PN}-9999-xmldoc.patch
 )
 
