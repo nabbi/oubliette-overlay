@@ -18,7 +18,8 @@ SLOT="0"
 RDEPEND="dev-db/sqlite:3=
 	sys-libs/zlib:=
 	inband? ( sys-fabric/libibmad )
-	ssl? ( dev-libs/openssl:= )"
+	ssl? ( dev-libs/openssl:= )
+	dev-libs/boost"
 DEPEND="${RDEPEND}"
 S="${WORKDIR}/${PN}-${MY_PV}"
 
@@ -29,5 +30,6 @@ src_prepare() {
 
 src_configure() {
 	eautoreconf
-	econf $(use_enable inband) $(use_enable ssl openssl)
+	econf $(use_enable inband) $(use_enable ssl openssl) \
+		--enable-fw-mgr
 }
