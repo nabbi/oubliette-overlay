@@ -35,7 +35,7 @@ fi
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64"
-IUSE="curl encode ffmpeg gcrypt gnutls +mmap +ssl libressl vlc"
+IUSE="curl encode gcrypt gnutls +mmap +ssl libressl vlc"
 SLOT="0"
 
 REQUIRED_USE="
@@ -69,7 +69,7 @@ dev-perl/MIME-Lite
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
-ffmpeg? ( virtual/ffmpeg )
+virtual/ffmpeg
 encode? ( media-libs/libmp4v2 )
 virtual/httpd-php:*
 virtual/jpeg:0
@@ -118,7 +118,6 @@ src_configure() {
 	perl_set_version
 	export TZ=UTC # bug 630470
 	mycmakeargs=(
-		-DZM_PERL_SUBPREFIX=${VENDOR_LIB#/usr}
 		-DZM_TMPDIR=/var/tmp/zm
 		-DZM_SOCKDIR=/var/run/zm
 		-DZM_WEB_USER=apache
@@ -126,7 +125,6 @@ src_configure() {
 		-DZM_WEBDIR=${MY_ZM_WEBDIR}
 		-DZM_NO_MMAP="$(usex mmap OFF ON)"
 		-DZM_NO_X10=OFF
-		-DZM_NO_FFMPEG="$(usex ffmpeg OFF ON)"
 		-DZM_NO_CURL="$(usex curl OFF ON)"
 		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
 		-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="$(usex ssl OFF ON)"
