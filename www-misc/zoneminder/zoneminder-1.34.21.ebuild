@@ -175,7 +175,7 @@ src_install() {
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
 
 	# documentation
-	rm "${WORKDIR}/${P}/scripts/*.pl.8.gz" || die
+	rm "${WORKDIR}/${P}_build/scripts/*.pl.8.gz" || die
 	if [[ ${PV} == 9999 ]]; then
 		dodoc README.md "${T}"/10_zoneminder.conf
 	else
