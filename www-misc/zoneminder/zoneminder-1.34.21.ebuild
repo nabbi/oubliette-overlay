@@ -34,7 +34,7 @@ else
 fi
 
 LICENSE="GPL-2"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="curl encode gcrypt gnutls +mmap +ssl libressl vlc"
 SLOT="0"
 
@@ -174,8 +174,6 @@ src_install() {
 	cp "${FILESDIR}"/10_zoneminder.conf "${T}"/10_zoneminder.conf || die
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
 
-	# documentation
-	rm "${WORKDIR}/${P}_build/scripts/*.pl.8.gz" || die
 	if [[ ${PV} == 9999 ]]; then
 		dodoc README.md "${T}"/10_zoneminder.conf
 	else
