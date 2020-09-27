@@ -10,6 +10,7 @@ depend() {
 start_pre() {
 	checkpath -d -m 0775 -o apache:apache /var/run/zm
 	checkpath -d -m 0775 -o apache:apache /var/tmp/zm
+	checkpath -d -m 0775 -o apache:apache /var/cache/zoneminder
 }
 
 start() {

@@ -158,10 +158,6 @@ src_install() {
 	dosym /var/cache/zoneminder ${MY_ZM_WEBDIR}/cache
 	dosym /var/lib/zoneminder/api_tmp ${MY_ZM_WEBDIR}/api/app/tmp
 
-	# the cache directory
-	keepdir /var/cache/zoneminder
-	fowners apache:apache /var/cache/zoneminder
-
 	# bug 523058
 	keepdir ${MY_ZM_WEBDIR}/temp
 	fowners -R apache:apache ${MY_ZM_WEBDIR}/temp
