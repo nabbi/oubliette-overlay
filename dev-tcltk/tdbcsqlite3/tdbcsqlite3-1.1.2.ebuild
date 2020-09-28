@@ -40,3 +40,7 @@ src_unpack() {
 src_configure() {
 	econf "--with-tdbc=/usr/lib64/tdbc${MY_TDBC}/"
 }
+
+src_install() {
+	dolib library/tdbcsqlite3.tcl
+}
