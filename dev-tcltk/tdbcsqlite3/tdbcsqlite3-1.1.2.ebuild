@@ -37,10 +37,12 @@ src_unpack() {
 	ln -s "${WORKDIR}/TEA__tclconfig__Source_Code-${TEA_V}" ${MY_PN}/tclconfig
 }
 
+src_prepare() {
+	eapply_user
+	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries/" -i Makefile.in
+}
+
 src_configure() {
 	econf "--with-tdbc=/usr/lib64/tdbc${MY_TDBC}/"
 }
 
-src_install() {
-	dolib library/tdbcsqlite3.tcl
-}
