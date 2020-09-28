@@ -24,7 +24,7 @@ KEYWORDS="amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-linux ~x86-linux ~x86-macos"
 RDEPEND="
 	~dev-tcltk/tdbc-${MY_TDBC}
 	>=dev-lang/tcl-8.6
-	dev-db/sqlite
+	dev-db/sqlite[tcl]
 	"
 DEPEND="${RDEPEND}"
 
