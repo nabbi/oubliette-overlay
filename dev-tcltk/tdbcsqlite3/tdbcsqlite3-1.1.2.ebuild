@@ -39,7 +39,7 @@ src_unpack() {
 
 src_prepare() {
 	eapply_user
-	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries/" -i Makefile.in
+	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries\ install-libraries/" -i Makefile.in
 }
 
 src_configure() {
