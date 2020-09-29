@@ -38,5 +38,5 @@ src_unpack() {
 }
 
 src_configure() {
-	econf "--with-tdbc=/usr/lib64/tdbc${MY_TDBC}/"
+	econf "--with-tdbc=/usr/$(get_libdir)/tdbc${MY_TDBC}/"
 }
