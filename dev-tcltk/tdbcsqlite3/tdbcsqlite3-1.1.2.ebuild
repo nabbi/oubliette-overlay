@@ -39,10 +39,14 @@ src_unpack() {
 
 src_prepare() {
 	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries\ install-libraries/" -i Makefile.in
-	sed -s "s/^#TEA_PUBLIC_TCL_HEADERS/TEA_PUBLIC_TCL_HEADERS/" -i configure.ac
+	#sed -s "s/^#TEA_PUBLIC_TCL_HEADERS/TEA_PUBLIC_TCL_HEADERS/" -i configure.ac
 }
 
 src_configure() {
-	econf "--with-tdbc=/usr/lib64/tdbc${MY_TDBC}/"
+	econf "--with-tdbc=/usr/$(get_libdir)/tdbc${MY_TDBC}/"
 }
 
+src_install() {
+	insinto /usr/$(get_libdir)/{$MY_PN}-${MY_TDBC}
+	doins pkgIndex.tcl
+}
