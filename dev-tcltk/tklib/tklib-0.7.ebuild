@@ -42,5 +42,5 @@ src_install() {
 
 	mv "${ED}"/usr/share/man/mann/datefield{,-${PN}}.n || die
 	mv "${ED}"/usr/share/man/mann/menubar{,-${PN}}.n || die
-	mv "${ED}"/usr/bin/dia{,-${PN}} || die
+	#mv "${ED}"/usr/bin/dia{,-${PN}} || die
 }
