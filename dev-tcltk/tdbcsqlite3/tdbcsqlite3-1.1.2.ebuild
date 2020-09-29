@@ -38,8 +38,10 @@ src_unpack() {
 }
 
 src_prepare() {
+	# tweak make file as the TM install did not work
 	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries\ install-libraries/" -i Makefile.in
-	#sed -s "s/^#TEA_PUBLIC_TCL_HEADERS/TEA_PUBLIC_TCL_HEADERS/" -i configure.ac
+	# fix pathing
+	sed -e "s/\.\.\ library//" -i pkgIndex.tcl.in
 }
 
 src_configure() {
