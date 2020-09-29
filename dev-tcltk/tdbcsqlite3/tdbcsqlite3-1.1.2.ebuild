@@ -38,7 +38,8 @@ src_unpack() {
 }
 
 src_prepare() {
-	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries\ install-lib-binaries/" -i Makefile.in
+	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries\ install-libraries/" -i Makefile.in
+	sed -s "s/^#TEA_PUBLIC_TCL_HEADERS/TEA_PUBLIC_TCL_HEADERS/" -i configure.ac
 }
 
 src_configure() {
