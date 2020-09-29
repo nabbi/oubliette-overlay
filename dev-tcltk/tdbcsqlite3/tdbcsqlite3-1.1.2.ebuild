@@ -47,6 +47,7 @@ src_configure() {
 }
 
 src_install() {
-	insinto /usr/$(get_libdir)/{$MY_PN}-${MY_TDBC}
+	default
+	insinto /usr/$(get_libdir)/${MY_PN}-${MY_TDBC}
 	doins pkgIndex.tcl
 }
