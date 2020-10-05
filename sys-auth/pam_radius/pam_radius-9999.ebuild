@@ -1,4 +1,4 @@
-# Copyright 1999-2019 Gentoo Authors
+# Copyright 2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -10,7 +10,9 @@ DESCRIPTION="PAM RADIUS authentication module"
 HOMEPAGE="http://www.freeradius.org/pam_radius_auth/"
 
 if [[ ${PV} != *9999 ]]; then
-	SRC_URI="ftp://ftp.freeradius.org/pub/radius/${P}.tar.gz"
+	MY_PV=$(ver_rs 1- '_')
+	SRC_URI="https://github.com/FreeRADIUS/${PN}/archive/release_${MY_PV}.tar.gz"
+	KEYWORDS="~amd64 ~x86"
 else
 	EGIT_REPO_URI="https://github.com/FreeRADIUS/${PN}.git"
 	EGIT_BRANCH=master
@@ -18,7 +20,6 @@ fi
 
 LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
 IUSE=""
 
 DEPEND="sys-libs/pam"
@@ -27,6 +28,15 @@ RDEPEND="${DEPEND}"
 doecho() {
 	echo "$@"
 	"$@" || die
+}
+
+src_unpack() {
+	if [[ ${PV} != *9999 ]]; then
+		unpack ${A}
+		mv "${WORKDIR}/${PN}-release_${MY_PV}" "${P}"
+	else
+		git-r3_src_unpack
+	fi
 }
 
 src_compile() {
