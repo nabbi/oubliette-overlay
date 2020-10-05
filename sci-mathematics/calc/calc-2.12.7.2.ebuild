@@ -56,5 +56,5 @@ src_install() {
 		T="${D}" \
 		LIBDIR="${EPREFIX}/usr/$(get_libdir)" \
 		install
-	dodoc BUGS CHANGES LIBRARY README
+	dodoc BUGS CHANGES LIBRARY README.FIRST
 }
