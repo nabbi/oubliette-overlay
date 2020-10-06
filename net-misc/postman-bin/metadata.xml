@@ -6,6 +6,6 @@
     <name>Ultrabug</name>
   </maintainer>
   <longdescription>
-  Oubliette - ebuild version bump from ultrabug overlay with repoman cleanups
+  Oubliette - ebuild version bump from jorgicio overlay
   </longdescription>
 </pkgmetadata>
