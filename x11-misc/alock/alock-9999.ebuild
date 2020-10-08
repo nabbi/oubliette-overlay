@@ -8,8 +8,8 @@ inherit autotools eutils toolchain-funcs git-r3
 DESCRIPTION="Simple screen lock application for X server"
 HOMEPAGE="https://github.com/Arkq/alock"
 
-# Temp using my nabbi fork for code testing instead of Arkq
-EGIT_REPO_URI="https://github.com/nabbi/${PN}"
+# toggling between Arkq fork and my nabbi fork
+EGIT_REPO_URI="https://github.com/Arkq/${PN}"
 EGIT_BRANCH=master
 
 LICENSE="MIT"

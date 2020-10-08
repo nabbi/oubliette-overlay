@@ -9,13 +9,13 @@
 		multiple hash-types, shadow passwords, and PAM.
 
 		Version 2.x was forked from mgumz/alock in 2014 by Arkadiusz Bokowy
+		https://github.com/Arkq/alock
 		
 		Version 1.x was written in 2005-2011 by Mathias Gumz
-		Original project page - https://darkshed.net/projects/alock
+		https://darkshed.net/projects/alock
 		https://github.com/mgumz/alock
 		
-		Originally based on xtrlock 1993–1994 by Ian Jackson
-		
+		Based on xtrlock 1993–1994 by Ian Jackson
 	</longdescription>
 	<upstream>
 		<maintainer>
