@@ -1,4 +1,4 @@
-# Copyright 2019 Gentoo Authors
+# Copyright 2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
@@ -23,7 +23,6 @@ DEPEND="dev-libs/libgcrypt:0
 	x11-libs/libXfixes
 	x11-libs/libXpm
 	x11-libs/libXrender
-	x11-libs/libXxf86misc
 	imlib? ( media-libs/imlib2[X] )
 	pam? ( sys-libs/pam )
 	xbacklight? ( x11-apps/xbacklight )"

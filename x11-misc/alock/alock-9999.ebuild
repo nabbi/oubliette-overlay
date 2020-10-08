@@ -1,4 +1,4 @@
-# Copyright 2019 Gentoo Authors
+# Copyright 2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
@@ -6,14 +6,14 @@ inherit autotools eutils toolchain-funcs git-r3
 
 # we need this since there are no tagged releases yet
 DESCRIPTION="Simple screen lock application for X server"
-HOMEPAGE="https://github.com/nabbi/alock"
+HOMEPAGE="https://github.com/Arkq/alock"
 
+# Temp using my nabbi fork for code testing instead of Arkq
 EGIT_REPO_URI="https://github.com/nabbi/${PN}"
 EGIT_BRANCH=master
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~ppc ~x86"
 IUSE="debug imlib pam xbacklight"
 
 DEPEND="dev-libs/libgcrypt:0
@@ -25,7 +25,6 @@ DEPEND="dev-libs/libgcrypt:0
 	x11-libs/libXfixes
 	x11-libs/libXpm
 	x11-libs/libXrender
-	x11-libs/libXxf86misc
 	imlib? ( media-libs/imlib2[X] )
 	pam? ( sys-libs/pam )
 	xbacklight? ( x11-apps/xbacklight )"
