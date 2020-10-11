@@ -66,6 +66,7 @@ dev-perl/Data-Entropy
 dev-perl/HTTP-Lite
 dev-perl/MIME-Lite
 dev-perl/Device-SerialPort
+dev-perl/X10
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
