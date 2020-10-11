@@ -13,5 +13,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE=""
 
-RDEPEND="dev-perl/Time-ParseDate"
+RDEPEND="
+	dev-perl/Time-ParseDate
+	dev-perl/Device-SerialPort"
 DEPEND="${RDEPEND}"
