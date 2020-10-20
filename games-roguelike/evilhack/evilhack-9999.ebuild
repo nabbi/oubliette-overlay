@@ -5,7 +5,7 @@ EAPI=7
 inherit desktop flag-o-matic toolchain-funcs
 
 DESCRIPTION="NetHack 3.6 variant features GruntHack, SporkHack and others with custom content"
-HOMEPAGE="https://evilhackwiki.com/wiki/EvilHack"
+HOMEPAGE="https://nethackwiki.com/wiki/EvilHack"
 if [[ "${PV}" == "9999" ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/k21971/EvilHack.git"
