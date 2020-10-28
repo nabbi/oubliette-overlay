@@ -1,0 +1,8 @@
+--- azure-cli-2.11.1-a/azure/cli/command_modules/util/commands.py	2020-08-28 08:36:01.000000000 +0200
++++ azure-cli-2.11.1-b/azure/cli/command_modules/util/commands.py	2020-08-29 20:11:57.431250895 +0200
+@@ -12,5 +12,3 @@
+     with self.command_group('') as g:
+         g.custom_command('version', 'show_version')
+ 
+-    with self.command_group('') as g:
+-        g.custom_command('upgrade', 'upgrade_version', is_experimental=True)
