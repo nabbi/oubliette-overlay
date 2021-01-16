@@ -1,4 +1,4 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # TO DO:
@@ -71,7 +71,7 @@ dev-perl/Device-SerialPort
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
-media-video/ffmpeg[x264]
+media-video/ffmpeg[x264,x265,jpeg2k]
 encode? ( media-libs/libmp4v2 )
 virtual/httpd-php:*
 virtual/jpeg:0
