@@ -24,13 +24,9 @@ if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
 else
-	MY_CRUD_VERSION="6.0.1"
-	MY_CAKEPHP_VERSION="1.0-zm"
-	SRC_URI="
-		https://github.com/ZoneMinder/zoneminder/archive/${PV}.tar.gz
-		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz
-		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_VERSION}.tar.gz -> CakePHP-Enum-Behavior-${MY_CAKEPHP_VERSION}.tar.gz
-		"
+	inherit git-r3
+	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
+	EGIT_COMMIT="${PV}"
 	KEYWORDS="~amd64"
 fi
 
@@ -98,13 +94,6 @@ MY_ZM_WEBDIR=/usr/share/zoneminder/www
 src_prepare() {
 	cmake_src_prepare
 
-	if [[ ${PV} != 9999 ]]; then
-		rmdir "${S}/web/api/app/Plugin/Crud" || die
-		mv "${WORKDIR}/crud-${MY_CRUD_VERSION}" "${S}/web/api/app/Plugin/Crud" || die
-		rmdir "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
-		mv "${WORKDIR}/CakePHP-Enum-Behavior-${MY_CAKEPHP_VERSION}" "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
-	fi
-
 	rm "${WORKDIR}/${P}/conf.d/README" || die
 }
 
@@ -169,11 +158,7 @@ src_install() {
 	cp "${FILESDIR}"/10_zoneminder.conf "${T}"/10_zoneminder.conf || die
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
 
-	if [[ ${PV} == 9999 ]]; then
-		dodoc README.md "${T}"/10_zoneminder.conf
-	else
-		dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
-	fi
+	dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
 
 	perl_delete_packlist
 
