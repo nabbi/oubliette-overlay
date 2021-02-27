@@ -123,6 +123,8 @@ src_configure() {
 src_install() {
 	cmake_src_install
 
+	docompress -x /usr/share/man
+
 	# the log directory
 	keepdir /var/log/zm
 	fowners apache:apache /var/log/zm
@@ -135,10 +137,10 @@ src_install() {
 	keepdir /var/lib/zoneminder /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/zoneminder/api_tmp
 	fperms -R 0775 /var/lib/zoneminder
 	fowners -R apache:apache /var/lib/zoneminder
-	dosym /var/lib/zoneminder/images ${MY_ZM_WEBDIR}/images
-	dosym /var/lib/zoneminder/events ${MY_ZM_WEBDIR}/events
-	dosym /var/cache/zoneminder ${MY_ZM_WEBDIR}/cache
-	dosym /var/lib/zoneminder/api_tmp ${MY_ZM_WEBDIR}/api/app/tmp
+	dosym ../../../../var/lib/zoneminder/images ${MY_ZM_WEBDIR}/images
+	dosym ../../../../var/lib/zoneminder/events ${MY_ZM_WEBDIR}/events
+	dosym ../../../../var/cache/zoneminder ${MY_ZM_WEBDIR}/cache
+	dosym ../../../../../../var/lib/zoneminder/api_tmp ${MY_ZM_WEBDIR}/api/app/tmp
 
 	# bug 523058
 	keepdir ${MY_ZM_WEBDIR}/temp
