@@ -150,8 +150,10 @@ pkg_postinst() {
 	if [[ $(get_libdir) != lib && ${SYMLINK_LIB} != yes && \
 			-d ${EROOT}/usr/$(get_libdir)/distcc ]]; then
 		rm -r -f "${EROOT}/usr/$(get_libdir)/distcc" || die
+	fi
+
 	# remove the old paths when switching from lib to libXX
-	elif [[ $(get_libdir) != lib && -d ${EROOT}/usr/lib/distcc ]]; then
+	if [[ $(get_libdir) != lib && -d ${EROOT}/usr/lib/distcc ]]; then
 		rm -r -f "${EROOT}/usr/lib/distcc" || die
 	fi
 
