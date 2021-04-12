@@ -1,15 +1,5 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-
-# TO DO:
-# * dependencies of unknown status:
-#       dev-perl/Device-SerialPort
-#       dev-perl/MIME-Lite
-#       dev-perl/MIME-tools
-#       dev-perl/PHP-Serialization
-#       virtual/perl-Archive-Tar
-#       virtual/perl-libnet
-#       virtual/perl-Module-Load
 
 EAPI=7
 
@@ -24,13 +14,9 @@ if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
 else
-	MY_CRUD_VERSION="3.1.0-zm"
-	MY_CAKEPHP_VERSION="1.0-zm"
-	SRC_URI="
-		https://github.com/ZoneMinder/zoneminder/archive/${PV}.tar.gz
-		https://github.com/ZoneMinder/crud/archive/${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz
-		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_VERSION}.tar.gz -> CakePHP-Enum-Behavior-${MY_CAKEPHP_VERSION}.tar.gz
-		"
+	inherit git-r3
+	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
+	EGIT_COMMIT="${PV}"
 	KEYWORDS="~amd64"
 fi
 
@@ -71,7 +57,7 @@ dev-perl/Device-SerialPort
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
-media-video/ffmpeg[x264]
+media-video/ffmpeg[x264,x265,jpeg2k]
 encode? ( media-libs/libmp4v2 )
 virtual/httpd-php:*
 virtual/jpeg:0
@@ -97,13 +83,6 @@ MY_ZM_WEBDIR=/usr/share/zoneminder/www
 
 src_prepare() {
 	cmake_src_prepare
-
-	if [[ ${PV} != 9999 ]]; then
-		rmdir "${S}/web/api/app/Plugin/Crud" || die
-		mv "${WORKDIR}/crud-${MY_CRUD_VERSION}" "${S}/web/api/app/Plugin/Crud" || die
-		rmdir "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
-		mv "${WORKDIR}/CakePHP-Enum-Behavior-${MY_CAKEPHP_VERSION}" "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
-	fi
 
 	rm "${WORKDIR}/${P}/conf.d/README" || die
 }
@@ -134,6 +113,8 @@ src_configure() {
 src_install() {
 	cmake_src_install
 
+	docompress -x /usr/share/man
+
 	# the log directory
 	keepdir /var/log/zm
 	fowners apache:apache /var/log/zm
@@ -146,10 +127,7 @@ src_install() {
 	keepdir /var/lib/zoneminder /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/zoneminder/api_tmp
 	fperms -R 0775 /var/lib/zoneminder
 	fowners -R apache:apache /var/lib/zoneminder
-	dosym /var/lib/zoneminder/images ${MY_ZM_WEBDIR}/images
-	dosym /var/lib/zoneminder/events ${MY_ZM_WEBDIR}/events
-	dosym /var/cache/zoneminder ${MY_ZM_WEBDIR}/cache
-	dosym /var/lib/zoneminder/api_tmp ${MY_ZM_WEBDIR}/api/app/tmp
+	dosym ../../../../../../var/lib/zoneminder/api_tmp ${MY_ZM_WEBDIR}/api/app/tmp
 
 	# bug 523058
 	keepdir ${MY_ZM_WEBDIR}/temp
@@ -169,11 +147,7 @@ src_install() {
 	cp "${FILESDIR}"/10_zoneminder.conf "${T}"/10_zoneminder.conf || die
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
 
-	if [[ ${PV} == 9999 ]]; then
-		dodoc README.md "${T}"/10_zoneminder.conf
-	else
-		dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
-	fi
+	dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
 
 	perl_delete_packlist
 
