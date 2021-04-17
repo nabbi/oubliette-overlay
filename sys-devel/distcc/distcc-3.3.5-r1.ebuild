@@ -1,7 +1,7 @@
 # Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-#testing with get_libdir
+#testing with libexec
 
 EAPI=7
 
@@ -50,13 +50,13 @@ src_prepare() {
 	use hardened && eapply "${FILESDIR}/distcc-hardened.patch"
 
 	sed -i \
-		-e "/PATH/s:\$distcc_location:${EPREFIX}/usr/$(get_libdir)/distcc/bin:" \
+		-e "/PATH/s:\$distcc_location:${EPREFIX}/usr/libexec/distcc/bin:" \
 		-e "s:@PYTHON@:${EPYTHON}:" \
 		pump.in || die "sed failed"
 
 	sed \
 		-e "s:@EPREFIX@:${EPREFIX:-/}:" \
-		-e "s:@libdir@:/usr/$(get_libdir):" \
+		-e "s:@libdir@:/usr/libexec:" \
 		"${FILESDIR}/distcc-config" > "${T}/distcc-config" || die
 
 	# TODO: gdb tests fail due to gdb failing to find .c file
@@ -70,7 +70,7 @@ src_prepare() {
 src_configure() {
 	local myconf=(
 		--disable-Werror
-		--libdir=/usr/$(get_libdir)
+		--libdir=/usr/libexec
 		$(use_enable ipv6 rfc2553)
 		$(use_with gtk)
 		--without-gnome
@@ -122,7 +122,7 @@ src_install() {
 	DCC_EMAILLOG_WHOM_TO_BLAME="${DCC_EMAILLOG_WHOM_TO_BLAME}"
 	EOF
 
-	keepdir /usr/$(get_libdir)/distcc
+	keepdir /usr/libexec/distcc
 
 	dobin "${T}/distcc-config"
 
@@ -139,8 +139,8 @@ src_install() {
 	fi
 
 	insinto /usr/share/shadowman/tools
-	newins - distcc <<<"${EPREFIX}/usr/$(get_libdir)/distcc/bin"
-	newins - distccd <<<"${EPREFIX}/usr/$(get_libdir)/distcc"
+	newins - distcc <<<"${EPREFIX}/usr/libexec/distcc/bin"
+	newins - distccd <<<"${EPREFIX}/usr/libexec/distcc"
 
 	rm -r "${ED}/etc/default" || die
 	rm "${ED}/etc/distcc/clients.allow" || die
@@ -148,14 +148,13 @@ src_install() {
 }
 
 pkg_postinst() {
-	# remove the old paths when switching from libXX to lib
-	if [[ $(get_libdir) != lib && ${SYMLINK_LIB} != yes && \
-			-d ${EROOT}/usr/$(get_libdir)/distcc ]]; then
+	# remove the old paths when switching from libXX to libexec
+	if [[ -d ${EROOT}/usr/$(get_libdir)/distcc ]]; then
 		rm -r -f "${EROOT}/usr/$(get_libdir)/distcc" || die
 	fi
 
-	# remove the old paths when switching from lib to libXX
-	if [[ $(get_libdir) != lib && -d ${EROOT}/usr/lib/distcc ]]; then
+	# remove the old paths when switching from lib to libexec
+	if [[ -d ${EROOT}/usr/lib/distcc ]]; then
 		rm -r -f "${EROOT}/usr/lib/distcc" || die
 	fi
 
