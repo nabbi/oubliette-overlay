@@ -94,6 +94,7 @@ python_install_all() {
 	distutils-r1_python_install_all
 	if use doc; then
 		dodoc files/HOWTO.html files/docbook-xsl.css
+		dodoc -r examples
 	fi
 }
 
