@@ -48,9 +48,9 @@ src_unpack() {
 		fossil pull --repository ${fossil} --verbose ${url} || die
 		echo
 	fi
-	cp -p ${fossil} "${distdir}/fossil-src/${PN}" || die
+	mv ${fossil} "${distdir}/fossil-src/${PN}" || die
 	einfo fossil open --quiet ${fossil}
-	fossil open --quiet ${fossil} || die
+	fossil open --quiet "${distdir}/fossil-src/${PN}/${fossil}" || die
 	echo
 	popd > /dev/null || die
 }
