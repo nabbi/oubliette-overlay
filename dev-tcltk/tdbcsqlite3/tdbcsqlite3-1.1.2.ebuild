@@ -1,7 +1,7 @@
-# Copyright 2019 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=7
 
 inherit eutils virtualx
 MY_PN="tdbcsqlite3"
@@ -19,7 +19,7 @@ SRC_URI="https://core.tcl.tk/tdbcsqlite3/tarball/${MY_PV}/tdbc__sqlite3-${MY_PV}
 
 LICENSE="tcltk"
 SLOT="0"
-KEYWORDS="amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-linux ~x86-linux ~x86-macos"
+KEYWORDS="amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-linux ~x86-linux"
 
 RDEPEND="
 	~dev-tcltk/tdbc-${MY_TDBC}
@@ -38,6 +38,8 @@ src_unpack() {
 }
 
 src_prepare() {
+	eapply_user
+
 	# tweak make file as the TM install did not work
 	sed -e "s/^install:\ all\ install-tm/install:\ all\ install-binaries\ install-libraries/" -i Makefile.in
 	# fix pathing

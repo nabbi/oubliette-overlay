@@ -1,7 +1,7 @@
-# Copyright 2019 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=7
 
 inherit eutils virtualx
 MY_PN="tdbcmysql"
@@ -19,7 +19,7 @@ SRC_URI="https://core.tcl.tk/tdbcmysql/tarball/${MY_PV}/tdbc__mysql-${MY_PV}.tar
 
 LICENSE="tcltk"
 SLOT="0"
-KEYWORDS="amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-linux ~x86-linux ~x86-macos"
+KEYWORDS="amd64 ~hppa ~ia64 ~mips ~ppc ~x86 ~amd64-linux ~x86-linux"
 
 RDEPEND="
 	~dev-tcltk/tdbc-${MY_TDBC}
