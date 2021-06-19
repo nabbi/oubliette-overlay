@@ -1,16 +1,6 @@
 # Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# TO DO:
-# * dependencies of unknown status:
-#       dev-perl/Device-SerialPort
-#       dev-perl/MIME-Lite
-#       dev-perl/MIME-tools
-#       dev-perl/PHP-Serialization
-#       virtual/perl-Archive-Tar
-#       virtual/perl-libnet
-#       virtual/perl-Module-Load
-
 EAPI=7
 
 inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd
@@ -31,7 +21,7 @@ else
 fi
 
 LICENSE="GPL-2"
-IUSE="curl encode gcrypt gnutls +mmap +ssl libressl vlc"
+IUSE="curl encode gcrypt gnutls +mmap +ssl vlc"
 SLOT="0"
 REQUIRED_USE="
 	|| ( ssl gnutls )
@@ -81,10 +71,7 @@ curl? ( net-misc/curl )
 gcrypt? ( dev-libs/libgcrypt:0= )
 gnutls? ( net-libs/gnutls )
 mmap? ( dev-perl/Sys-Mmap )
-ssl? (
-	!libressl? ( dev-libs/openssl:0= )
-	libressl? ( dev-libs/libressl:0= )
-)
+ssl? ( dev-libs/openssl:0= )
 vlc? ( media-video/vlc[live] )
 "
 RDEPEND="${DEPEND}"
@@ -137,9 +124,6 @@ src_install() {
 	keepdir /var/lib/zoneminder /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/zoneminder/api_tmp
 	fperms -R 0775 /var/lib/zoneminder
 	fowners -R apache:apache /var/lib/zoneminder
-	dosym ../../../../var/lib/zoneminder/images ${MY_ZM_WEBDIR}/images
-	dosym ../../../../var/lib/zoneminder/events ${MY_ZM_WEBDIR}/events
-	dosym ../../../../var/cache/zoneminder ${MY_ZM_WEBDIR}/cache
 	dosym ../../../../../../var/lib/zoneminder/api_tmp ${MY_ZM_WEBDIR}/api/app/tmp
 
 	# bug 523058

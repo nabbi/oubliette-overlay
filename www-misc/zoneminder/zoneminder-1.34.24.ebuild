@@ -21,7 +21,7 @@ else
 fi
 
 LICENSE="GPL-2"
-IUSE="curl encode gcrypt gnutls +mmap +ssl libressl vlc"
+IUSE="curl encode gcrypt gnutls +mmap +ssl vlc"
 SLOT="0"
 REQUIRED_USE="
 	|| ( ssl gnutls )
@@ -71,10 +71,7 @@ curl? ( net-misc/curl )
 gcrypt? ( dev-libs/libgcrypt:0= )
 gnutls? ( net-libs/gnutls )
 mmap? ( dev-perl/Sys-Mmap )
-ssl? (
-	!libressl? ( dev-libs/openssl:0= )
-	libressl? ( dev-libs/libressl:0= )
-)
+ssl? ( dev-libs/openssl:0= )
 vlc? ( media-video/vlc[live] )
 "
 RDEPEND="${DEPEND}"
