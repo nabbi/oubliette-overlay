@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<maintainer type="person">
+<email>nic@boet.cc</email>
+<name>nic</name>
+</maintainer>
+<longdescription>
+c-icap is an implementation of an ICAP server. It can be used with HTTP proxies that support the ICAP protocol such as the Squid 3.x HTTP proxy server to implement content adaptation/filtering services
+</longdescription>
+</pkgmetadata>
