@@ -68,4 +68,6 @@ src_install() {
 		insinto /etc/logrotate.d
 		newins "${FILESDIR}"/${PN}.logrotate ${PN}
 	fi
+
+	dodoc AUTHORS README TODO ChangeLog
 }
