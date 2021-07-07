@@ -18,11 +18,11 @@ fi
 
 LICENSE="LGPL-2.1"
 SLOT="0"
-IUSE="berkdb clamav"
+IUSE="berkdb"
 
 DEPEND="
 	berkdb? ( sys-libs/db:* )
-	clamav? ( app-antivirus/clamav )
+	app-antivirus/clamav
 	net-proxy/c-icap
 	"
 RDEPEND="${DEPEND}"
