@@ -41,8 +41,8 @@ src_configure() {
 		--disable-maintainer-mode \
 		--disable-static \
 		--with-c-icap \
-		$(use_with berkdb bdb) \
-		$(use_with clamav)
+		--with-clamav \
+		$(use_with berkdb bdb)
 }
 
 src_install() {
