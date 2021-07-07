@@ -54,6 +54,8 @@ src_install() {
 	# perfrom some cleanups of log and run dirs
 	rm -r "${ED}/var" || die
 
+	find "${ED}" -name '*.la' -delete || die
+
 	keepdir /var/log/c-icap
 	fowners cicap:cicap  /var/log/c-icap
 
