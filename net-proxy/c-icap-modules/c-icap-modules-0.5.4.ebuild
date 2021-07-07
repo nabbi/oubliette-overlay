@@ -46,6 +46,8 @@ src_configure() {
 }
 
 src_install() {
+	dodir /etc/c-icap
+
 	default
 
 	dodoc AUTHORS README ChangeLog
