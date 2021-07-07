@@ -8,4 +8,7 @@
 <longdescription>
 c-icap is an implementation of an ICAP server. It can be used with HTTP proxies that support the ICAP protocol such as the Squid 3.x HTTP proxy server to implement content adaptation/filtering services
 </longdescription>
+<use>
+<flag name="logrotate">Install logrotate.d file</flag>
+</use>
 </pkgmetadata>

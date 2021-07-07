@@ -1,0 +1,37 @@
+#!/sbin/openrc-run
+# Copyright 2021 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+extra_started_commands="reload"
+name="c-icap daemon"
+description="C-ICAP service"
+command=/usr/bin/c-icap
+command_args="${cicap_args} -f ${configfile}"
+
+depend() {
+	need net
+}
+
+start_pre() {
+	checkpath --directory --owner cicap:cicap --mode 0775 "$(dirname "${pidfile}")"
+}
+
+start() {
+	ebegin "Starting c-icap-server"
+	start-stop-daemon --start --exec $command --pidfile ${pidfile}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping c-icap-server"
+	start-stop-daemon --stop --exec $command --pidfile ${pidfile}
+	eend $?
+}
+
+reload() {
+	start_pre || return 1
+	ebegin "Sending reconfigure and relog commands to c-icap"
+	echo -n "reconfigure" > "${cmdsocket}"
+	echo -n "relog" > "${cmdsocket}"
+	eend $?
+}

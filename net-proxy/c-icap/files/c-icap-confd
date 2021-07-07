@@ -1,0 +1,19 @@
+# $Id$
+
+# The main configuration file
+configfile=/etc/c-icap/c-icap.conf
+
+#c-icap writes its pid in this file
+pidfile=/var/run/c-icap/c-icap.pid
+
+#The commands socket. This file used to send commands to the icap server from command line.
+cmdsocket=/var/run/c-icap/c-icap.ctl
+
+# Use this to set any extra option for the daemon. Do not use the -f
+# option here.
+cicap_args=""
+
+# If you enabled LDAP support, and you'd like to access tables stored
+# in the local LDAP instance, you want to uncomment the following
+# line.
+#rc_need="slapd"

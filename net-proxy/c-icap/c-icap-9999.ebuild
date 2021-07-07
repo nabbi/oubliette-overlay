@@ -13,15 +13,18 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_BRANCH="master"
 else
 	EGIT_COMMIT="C_ICAP_${PV}"
-	KEYWORDS="amd64"
+	KEYWORDS="amd64 ~arm x86"
 fi
 
 LICENSE="LGPL-2.1"
 SLOT="0"
+IUSE="berkdb ldap ipv6 logrotate"
 
 DEPEND="
 	acct-group/cicap
 	acct-user/cicap
+	berkdb? ( sys-libs/db:* )
+	ldap? ( net-nds/openldap )
 	"
 RDEPEND="${DEPEND}"
 BDEPEND=""
@@ -33,17 +36,36 @@ src_prepare() {
 	eautoreconf
 }
 
+src_configure() {
+	econf \
+		--sysconfdir=/etc/${PN} \
+		--disable-dependency-tracking \
+		--disable-maintainer-mode \
+		--disable-static \
+		--enable-large-files \
+		$(use_enable ipv6) \
+		$(use_with berkdb bdb) \
+		$(use_with ldap)
+}
+
 src_install() {
 	default
 
-	# perfrom some cleanups
+	# perfrom some cleanups of log and run dirs
 	rm -r "${ED}/var" || die
 
 	keepdir /var/log/c-icap
 	fowners cicap:cicap  /var/log/c-icap
 
-	insinto /etc/
+	insinto /etc/${PN}
 	doins "${FILESDIR}"/${PN}.conf
 
-	doinitd "${FILESDIR}"/${PN}
+	newinitd "${FILESDIR}/${PN}-init" ${PN}
+	newconfd "${FILESDIR}/${PN}-confd" ${PN}
+
+	if use logrotate ; then
+		insopts -m0644
+		insinto /etc/logrotate.d
+		newins "${FILESDIR}"/${PN}.logrotate ${PN}
+	fi
 }
