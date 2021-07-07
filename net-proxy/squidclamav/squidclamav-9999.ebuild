@@ -22,6 +22,7 @@ IUSE=""
 
 DEPEND="
 	net-proxy/c-icap
+	app-antivirus/clamav
 	"
 RDEPEND="${DEPEND}"
 BDEPEND=""
