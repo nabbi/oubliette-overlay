@@ -40,6 +40,7 @@ src_configure() {
 		--disable-dependency-tracking \
 		--disable-maintainer-mode \
 		--disable-static \
+		--with-c-icap \
 		$(use_with berkdb bdb) \
 		$(use_with clamav)
 }
