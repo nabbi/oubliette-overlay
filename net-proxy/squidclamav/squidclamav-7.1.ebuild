@@ -36,6 +36,7 @@ src_configure() {
 src_install() {
 	default
 
+	find "${ED}" -name '*.la' -delete || die
 }
 
 pkg_postinst() {
