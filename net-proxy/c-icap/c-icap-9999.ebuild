@@ -13,7 +13,7 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_BRANCH="master"
 else
 	EGIT_COMMIT="C_ICAP_${PV}"
-	KEYWORDS="amd64 ~arm x86"
+	KEYWORDS="amd64 ~arm ~x86"
 fi
 
 LICENSE="LGPL-2.1"
@@ -70,4 +70,24 @@ src_install() {
 	fi
 
 	dodoc AUTHORS README TODO ChangeLog
+}
+
+pkg_postinst() {
+	elog "To enable Squid to call the ICAP modules from a local server you should set"
+	elog "the following in your squid.conf:"
+	elog ""
+	elog "    icap_enable on"
+	elog ""
+	elog "    # not strictly needed, but some modules might make use of these"
+	elog "    icap_send_client_ip on"
+	elog "    icap_send_client_username on"
+	elog ""
+	elog "    icap_service service_req reqmod_precache bypass=1 icap://localhost:1344/service"
+	elog "    adaptation_access service_req allow all"
+	elog ""
+	elog "    icap_service service_resp respmod_precache bypass=0 icap://localhost:1344/service"
+	elog "    adaptation_access service_resp allow all"
+	elog ""
+	elog "You obviously will have to replace \"service\" with the actual ICAP service to"
+	elog "use."
 }
