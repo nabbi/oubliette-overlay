@@ -45,6 +45,8 @@ src_configure() {
 }
 
 src_install() {
+	default
+
 	dodoc AUTHORS README ChangeLog
 
 	find "${ED}" -name '*.la' -delete || die
