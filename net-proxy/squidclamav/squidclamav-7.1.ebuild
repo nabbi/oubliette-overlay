@@ -23,14 +23,19 @@ IUSE=""
 DEPEND="
 	net-proxy/c-icap
 	app-antivirus/clamav
+	app-arch/libarchive
 	"
 RDEPEND="${DEPEND}"
 BDEPEND=""
 
 src_configure() {
 	econf \
+		--disable-dependency-tracking \
+		--disable-maintainer-mode \
 		--disable-static \
-		--enable-shared
+		--enable-shared \
+		--with-c-icap \
+		--with-libarchive
 }
 
 src_install() {
