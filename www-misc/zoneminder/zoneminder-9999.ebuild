@@ -118,7 +118,7 @@ src_install() {
 
 	# the logrotate script
 	insinto /etc/logrotate.d
-	newins distros/ubuntu1604/zoneminder.logrotate zoneminder
+	newins distros/ubuntu2004/zoneminder.logrotate zoneminder
 
 	# now we duplicate the work of zmlinkcontent.sh
 	keepdir /var/lib/zoneminder /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/zoneminder/api_tmp
