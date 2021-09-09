@@ -12,10 +12,10 @@ HOMEPAGE="http://www.zoneminder.com/"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
-	EGIT_REPO_URI="https://github.com/nabbi/zoneminder"
+	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
 else
 	inherit git-r3
-	EGIT_REPO_URI="https://github.com/nabbi/zoneminder"
+	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
 	EGIT_COMMIT="${PV}"
 	KEYWORDS="~amd64"
 fi

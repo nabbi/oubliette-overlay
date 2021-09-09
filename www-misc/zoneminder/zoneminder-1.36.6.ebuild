@@ -10,6 +10,7 @@ MY_PN="ZoneMinder"
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
 
+# upstream submodule ref head is broken. workaround around using my fork
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/nabbi/zoneminder"
