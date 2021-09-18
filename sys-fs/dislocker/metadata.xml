@@ -8,4 +8,7 @@
   <upstream>
     <remote-id type="github">Aorimn/dislocker</remote-id>
   </upstream>
+  <longdescription>
+    Oubliette - cmake.eclass bug 811486 workaround
+  </longdescription>
 </pkgmetadata>
