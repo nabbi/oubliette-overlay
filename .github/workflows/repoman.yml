@@ -125,4 +125,4 @@ jobs:
         sudo ln -s /var/db/repos/gentoo/profiles/default/linux/amd64/17.0 /etc/portage/make.profile
     - name: Test with repoman
       run: |
-        python3 portage-portage-3.0.20/repoman/bin/repoman full -dx --jobs=$(nproc) --include-profiles="${PROFILE}"
+        python3 portage-portage-3.0.23/repoman/bin/repoman full -dx --jobs=$(nproc) --include-profiles="${PROFILE}"
