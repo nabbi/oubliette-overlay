@@ -1,4 +1,4 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -32,6 +32,7 @@ fi
 
 src_prepare() {
 	eapply "${FILESDIR}/nethack-3.6.3-recover.patch"
+	eapply "${FILESDIR}/evilhack-wintty.patch"
 	eapply_user
 
 	cp "${FILESDIR}/nethack-3.6.3-hint-tty" hint || die "Failed to copy hint file"
@@ -51,14 +52,15 @@ src_compile() {
 	LOCAL_MAKEOPTS=(
 		CC="$(tc-getCC)" CFLAGS="${CFLAGS}" LFLAGS="${LDFLAGS}"
 		WINTTYLIB="$($(tc-getPKG_CONFIG) --libs ncurses)"
-		HACKDIR="${EPREFIX}/usr/$(get_libdir)/evilhack" INSTDIR="${ED}/usr/$(get_libdir)/evilhack"
-		SHELLDIR="${ED}/usr/bin" VARDIR="${ED}/var/games/evilhack"
+		HACKDIR="${EPREFIX}/usr/$(get_libdir)/evilhack" INSTDIR="${D%/}${EPREFIX}/usr/$(get_libdir)/evilhack"
+		SHELLDIR="${D%/}${EPREFIX}/usr/bin" VARDIR="${D%/}${EPREFIX}/var/games/evilhack"
 		)
 
 	emake "${LOCAL_MAKEOPTS[@]}" evilhack recover Guidebook spec_levs
 
 	# Upstream still has some parallel compilation bugs
-	emake -j1 "${LOCAL_MAKEOPTS[@]}" all
+	#emake -j1 "${LOCAL_MAKEOPTS[@]}" all
+	emake "${LOCAL_MAKEOPTS[@]}" all
 }
 
 src_install() {
