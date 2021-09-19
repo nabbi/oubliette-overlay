@@ -32,7 +32,7 @@ fi
 
 src_prepare() {
 	eapply "${FILESDIR}/nethack-3.6.3-recover.patch"
-	eapply "${FILESDIR}/evilhack-wintty.patch"
+#	eapply "${FILESDIR}/evilhack-wintty.patch"
 	eapply_user
 
 	cp "${FILESDIR}/nethack-3.6.3-hint-tty" hint || die "Failed to copy hint file"
