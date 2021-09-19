@@ -59,8 +59,7 @@ src_compile() {
 	emake "${LOCAL_MAKEOPTS[@]}" evilhack recover Guidebook spec_levs
 
 	# Upstream still has some parallel compilation bugs
-	#emake -j1 "${LOCAL_MAKEOPTS[@]}" all
-	emake "${LOCAL_MAKEOPTS[@]}" all
+	emake -j1 "${LOCAL_MAKEOPTS[@]}" all
 }
 
 src_install() {
