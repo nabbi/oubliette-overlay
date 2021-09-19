@@ -32,7 +32,6 @@ fi
 
 src_prepare() {
 	eapply "${FILESDIR}/nethack-3.6.3-recover.patch"
-#	eapply "${FILESDIR}/evilhack-wintty.patch"
 	eapply_user
 
 	cp "${FILESDIR}/nethack-3.6.3-hint-tty" hint || die "Failed to copy hint file"
@@ -59,7 +58,8 @@ src_compile() {
 	emake "${LOCAL_MAKEOPTS[@]}" evilhack recover Guidebook spec_levs
 
 	# Upstream still has some parallel compilation bugs
-	emake -j1 "${LOCAL_MAKEOPTS[@]}" all
+	#emake -j1 "${LOCAL_MAKEOPTS[@]}" all
+	emake "${LOCAL_MAKEOPTS[@]}" all
 }
 
 src_install() {
