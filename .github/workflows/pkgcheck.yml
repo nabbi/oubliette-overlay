@@ -1,0 +1,24 @@
+#https://raw.githubusercontent.com/gentoo-haskell/gentoo-haskell/master/.github/workflows/pkgcheck.yml
+name: pkgcheck
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run pkgcheck
+      uses: pkgcore/pkgcheck-action@v1
+      with:
+        # NonSolvableDepsInXXX is a false positive. This is fixed in
+        # https://github.com/pkgcore/pkgcheck/issues/281 , and we can remove this
+        # keyword flag once the next pkgcheck release hits
+        #args: --checks=-RedundantVersionCheck --keywords=-NonsolvableDepsInDev,-NonsolvableDepsInStable,-NonsolvableDepsInExp
+        args: --checks=-RedundantVersionCheck
