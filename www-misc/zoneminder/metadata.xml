@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<longdescription>
-	Oubliette - ebuild version bump from Gentoo repository
-	</longdescription>
 	<maintainer type="person">
-		<email>dilfridge@gentoo.org</email>
-		<name>Andreas K. Huettel</name>
+		<email>nic@boet.cc</email>
+		<description>
+			Oubliette - ebuild version bump from Gentoo repository
+		</description>
 	</maintainer>
 	<use>
 		<flag name="curl">Enable using net-misc/curl for streaming from cameras</flag>
