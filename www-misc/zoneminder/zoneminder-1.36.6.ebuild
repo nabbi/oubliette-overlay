@@ -3,25 +3,17 @@
 
 EAPI=7
 
-inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd
+inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd git-r3
 
 MY_PN="ZoneMinder"
-MY_CRUD_V="14292374ccf1328f2d5db20897bd06f99ba4d938"
-MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
-MY_RTSP_V="cd7fd49becad6010a1b8466bfebbd93999a39878"
 
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
 
-if [[ ${PV} == 9999 ]]; then
-	inherit git-r3
-	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
-else
-	SRC_URI="
-		https://github.com/${MY_PN}/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
-		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_V}.tar.gz -> Crud-${MY_CRUD_V}.tar.gz
-		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
-		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz"
+EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
+
+if [[ ${PV} != 9999 ]]; then
+	EGIT_COMMIT="${PV}"
 	KEYWORDS="~amd64"
 fi
 
@@ -87,17 +79,6 @@ src_prepare() {
 	cmake_src_prepare
 
 	rm "${WORKDIR}/${P}/conf.d/README" || die
-
-	if [[ ${PV} != 9999 ]]; then
-		rmdir "${S}/web/api/app/Plugin/Crud" || die
-		mv "${WORKDIR}/crud-${MY_CRUD_V}" "${S}/web/api/app/Plugin/Crud" || die
-
-		rmdir "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
-		mv "${WORKDIR}/CakePHP-Enum-Behavior-${MY_CAKEPHP_V}" "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
-
-		rmdir "${S}/dep/RtspServer" || die
-		mv "${WORKDIR}/RtspServer-${MY_RTSP_V}" "${S}/dep/RtspServer" || die
-	fi
 }
 
 src_configure() {
