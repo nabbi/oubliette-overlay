@@ -9,7 +9,7 @@ inherit perl-module
 DESCRIPTION='Lightweight HTTP implementation'
 
 SLOT="0"
-KEYWORDS="amd64 ~x86"
+KEYWORDS="~amd64 ~x86"
 IUSE=""
 perl_meta_configure() {
 	# ExtUtils::MakeMaker 6.42 ( 6.420.0 )

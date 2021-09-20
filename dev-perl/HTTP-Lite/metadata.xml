@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<longdescription>
-		Oubliette - ebuild from perl-experimental overlay for zoneminder
-	</longdescription>
-	<maintainer type="project">
-		<email>perl@gentoo.org</email>
-		<name>Gentoo Perl Project</name>
-	</maintainer>
 	<maintainer type="person">
-		<email>kentfredric@gmail.com</email>
-		<name>Kent Fredric</name>
+		<email>nic@boet.cc</email>
+		<description>
+			Oubliette - ebuild copied from perl-experimental overlay for zoneminder
+			https://github.com/gentoo-perl/perl-experimental/tree/master/dev-perl/HTTP-Lite
+
+			https://github.com/neilb/HTTP-Lite/releases
+		</description>
 	</maintainer>
 	<upstream>
 		<remote-id type="cpan">HTTP-Lite</remote-id>
