@@ -3,18 +3,17 @@
 
 EAPI=7
 
-inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd
+inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd git-r3
 
 MY_PN="ZoneMinder"
 
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
 
-if [[ ${PV} == 9999 ]]; then
-	inherit git-r3
-	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
-else
-	SRC_URI="https://github.com/${MY_PN}/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
+EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
+
+if [[ ${PV} != 9999 ]]; then
+	EGIT_COMMIT="${PV}"
 	KEYWORDS="~amd64"
 fi
 

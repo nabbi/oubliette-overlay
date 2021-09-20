@@ -3,19 +3,23 @@
 
 EAPI=7
 
-inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd git-r3
+inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd
 
 MY_PN="ZoneMinder"
+MY_CRUD_VERSION="3.1.0"
 
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
 
-EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
-
-if [[ ${PV} != 9999 ]]; then
-	EGIT_COMMIT="${PV}"
+#if [[ ${PV} == 9999 ]]; then
+#	inherit git-r3
+#	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
+#else
+	SRC_URI="
+		https://github.com/${MY_PN}/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
+		https://github.com/FriendsOfCake/crud/archive/v${MY_CRUD_VERSION}.tar.gz -> Crud-${MY_CRUD_VERSION}.tar.gz"
 	KEYWORDS="~amd64"
-fi
+#fi
 
 LICENSE="GPL-2"
 IUSE="curl encode gcrypt gnutls +mmap +ssl vlc"
@@ -79,6 +83,8 @@ src_prepare() {
 	cmake_src_prepare
 
 	rm "${WORKDIR}/${P}/conf.d/README" || die
+	rmdir "${S}/web/api/app/Plugin/Crud" || die
+	mv "${WORKDIR}/crud-${MY_CRUD_VERSION}" "${S}/web/api/app/Plugin/Crud" || die
 }
 
 src_configure() {
