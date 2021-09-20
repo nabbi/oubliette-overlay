@@ -1,4 +1,4 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
@@ -25,11 +25,6 @@ COMMON_DEPEND="
 	$(comment virtual/perl-integer)
 	virtual/perl-parent
 	$(comment perl 5.6 w/ strict and warnings)
-
-	$(comment CONFLICTS)
-	!<virtual/perl-Math-BigInt-1.60 $(comment 1.600.0)
-	!<virtual/perl-Math-BigRat-0.04 $(comment 0.40.0)
-	!<perl-core/Math-BigRat-0.04 $(comment 0.40.0)
 "
 DEPEND="
 	${COMMON_DEPEND}

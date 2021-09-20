@@ -1,16 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<longdescription>
-		Oubliette - ebuild from perl-experimental overlay for zoneminder
-	</longdescription>
-	<maintainer type="project">
-		<email>perl@gentoo.org</email>
-		<name>Gentoo Perl Project</name>
-	</maintainer>
 	<maintainer type="person">
-		<email>kentfredric@gmail.com</email>
-		<name>Kent Fredric</name>
+		<email>nic@boet.cc</email>
+		<description>
+			Oubliette - ebuild copied and tweaked from perl-experimental overlay for zoneminder
+		</description>
 	</maintainer>
 	<upstream>
 		<remote-id type="cpan">Data-Entropy</remote-id>
