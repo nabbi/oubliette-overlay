@@ -3,7 +3,8 @@
 
 EAPI=7
 
-inherit cmake flag-o-matic
+CMAKE_REMOVE_MODULES_LIST="${CMAKE_REMOVE_MODULES_LIST} FindRuby"
+inherit cmake
 
 DESCRIPTION="Dislocker is used to read BitLocker encrypted partitions"
 HOMEPAGE="https://github.com/Aorimn/dislocker"
@@ -26,8 +27,6 @@ DEPEND="
 	ruby? ( dev-lang/ruby:* )
 "
 RDEPEND="${DEPEND}"
-
-CMAKE_REMOVE_MODULES_LIST="${CMAKE_REMOVE_MODULES_LIST} FindRuby"
 
 src_prepare() {
 	cmake_src_prepare

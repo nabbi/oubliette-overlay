@@ -3,7 +3,6 @@
 
 EAPI=7
 
-inherit eutils virtualx
 MY_PN="tdbcsqlite3"
 #TDBC SQLite3 - 1.1.2 2020-07-09 commit version
 MY_PV="c4702e6d7a"

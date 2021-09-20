@@ -3,7 +3,6 @@
 
 EAPI=7
 
-inherit eutils virtualx
 MY_PN="tdbcodbc"
 #TDBC ODBC - 1.1.2 2020-07-09 commit version
 MY_PV="1b8fcca830"

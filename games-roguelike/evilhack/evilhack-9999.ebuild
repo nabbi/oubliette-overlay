@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
-inherit desktop flag-o-matic toolchain-funcs
+inherit flag-o-matic toolchain-funcs
 
 DESCRIPTION="NetHack 3.6 variant features GruntHack, SporkHack and others with custom content"
 HOMEPAGE="https://nethackwiki.com/wiki/EvilHack"

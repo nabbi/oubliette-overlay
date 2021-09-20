@@ -3,7 +3,6 @@
 
 EAPI=7
 
-inherit eutils virtualx
 MY_PN="tdbcmysql"
 #TDBC MySQL - 1.1.2 2020-07-09 commit version
 MY_PV="f84f7b2660"

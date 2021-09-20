@@ -1,10 +1,10 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
 
 [[ ${PV} == *9999 ]] && SCM="git-r3"
-inherit eutils pam toolchain-funcs $SCM
+inherit pam toolchain-funcs $SCM
 
 DESCRIPTION="PAM RADIUS authentication module"
 HOMEPAGE="http://www.freeradius.org/pam_radius_auth/"

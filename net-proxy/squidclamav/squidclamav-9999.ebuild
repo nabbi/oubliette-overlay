@@ -3,16 +3,15 @@
 
 EAPI=7
 
-inherit git-r3 autotools
-
 DESCRIPTION="SquidClamAv is a dedicated ClamAV antivirus redirector for Squid"
 HOMEPAGE="https://squidclamav.darold.net/"
-EGIT_REPO_URI="https://github.com/darold/squidclamav"
 
 if [[ ${PV} == 9999 ]]; then
+	inherit git-r3
+	EGIT_REPO_URI="https://github.com/darold/squidclamav"
 	EGIT_BRANCH="master"
 else
-	EGIT_COMMIT="v${PV}"
+	SRC_URI="https://github.com/darold/squidclamav/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 	KEYWORDS="amd64 ~arm ~x86"
 fi
 

@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit autotools flag-o-matic systemd linux-info
+inherit autotools systemd linux-info
 
 DESCRIPTION="Robust and highly flexible tunneling application compatible with many OSes"
 HOMEPAGE="https://openvpn.net/"

@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-  <maintainer type="person">
-    <email>nativemad@gentoo.org</email>
-    <name>Andreas Schuerch</name>
-  </maintainer>
-  <upstream>
-    <remote-id type="github">Aorimn/dislocker</remote-id>
-  </upstream>
-  <longdescription>
-    Oubliette - cmake.eclass bug 811486 workaround
-  </longdescription>
+<maintainer type="person">
+<email>nativemad@gentoo.org</email>
+<name>Andreas Schuerch</name>
+</maintainer>
+<upstream>
+<remote-id type="github">Aorimn/dislocker</remote-id>
+</upstream>
+<longdescription>
+Oubliette - copied from gentoo to workaround bug
+cmake.eclass has an escape issue
+https://bugs.gentoo.org/811486
+</longdescription>
 </pkgmetadata>

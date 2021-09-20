@@ -3,7 +3,6 @@
 
 EAPI=7
 
-inherit autotools flag-o-matic toolchain-funcs
 MY_P=${MY_PN}-${MY_PV}
 
 DESCRIPTION="provides UDP sockets for Tcl"

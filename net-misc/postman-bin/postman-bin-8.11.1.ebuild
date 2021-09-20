@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit desktop eutils xdg
+inherit desktop xdg
 
 MY_PN="${PN/-bin/}"
 

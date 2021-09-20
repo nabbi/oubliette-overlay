@@ -3,7 +3,6 @@
 
 EAPI=7
 
-inherit eutils virtualx
 MY_PN="TDBC"
 #TDBC - 1.1.2 2020-07-09 commit version
 MY_PV="4e6b72e13b"

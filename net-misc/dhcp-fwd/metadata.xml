@@ -3,11 +3,10 @@
 <pkgmetadata>
 <maintainer type="person">
 <email>nic@boet.cc</email>
-</maintainer>
-<longdescription lang="en">
+<description>
 Oubliette - new package
-
-</longdescription>
+</description>
+</maintainer>
 <use>
 <flag name="diet">compiles with diet libc</flag>
 <flag name="logging">compiles with logging support</flag>

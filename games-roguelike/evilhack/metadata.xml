@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-<longdescription lang="en">
-Oubliette - new package
-</longdescription>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+		<description>
+			Oubliette - new ebuild for zoneminder X10 support
+		</description>
+	</maintainer>
 </pkgmetadata>

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-  <longdescription>
-  Oubliette - ebuild copied from zGentoo overlay
-  </longdescription>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+		<description>
+			Oubliette - ebuild copied from zGentoo overlay
+		</description>
+	</maintainer>
 </pkgmetadata>
