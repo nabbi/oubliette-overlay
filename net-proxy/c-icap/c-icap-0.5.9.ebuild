@@ -3,17 +3,19 @@
 
 EAPI=7
 
-inherit git-r3 autotools
+inherit autotools
 
 DESCRIPTION="an implementation of an ICAP server written in C"
 HOMEPAGE="http://c-icap.sourceforge.net/"
-EGIT_REPO_URI="https://github.com/c-icap/c-icap-server"
 
 if [[ ${PV} == 9999 ]]; then
+	inherit git-r3
+	EGIT_REPO_URI="https://github.com/c-icap/c-icap-server"
 	EGIT_BRANCH="master"
 else
-	EGIT_COMMIT="C_ICAP_${PV}"
+	SRC_URI="https://github.com/c-icap/c-icap-server/archive/refs/tags/C_ICAP_${PV}.tar.gz -> ${P}.tar.gz"
 	KEYWORDS="amd64 ~arm ~x86"
+	S="${WORKDIR}/c-icap-server-C_ICAP_${PV}"
 fi
 
 LICENSE="LGPL-2.1"
@@ -32,7 +34,11 @@ BDEPEND=""
 src_prepare() {
 	eapply_user
 
-	git branch --list -v | grep -e '^\*' | awk '{print $2"-"$3}'> VERSION.m4
+	if [[ ${PV} == 9999 ]]; then
+		git branch --list -v | grep -e '^\*' | awk '{print $2"-"$3}'> VERSION.m4 || die
+	else
+		echo ${PV} > VERSION.m4 || die
+	fi
 	eautoreconf
 }
 

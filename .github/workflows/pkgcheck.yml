@@ -21,6 +21,9 @@ jobs:
         # https://github.com/pkgcore/pkgcheck/issues/281 , and we can remove this
         # keyword flag once the next pkgcheck release hits
         #args: --checks=-RedundantVersionCheck --keywords=-NonsolvableDepsInDev,-NonsolvableDepsInStable,-NonsolvableDepsInExp
+        #
         # ignore "VCS version visible for KEYWORDS=" as a number of pkgs refs repo tags
         # These are logged as warnings but exit code is non-zero
-        args: --checks=-RedundantVersionCheck --keywords=-VisibleVcsPkg
+        #args: --checks=-RedundantVersionCheck --keywords=-VisibleVcsPkg
+        #
+        args: --checks=-RedundantVersionCheck
