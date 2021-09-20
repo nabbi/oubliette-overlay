@@ -1,8 +1,8 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
-inherit autotools eutils toolchain-funcs git-r3
+inherit autotools toolchain-funcs git-r3
 
 # we need this since there are no tagged releases yet
 DESCRIPTION="Simple screen lock application for X server"
