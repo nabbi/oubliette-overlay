@@ -13,7 +13,10 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="diet logging"
 
-DEPEND="diet? ( dev-libs/dietlibc )"
+DEPEND="
+	acct-group/dhcp-fwd
+	acct-user/dhcp-fwd
+	diet? ( dev-libs/dietlibc )"
 RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/${PSRC}"
@@ -21,13 +24,8 @@ S="${WORKDIR}/${PSRC}"
 src_prepare() {
 	unpack ${A}
 	cd "${S}"
-	epatch "${FILESDIR}/${P}-gentoo.patch"
+	eapply "${FILESDIR}/${PN}-0.8-gentoo.patch"
 	eapply_user
-}
-
-pkg_setup() {
-	enewgroup dhcp-fwd
-	enewuser dhcp-fwd -1 -1 -1 dhcp-fwd
 }
 
 src_compile() {
