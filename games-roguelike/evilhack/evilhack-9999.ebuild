@@ -34,38 +34,52 @@ src_prepare() {
 	eapply "${FILESDIR}/nethack-3.6.3-recover.patch"
 	eapply_user
 
-	cp "${FILESDIR}/nethack-3.6.3-hint-tty" hint || die "Failed to copy hint file"
+	cp "${FILESDIR}/evilhack-hint-tty.1" hint || die "Failed to copy hint file"
+
+	# these might not all be needed as we no longer "make install"
+	sed -i "s:@HACKDIR@:${EPREFIX}/usr/$(get_libdir)/evilhack:" hint || die
+	sed -i "s:@SHELLDIR@:${EPREFIX}/usr/bin:" hint || die
+	sed -i "s:@VARDIR@:${EPREFIX}/var/games/evilhack:" hint || die
+	sed -i "s:@WINTTYLIB@:$($(tc-getPKG_CONFIG) --libs ncurses):" hint || die
+
 	sys/unix/setup.sh hint || die "Failed to run setup.sh"
 }
 
+# https://github.com/k21971/EvilHack/issues/71
+# Known QA issue present also present in vanilla nethack
+#
+# dogmove.c: In function ‘droppables’:
+# cc1: warning: function may return address of local variable [-Wreturn-local-addr]
+# dogmove.c:266:28: note: declared here
+
 src_compile() {
-	append-cflags -I../include -DDLB -DSECURE -DTIMED_DELAY -DVISION_TABLES -DDUMPLOG -DSCORE_ON_BOTL
-	append-cflags -DLIVELOG_ENABLE
+	append-cflags -I../include -DNOTPARMDECL
+	append-cflags -DDLB -DSECURE -DTIMED_DELAY -DDUMPLOG -DSCORE_ON_BOTL
 	append-cflags '-DCOMPRESS=\"${EPREFIX}/bin/gzip\"' '-DCOMPRESS_EXTENSION=\".gz\"'
 	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
-	append-cflags "-DDEF_PAGER=\\\"${PAGER}\\\""
 	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
+	append-cflags -DVISION_TABLES
+	append-cflags -DLIVELOG_ENABLE
 
-	#use X && append-cflags -DX11_GRAPHICS -DUSE_XPM
-
-	LOCAL_MAKEOPTS=(
-		CC="$(tc-getCC)" CFLAGS="${CFLAGS}" LFLAGS="${LDFLAGS}"
-		WINTTYLIB="$($(tc-getPKG_CONFIG) --libs ncurses)"
-		HACKDIR="${EPREFIX}/usr/$(get_libdir)/evilhack" INSTDIR="${D%/}${EPREFIX}/usr/$(get_libdir)/evilhack"
-		SHELLDIR="${D%/}${EPREFIX}/usr/bin" VARDIR="${D%/}${EPREFIX}/var/games/evilhack"
-		)
-
-	emake "${LOCAL_MAKEOPTS[@]}" evilhack recover Guidebook spec_levs
-
-	# Upstream still has some parallel compilation bugs
-	#emake -j1 "${LOCAL_MAKEOPTS[@]}" all
-	emake "${LOCAL_MAKEOPTS[@]}" all
+	emake evilhack recover Guidebook spec_levs
+	emake all
 }
 
 src_install() {
-	emake "${LOCAL_MAKEOPTS[@]}" install
 
-	mv "${ED}/usr/$(get_libdir)/evilhack/recover" "${ED}/usr/bin/recover-evilhack" || die "Failed to move recover-evilhack"
+	#fix pathing in launch script
+	sed -i "s:^HACKDIR=.*:HACKDIR=/var/games/evilhack:" sys/unix/nethack.sh || die
+	sed -i "s:^HACK=.*:HACK=\$HACKDIR/evilhack:" sys/unix/nethack.sh || die
+	newbin sys/unix/nethack.sh evilhack
+
+	newbin util/recover recover-evilhack
+
+	dodir /usr/$(get_libdir)/evilhack
+	for f in cmdhelp help hh history keyhelp license nhdat opthelp symbols wizhelp; do
+		mv "${S}/dat/${f}" "${ED}/usr/$(get_libdir)/evilhack/${f}" || die
+	done
+
+	mv src/evilhack "${ED}/usr/$(get_libdir)/evilhack/" || die
 
 	newman doc/nethack.6 evilhack.6
 	newman doc/recover.6 recover-evilhack.6
@@ -77,7 +91,6 @@ src_install() {
 	insinto /etc/skel
 	newins "${FILESDIR}/nethack-3.6.0-nethackrc" .evilhackrc
 
-	rm -r "${ED}/var/games/evilhack" || die "Failed to clean var/games/evilhack"
 	keepdir /var/games/evilhack/save
 }
 

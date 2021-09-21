@@ -4,7 +4,7 @@
 	<maintainer type="person">
 		<email>nic@boet.cc</email>
 		<description>
-			Oubliette - new ebuild for zoneminder X10 support
+			Oubliette - new ebuild based on nethack with qa cleanups
 		</description>
 	</maintainer>
 </pkgmetadata>
