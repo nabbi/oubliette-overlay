@@ -52,13 +52,6 @@ src_prepare() {
 # dogmove.c:266:28: note: declared here
 
 src_compile() {
-#	append-cflags -I../include -DNOTPARMDECL
-#	append-cflags -DDLB -DSECURE -DTIMED_DELAY -DDUMPLOG -DSCORE_ON_BOTL
-#	append-cflags '-DCOMPRESS=\"${EPREFIX}/bin/gzip\"' '-DCOMPRESS_EXTENSION=\".gz\"'
-#	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
-#	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
-#	append-cflags -DVISION_TABLES
-#	append-cflags -DLIVELOG_ENABLE
 
 # evilhack sys/unix/hints/linux-debug
 ##	CFLAGS=-g3 -O2 -I../include -DNOTPARMDECL -fno-common
@@ -117,11 +110,12 @@ src_install() {
 	newins "${FILESDIR}/nethack-3.6.0-nethackrc" .evilhackrc
 
 	keepdir /var/games/evilhack/save
+	keepdir /var/games/evilhack/whereis
 }
 
 pkg_preinst() {
 	fowners root:gamestat /var/games/evilhack /var/games/evilhack/save
-	fperms 2770 /var/games/evilhack /var/games/evilhack/save
+	fperms 2770 /var/games/evilhack /var/games/evilhack/save /var/games/evilhack/whereis
 
 	fowners root:gamestat "/usr/$(get_libdir)/evilhack/evilhack"
 	fperms g+s "/usr/$(get_libdir)/evilhack/evilhack"
