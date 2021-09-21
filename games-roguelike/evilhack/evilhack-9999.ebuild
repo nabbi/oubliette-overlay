@@ -59,7 +59,6 @@ src_compile() {
 	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
 	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
 	append-cflags -DVISION_TABLES
-	append-cflags -DLIVELOG_ENABLE
 
 	emake evilhack recover Guidebook spec_levs
 	emake all
