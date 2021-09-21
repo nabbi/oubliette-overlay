@@ -85,7 +85,6 @@ src_compile() {
 
 src_install() {
 
-	#fix pathing in launch script
 	sed -i "s:^HACKDIR=.*:HACKDIR=/usr/$(get_libdir)/evilhack:" sys/unix/nethack.sh || die
 	sed -i "s:^HACK=.*:HACK=\$HACKDIR/evilhack:" sys/unix/nethack.sh || die
 	newbin sys/unix/nethack.sh evilhack
@@ -114,7 +113,7 @@ src_install() {
 }
 
 pkg_preinst() {
-	fowners root:gamestat /var/games/evilhack /var/games/evilhack/save
+	fowners root:gamestat /var/games/evilhack /var/games/evilhack/save /var/games/evilhack/whereis
 	fperms 2770 /var/games/evilhack /var/games/evilhack/save /var/games/evilhack/whereis
 
 	fowners root:gamestat "/usr/$(get_libdir)/evilhack/evilhack"
