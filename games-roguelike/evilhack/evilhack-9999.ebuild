@@ -36,7 +36,6 @@ src_prepare() {
 
 	cp "${FILESDIR}/evilhack-hint-tty.1" hint || die "Failed to copy hint file"
 
-	# these might not all be needed as we no longer "make install"
 	sed -i "s:@HACKDIR@:${EPREFIX}/usr/$(get_libdir)/evilhack:" hint || die
 	sed -i "s:@SHELLDIR@:${EPREFIX}/usr/bin:" hint || die
 	sed -i "s:@VARDIR@:${EPREFIX}/var/games/evilhack:" hint || die
@@ -59,9 +58,12 @@ src_compile() {
 	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
 	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
 	append-cflags -DVISION_TABLES
+	append-cflags -DLIVELOG_ENABLE
 
 	emake evilhack recover Guidebook spec_levs
-	emake all
+
+	# Upstream still has some parallel compilation bugs
+	emake -j1 all
 }
 
 src_install() {
