@@ -68,7 +68,7 @@ src_compile() {
 src_install() {
 
 	#fix pathing in launch script
-	sed -i "s:^HACKDIR=.*:HACKDIR=/var/games/evilhack:" sys/unix/nethack.sh || die
+	sed -i "s:^HACKDIR=.*:HACKDIR=/usr/$(get_libdir)/evilhack:" sys/unix/nethack.sh || die
 	sed -i "s:^HACK=.*:HACK=\$HACKDIR/evilhack:" sys/unix/nethack.sh || die
 	newbin sys/unix/nethack.sh evilhack
 
