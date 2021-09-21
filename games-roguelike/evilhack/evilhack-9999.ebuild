@@ -52,13 +52,37 @@ src_prepare() {
 # dogmove.c:266:28: note: declared here
 
 src_compile() {
-	append-cflags -I../include -DNOTPARMDECL
-	append-cflags -DDLB -DSECURE -DTIMED_DELAY -DDUMPLOG -DSCORE_ON_BOTL
-	append-cflags '-DCOMPRESS=\"${EPREFIX}/bin/gzip\"' '-DCOMPRESS_EXTENSION=\".gz\"'
-	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
-	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
-	append-cflags -DVISION_TABLES
+#	append-cflags -I../include -DNOTPARMDECL
+#	append-cflags -DDLB -DSECURE -DTIMED_DELAY -DDUMPLOG -DSCORE_ON_BOTL
+#	append-cflags '-DCOMPRESS=\"${EPREFIX}/bin/gzip\"' '-DCOMPRESS_EXTENSION=\".gz\"'
+#	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\"" "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
+#	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\""
+#	append-cflags -DVISION_TABLES
+#	append-cflags -DLIVELOG_ENABLE
+
+# evilhack sys/unix/hints/linux-debug
+##	CFLAGS=-g3 -O2 -I../include -DNOTPARMDECL -fno-common
+	append-cflags -I../include -DNOTPARMDECL -fno-common
+	append-cflags -DDLB
+	append-cflags "-DCOMPRESS=\\\"${EPREFIX}/bin/gzip\\\"" '-DCOMPRESS_EXTENSION=\".gz\"'
+##	append-cflags -DGCC_WARN -Wall -Wextra -Wformat=2 #-Werror
+##	append-cflags -Wimplicit -Wreturn-type -Wunused -Wswitch -Wshadow -Wwrite-strings
+##	append-cflags -Wno-format-nonliteral
+##	append-cflags -Wno-stringop-truncation
+##	append-cflags -Wno-missing-field-initializers
+##	append-cflags -Wno-format-overflow -Wno-stringop-overflow
+	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\"" -DSECURE
+	append-cflags -DTIMED_DELAY
+	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\""
+	append-cflags "-DVAR_PLAYGROUND=\\\"${EPREFIX}/var/games/evilhack\\\""
+	append-cflags -DCONFIG_ERROR_SECURE=FALSE
+	append-cflags -DCURSES_GRAPHICS
+	append-cflags -DPANICLOG_FMT2
+	append-cflags -DTTY_TILES_ESCCODES
+	append-cflags -DDGAMELAUNCH
 	append-cflags -DLIVELOG_ENABLE
+	append-cflags -DDUMPLOG
+	append-cflags -DDUMPHTML
 
 	emake evilhack recover Guidebook spec_levs
 
