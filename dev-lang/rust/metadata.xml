@@ -8,6 +8,10 @@
 	<maintainer type="project">
 		<email>rust@gentoo.org</email>
 		<name>Rust Project</name>
+		<description>
+			Oubliette - patched makeopts when compiled on distcc tuned host
+			https://bugs.gentoo.org/814281
+		</description>
 	</maintainer>
 	<use>
 		<flag name="clippy">Install clippy, Rust code linter</flag>
