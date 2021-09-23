@@ -64,8 +64,6 @@ src_compile() {
 	append-cflags -DDUMPLOG
 	append-cflags -DDUMPHTML
 
-	emake evilhack recover Guidebook spec_levs
-
 	# Upstream still has some parallel compilation bugs
 	emake -j1 all
 }
