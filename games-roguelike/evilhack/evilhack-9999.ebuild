@@ -64,8 +64,6 @@ src_compile() {
 	append-cflags -DDUMPLOG
 	append-cflags -DDUMPHTML
 
-	emake evilhack recover Guidebook spec_levs
-
 	# Upstream still has some parallel compilation bugs
 	emake -j1 all
 }
@@ -111,7 +109,7 @@ pkg_postinst() {
 	cd "${EROOT}/var/games/evilhack" || die "Failed to enter ${EROOT}/var/games/evilhack directory"
 
 	# Those files can't be created earlier because we don't want portage to wipe them during upgrades
-	( umask 007 && touch logfile perm record xlogfile ) || die "Failed to create log files"
+	( umask 007 && touch livelog logfile perm record wishtracker xlogfile ) || die "Failed to create log files"
 
 	# Instead of using a proper version header in its save files, evilhack checks for incompatibilities
 	# by comparing the mtimes of save files and its own binary. This would require admin interaction even
