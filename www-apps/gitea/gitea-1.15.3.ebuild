@@ -90,6 +90,9 @@ src_compile() {
 	[[ ${PV} != 9999* ]] && makeenv+=("DRONE_TAG=${MY_PV}")
 
 	if use build-client; then
+		# read-shrinkwrap lockfileVersion 1 vs 2
+		npm install npm@latest
+
 		# -j1 as Makefile doesn't handle dependancy correctly, and is not
 		# useful as golang compiler don't use this info.
 		env "${makeenv[@]}" emake -j1 build
