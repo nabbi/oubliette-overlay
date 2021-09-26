@@ -114,7 +114,7 @@ src_install() {
 	newins custom/conf/app.example.ini app.ini
 	if use acct ; then
 		fowners root:git /etc/gitea/{,app.ini}
-		fperms g+w,o-rwx /etc/gitea/{,app.ini}
+		fperms g+rw,o-rwx /etc/gitea/{,app.ini}
 
 		diropts -m0750 -o git -g git
 		keepdir /var/lib/gitea /var/lib/gitea/custom /var/lib/gitea/data
