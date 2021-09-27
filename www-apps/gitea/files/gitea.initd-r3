@@ -10,6 +10,8 @@ description="Gitea, a self-hosted Git service"
 : ${GITEA_WORK_DIR:=/var/lib/gitea}
 : ${GITEA_CUSTOM:=${GITEA_WORK_DIR}/custom}
 
+retry="SIGTERM/15 SIGKILL/60"
+
 command="/usr/bin/gitea web"
 command_args="--config ${GITEA_CONF}"
 command_background="true"
