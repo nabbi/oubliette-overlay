@@ -31,13 +31,6 @@ DEPEND="
 	xbacklight? ( x11-apps/xbacklight )"
 RDEPEND="${DEPEND}"
 
-PATCHES=(
-#	"${FILESDIR}"/implicit_pointer_conversion_fix_amd64.patch
-#	"${FILESDIR}"/check-setuid.patch
-#	"${FILESDIR}"/tidy-printf.patch
-#	"${FILESDIR}"/fix-aliasing.patch
-)
-
 src_unpack() {
 	git-r3_src_unpack
 }
