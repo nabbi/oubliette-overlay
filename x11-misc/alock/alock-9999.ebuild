@@ -34,7 +34,7 @@ PATCHES=(
 #	"${FILESDIR}"/implicit_pointer_conversion_fix_amd64.patch
 #	"${FILESDIR}"/check-setuid.patch
 #	"${FILESDIR}"/tidy-printf.patch
-	"${FILESDIR}"/fix-aliasing.patch
+#	"${FILESDIR}"/fix-aliasing.patch
 )
 
 src_unpack() {
