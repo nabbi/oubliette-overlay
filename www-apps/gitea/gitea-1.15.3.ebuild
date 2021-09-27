@@ -22,12 +22,15 @@ LICENSE="Apache-2.0 BSD BSD-2 ISC MIT MPL-2.0"
 SLOT="0"
 IUSE="+acct build-client pam sqlite"
 
-BDEPEND="build-client? ( >=net-libs/nodejs-10[npm] )"
+BDEPEND="
+	build-client? ( >=net-libs/nodejs-12.17[npm] )
+	>=dev-lang/go-1.17"
 COMMON_DEPEND="
 	acct? (
 		acct-group/git
 		acct-user/git[gitea] )
-	pam? ( sys-libs/pam )"
+	pam? ( sys-libs/pam )
+	sqlite? ( dev-db/sqlite )"
 DEPEND="${COMMON_DEPEND}"
 RDEPEND="${COMMON_DEPEND}
 	dev-vcs/git"
@@ -39,6 +42,7 @@ FILECAPS=(
 	-m 0755 cap_net_bind_service+ep usr/bin/gitea
 )
 
+# build-client violates sanbox fetching resources
 RESTRICT="network-sandbox test"
 QA_PRESTRIPPED="usr/bin/gitea"
 
@@ -61,20 +65,22 @@ src_prepare() {
 		sed -i -e "s#^DB_TYPE = .*#DB_TYPE = sqlite3#" custom/conf/app.example.ini || die
 	fi
 
-	einfo "Remove tests which are known to fail with network-sandbox enabled."
-	rm ./modules/migrations/github_test.go || die
+	if use ! build-client; then
+		einfo "Remove tests which are known to fail with network-sandbox enabled."
+		rm ./modules/migrations/github_test.go || die
 
-	einfo "Remove tests which depend on gitea git-repo."
-	rm ./modules/git/blob_test.go || die
-	rm ./modules/git/repo_test.go || die
+		einfo "Remove tests which depend on gitea git-repo."
+		rm ./modules/git/blob_test.go || die
+		rm ./modules/git/repo_test.go || die
 
-	# Remove already build assets (like frontend part)
-	use build-client && emake clean-all
+		# Remove already build assets (like frontend part)
+		emake clean-all
+	fi
 }
 
 src_compile() {
 	local gitea_tags=(
-		bindata
+		$(usex build-client '' 'bindata')
 		$(usev pam)
 		$(usex sqlite 'sqlite sqlite_unlock_notify' '')
 	)
