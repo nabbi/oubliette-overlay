@@ -65,7 +65,7 @@ src_prepare() {
 		sed -i -e "s#^DB_TYPE = .*#DB_TYPE = sqlite3#" custom/conf/app.example.ini || die
 	fi
 
-	if use ! build-client; then
+	if ! use build-client; then
 		einfo "Remove tests which are known to fail with network-sandbox enabled."
 		rm ./modules/migrations/github_test.go || die
 
