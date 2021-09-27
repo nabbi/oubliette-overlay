@@ -42,7 +42,7 @@ FILECAPS=(
 	-m 0755 cap_net_bind_service+ep usr/bin/gitea
 )
 
-RESTRICT="test"
+RESTRICT="build-client?(network-sandbox) test"
 QA_PRESTRIPPED="usr/bin/gitea"
 
 src_prepare() {
@@ -72,8 +72,6 @@ src_prepare() {
 		rm ./modules/git/blob_test.go || die
 		rm ./modules/git/repo_test.go || die
 	else
-		# build-client violates sanbox fetching resources
-		RESTRICT="${RESTRICT} network-sandbox"
 		# Remove already build assets (like frontend part)
 		emake clean-all
 	fi
