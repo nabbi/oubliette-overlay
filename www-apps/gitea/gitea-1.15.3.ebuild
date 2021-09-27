@@ -65,7 +65,7 @@ src_prepare() {
 	fi
 
 	if use build-client; then
-		einfo "Remove already built fronend JS and CSS assets"
+		einfo "Remove already built frontend JS and CSS assets"
 		emake clean-all
 	else
 		einfo "Remove tests which are known to fail with network-sandbox enabled."
@@ -79,7 +79,7 @@ src_prepare() {
 
 src_compile() {
 	local gitea_tags=(
-		$(usex build-client '' 'bindata')
+		bindata
 		$(usev pam)
 		$(usex sqlite 'sqlite sqlite_unlock_notify' '')
 	)
