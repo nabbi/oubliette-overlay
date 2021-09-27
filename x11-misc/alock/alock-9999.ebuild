@@ -16,7 +16,8 @@ LICENSE="MIT"
 SLOT="0"
 IUSE="debug imlib pam xbacklight"
 
-DEPEND="dev-libs/libgcrypt:0
+DEPEND="
+	virtual/libcrypt
 	x11-libs/libX11
 	x11-libs/libXau
 	x11-libs/libxcb
