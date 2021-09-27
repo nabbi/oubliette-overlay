@@ -39,7 +39,7 @@ DOCS=(
 	custom/conf/app.example.ini CONTRIBUTING.md README.md
 )
 FILECAPS=(
-	-m 0755 cap_net_bind_service+ep usr/bin/gitea
+	-m 711 cap_net_bind_service+ep usr/bin/gitea
 )
 
 RESTRICT="test build-client? ( network-sandbox )"
@@ -64,16 +64,16 @@ src_prepare() {
 		sed -i -e "s#^DB_TYPE = .*#DB_TYPE = sqlite3#" custom/conf/app.example.ini || die
 	fi
 
-	if ! use build-client; then
+	if use build-client; then
+		einfo "Remove already built fronend JS and CSS assets"
+		emake clean-all
+	else
 		einfo "Remove tests which are known to fail with network-sandbox enabled."
 		rm ./modules/migrations/github_test.go || die
 
 		einfo "Remove tests which depend on gitea git-repo."
 		rm ./modules/git/blob_test.go || die
 		rm ./modules/git/repo_test.go || die
-	else
-		# Remove already build assets (like frontend part)
-		emake clean-all
 	fi
 }
 
@@ -119,7 +119,7 @@ src_install() {
 	newins custom/conf/app.example.ini app.ini
 	if use acct ; then
 		fowners root:git /etc/gitea/{,app.ini}
-		fperms g+r,o-rwx /etc/gitea/{,app.ini}
+		fperms g+rw,o-rwx /etc/gitea/{,app.ini}
 
 		diropts -m0750 -o git -g git
 		keepdir /var/lib/gitea /var/lib/gitea/custom /var/lib/gitea/data
@@ -130,4 +130,9 @@ src_install() {
 pkg_postinst() {
 	fcaps_pkg_postinst
 	tmpfiles_process gitea.conf
+
+	ewarn "The default JWT signing algorithm changed in 1.15.0 from HS256 (symmetric) to"
+	ewarn "RS256 (asymmetric). Gitea OAuth2 tokens (and potentially client secrets) will"
+	ewarn "need to be regenerated unless you change your JWT_SIGNING_ALGORITHM back to HS256."
+	ewarn "For other breaking changes, see <https://github.com/go-gitea/gitea/releases/tag/v1.15.0>."
 }
