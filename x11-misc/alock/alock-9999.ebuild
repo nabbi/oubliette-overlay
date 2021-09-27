@@ -1,15 +1,15 @@
 # Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=8
 inherit autotools toolchain-funcs git-r3
 
 # we need this since there are no tagged releases yet
 DESCRIPTION="Simple screen lock application for X server"
-HOMEPAGE="https://github.com/Arkq/alock"
+HOMEPAGE="https://github.com/mgumz/alock"
 
 # toggling between Arkq fork and my nabbi fork
-EGIT_REPO_URI="https://github.com/Arkq/${PN}"
+EGIT_REPO_URI="https://github.com/mgumz/${PN}"
 EGIT_BRANCH=master
 
 LICENSE="MIT"
@@ -29,6 +29,13 @@ DEPEND="dev-libs/libgcrypt:0
 	pam? ( sys-libs/pam )
 	xbacklight? ( x11-apps/xbacklight )"
 RDEPEND="${DEPEND}"
+
+PATCHES=(
+	"${FILESDIR}"/implicit_pointer_conversion_fix_amd64.patch
+	"${FILESDIR}"/check-setuid.patch
+	"${FILESDIR}"/tidy-printf.patch
+	"${FILESDIR}"/fix-aliasing.patch
+)
 
 src_unpack() {
 	git-r3_src_unpack
