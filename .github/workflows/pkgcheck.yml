@@ -13,6 +13,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
+    - name: Install Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.9'
