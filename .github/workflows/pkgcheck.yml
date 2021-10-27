@@ -14,8 +14,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Run pkgcheck
-      uses: pkgcore/pkgcheck-action@v1
+    - name: Install Python
+      uses: actions/setup-python@v2
       with:
         python-version: '3.9'
+
+    - name: Run pkgcheck
+      uses: nabbi/pkgcheck-action@v1
+      with:
         args: --checks=-RedundantVersionCheck --keywords=-PotentialStable
