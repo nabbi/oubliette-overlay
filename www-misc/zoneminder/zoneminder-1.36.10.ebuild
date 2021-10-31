@@ -158,8 +158,10 @@ src_install() {
 
 	cp "${FILESDIR}"/10_zoneminder.conf "${T}"/10_zoneminder.conf || die
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
+	insinto /etc/apache2/vhosts.d
+	newins "${T}"/10_zoneminder.conf 10_zoneminder.conf
 
-	dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
+	dodoc CHANGELOG.md CONTRIBUTING.md README.md
 
 	perl_delete_packlist
 
