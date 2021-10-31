@@ -172,12 +172,14 @@ src_install() {
 pkg_postinst() {
 	readme.gentoo_print_elog
 
-	local v
-	for v in ${REPLACING_VERSIONS}; do
-		if ! ver_test ${PV} -ge ${v}; then
-			elog "You have upgraded zoneminder and may have to upgrade your database now using the 'zmupdate.pl' script."
-		else
+	if [[ -z "${REPLACING_VERSIONS}" ]]; then
 			elog "Fresh installs of zoneminder require a few additional steps. Please read the README.gentoo"
-		fi
-	done
+	else
+		local v
+		for v in ${REPLACING_VERSIONS}; do
+			if ! ver_test ${PV} -ge ${v}; then
+				elog "You have upgraded zoneminder and may have to upgrade your database now using the 'zmupdate.pl' script."
+			fi
+		done
+	fi
 }
