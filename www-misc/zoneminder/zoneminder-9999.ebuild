@@ -156,12 +156,13 @@ src_install() {
 	# systemd unit file
 	systemd_dounit "${FILESDIR}"/zoneminder.service
 
+	# apache2 conf file
 	cp "${FILESDIR}"/10_zoneminder.conf "${T}"/10_zoneminder.conf || die
 	sed -i "${T}"/10_zoneminder.conf -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
 	insinto /etc/apache2/vhosts.d
-	newins "${T}"/10_zoneminder.conf 10_zoneminder.conf
+	doins "${T}"/10_zoneminder.conf
 
-	dodoc CHANGELOG.md CONTRIBUTING.md README.md
+	dodoc CHANGELOG.md CONTRIBUTING.md README.md "${T}"/10_zoneminder.conf
 
 	perl_delete_packlist
 
@@ -175,6 +176,8 @@ pkg_postinst() {
 	for v in ${REPLACING_VERSIONS}; do
 		if ! ver_test ${PV} -ge ${v}; then
 			elog "You have upgraded zoneminder and may have to upgrade your database now using the 'zmupdate.pl' script."
+		else
+			elog "Fresh installs of zoneminder require a few additional steps. Please read the README.gentoo"
 		fi
 	done
 }
