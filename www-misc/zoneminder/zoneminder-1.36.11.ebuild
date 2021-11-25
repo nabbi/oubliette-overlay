@@ -177,7 +177,7 @@ pkg_postinst() {
 	else
 		local v
 		for v in ${REPLACING_VERSIONS}; do
-			if ! ver_test ${PV} -ge ${v}; then
+			if ver_test ${PV} -ge ${v}; then
 				elog "You have upgraded zoneminder and may have to upgrade your database now using the 'zmupdate.pl' script."
 			fi
 		done
