@@ -3,6 +3,11 @@
 [![repoman](https://github.com/nabbi/oubliette-overlay/actions/workflows/repoman.yml/badge.svg)](https://github.com/nabbi/oubliette-overlay/actions/workflows/repoman.yml)
 [![pkgcheck](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml/badge.svg)](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml)
 
-My personal unofficial Portage overlay containing forgotten ebuilds for Gentoo Linux. [oubliette-patches](https://github.com/nabbi/oubliette-patches) compliments what this misses.
+My personal unofficial Portage overlay containing forgotten ebuilds for Gentoo Linux.
+* [oubliette-patches](https://github.com/nabbi/oubliette-patches) compliments what this misses.
+* [oubliette-overlay-dev](https://github.com/nabbi/oubliette-overlay-dev) is an experimental  sandbox
 
-* To add the overlay using layman, do '***layman -a oubliette***'
+To add the overlay using layman:
+```
+layman -a oubliette
+```

@@ -1,0 +1,13 @@
+<repositories encoding="unicode" version="1.0">
+  <repo priority="50" quality="experimental" status="unofficial">
+    <name>oubliette</name>
+    <description>personal overlay of forgotten ebuilds</description>
+    <homepage>https://github.com/nabbi/oubliette-overlay</homepage>
+    <owner>
+      <email>nic@boet.cc</email>
+      <name>nic</name>
+    </owner>
+    <source type="git">https://github.com/nabbi/oubliette-overlay.git</source>
+    <feed>https://github.com/nabbi/oubliette-overlay/commits/master.atom</feed>
+  </repo>
+</repositories>
