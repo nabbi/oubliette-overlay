@@ -14,8 +14,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-      # Python 3.10 breaks pkhcheck, point at my fork which uses 3.9 vs 3.x
     - name: Run pkgcheck
-      uses: nabbi/pkgcheck-action@v1
+      uses: pkgcore/pkgcheck-action@v1
       with:
         args: --checks=-RedundantVersionCheck --keywords=-PotentialStable
