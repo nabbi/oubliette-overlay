@@ -1,4 +1,4 @@
-# Copyright 2021 Gentoo Authors
+# Copyright 2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -6,7 +6,7 @@ EAPI=7
 inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd
 
 MY_PN="ZoneMinder"
-MY_CRUD_V="14292374ccf1328f2d5db20897bd06f99ba4d938"
+MY_CRUD_V="0bd63fb464957080ead342db58ca9e01532cf1ef"
 MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
 MY_RTSP_V="cd7fd49becad6010a1b8466bfebbd93999a39878"
 
