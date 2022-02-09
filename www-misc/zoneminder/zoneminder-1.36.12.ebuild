@@ -106,6 +106,7 @@ src_configure() {
 	mycmakeargs=(
 		-DZM_TMPDIR=/var/tmp/zm
 		-DZM_SOCKDIR=/var/run/zm
+		-DZM_PATH_ZMS="/zm/cgi-bin/nph-zms"
 		-DZM_WEB_USER=apache
 		-DZM_WEB_GROUP=apache
 		-DZM_WEBDIR=${MY_ZM_WEBDIR}
