@@ -6,9 +6,9 @@ EAPI=7
 inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd
 
 MY_PN="ZoneMinder"
-MY_CRUD_V="0bd63fb464957080ead342db58ca9e01532cf1ef"
-MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
-MY_RTSP_V="cd7fd49becad6010a1b8466bfebbd93999a39878"
+MY_CRUD_V="3.0"
+MY_CAKEPHP_V="master"
+MY_RTSP_V="master"
 
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
@@ -19,9 +19,9 @@ if [[ ${PV} == 9999 ]]; then
 else
 	SRC_URI="
 		https://github.com/${MY_PN}/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
-		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_V}.tar.gz -> Crud-${MY_CRUD_V}.tar.gz
-		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
-		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz"
+		https://github.com/FriendsOfCake/crud/archive/refs/heads/${MY_CRUD_V}.zip -> Crud-${MY_CRUD_V}.zip
+		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/refs/heads/${MY_CAKEPHP_V}.zip -> CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.zip
+		https://github.com/ZoneMinder/RtspServer/archive/refs/heads/${MY_RTSP_V}.zip -> RtspServer-${MY_RTSP_V}.zip"
 	KEYWORDS="~amd64"
 fi
 
