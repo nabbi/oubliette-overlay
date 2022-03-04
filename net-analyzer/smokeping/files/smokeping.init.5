@@ -64,8 +64,7 @@ restore() {
 		f_rrd=$(dirname $f)/$(basename $f .xml).rrd
 		mv -f "${f_rrd}" "${f_rrd}.bak"
 		chown --no-dereference root:0 "${f_rrd}.bak"
-		rrdtool restore "$f" "${f_rrd}"
-		chown --no-dereference smokeping:smokeping "${f_rrd}"
+		sudo -u smokeping rrdtool restore "$f" "${f_rrd}"
 	done
 	eend $?
 }
