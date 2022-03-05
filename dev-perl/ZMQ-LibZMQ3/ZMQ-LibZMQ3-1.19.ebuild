@@ -10,7 +10,7 @@ DESCRIPTION="A libzmq 3.x wrapper for Perl"
 
 #LICENSE="|| ( Artistic GPL-1+ )"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64 ppc ppc64 sparc x86"
 
 RDEPEND="
 	dev-perl/Module-Install
