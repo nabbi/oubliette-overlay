@@ -12,5 +12,5 @@ DESCRIPTION="A libzmq 3.x wrapper for Perl"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RDEPEND=""
+RDEPEND="dev-perl/Module-Install"
 DEPEND="${RDEPEND}"
