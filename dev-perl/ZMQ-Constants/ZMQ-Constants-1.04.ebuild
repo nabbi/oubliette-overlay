@@ -6,18 +6,12 @@ EAPI=8
 DIST_AUTHOR="DMAKI"
 inherit perl-module
 
-DESCRIPTION="A libzmq 3.x wrapper for Perl"
+DESCRIPTION="Constants for libzmq"
 
 #LICENSE="|| ( Artistic GPL-1+ )"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RDEPEND="
-	dev-perl/Module-Install
-	dev-perl/ZMQ-Constants
-	net-libs/zeromq"
+RDEPEND=""
 DEPEND="${RDEPEND}"
 
-PATCHES=(
-	"${FILESDIR}/${PN}-perl-do.patch"
-)
