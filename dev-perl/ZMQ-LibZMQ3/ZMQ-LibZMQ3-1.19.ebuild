@@ -16,3 +16,7 @@ RDEPEND="
 	dev-perl/Module-Install
 	net-libs/zeromq"
 DEPEND="${RDEPEND}"
+
+PATCHES=(
+	"${FILESDIR}/${PN}-perl-do.patch"
+)
