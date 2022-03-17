@@ -59,7 +59,7 @@ src_prepare() {
 		suffix="gentoo-${PR}"
 	fi
 	if [[ ${PV} == 9999 ]]; then
-		suffix="gentoo-$(git rev-parse --short HEAD)"
+		suffix="$(git rev-parse --short HEAD)-gentoo"
 	fi
 	sed -i \
 		-e "s~\(__fluxbox_version .@VERSION@\)~\1-${suffix}~" \
