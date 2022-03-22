@@ -43,6 +43,12 @@ src_prepare() {
 	# bug #479400
 	sed -i 's@#!/usr/bin/perl -T -w@#!/usr/bin/perl -w@' postgrey || die "sed failed"
 	sed -i -e '/git/d' Makefile || die
+
+	if [[ ${PV} == 9999 ]]; then
+		gitver="$(git rev-parse --short HEAD)-gentoo"
+		sed -i -e "s~\(postgrey \$VERSION\)~\1 ${gitver}~" postgrey || die "version sed failed"
+		sed -i -e "s~\(postgrey-search \$VERSION\)~\1 ${gitver}~" postgrey-search || die "version sed failed"
+	fi
 }
 
 src_install() {
@@ -55,6 +61,8 @@ src_install() {
 
 	# postgrey binary
 	dosbin ${PN}
+	dosbin postgrey-search
+	dosbin postgrey_clients_dump
 	dosbin contrib/postgreyreport
 
 	# policy-test script
