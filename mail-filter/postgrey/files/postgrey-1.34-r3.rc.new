@@ -50,7 +50,7 @@ fi
 		[ -z "${POSTGREY_PID}" ] && einfo "  - POSTGREY_PID"
 		conf_error
 	fi
-    checkpath -q -d -o postgrey:postgrey -m 0755 "${POSTGREY_PID}" || return 1
+    checkpath -q -d -o postgrey:postgrey -m 0755 "$(dirname ${POSTGREY_PID})" || return 1
 }
 
 start() {
