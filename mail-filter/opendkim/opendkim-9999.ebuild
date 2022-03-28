@@ -84,6 +84,10 @@ src_prepare() {
 	#
 	sed -e "s:/tmp:${T}:" -i libopendkim/tests/t-testdata.h || die
 
+	if [[ ${PV} == 9999 ]]; then
+		sed -i -e "s:v%s\\\n:v%s $(git rev-parse --short HEAD)-${EGIT_BRANCH}-gentoo\\\n:" opendkim/opendkim.c || die
+	fi
+
 	eautoreconf
 }
 
