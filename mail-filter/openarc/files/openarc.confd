@@ -1,0 +1,3 @@
+# user/group to run openarc daemon as
+OPENARC_USER=openarc
+OPENARC_GROUP=openarc
