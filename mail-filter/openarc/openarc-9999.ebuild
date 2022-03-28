@@ -9,6 +9,7 @@ DESCRIPTION="Open source ARC implementation"
 HOMEPAGE="https://github.com/trusteddomainproject/OpenARC"
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
+	EGIT_BRANCH="develop"
 	EGIT_REPO_URI="https://github.com/trusteddomainproject/OpenARC.git"
 else
 	SRC_URI="https://github.com/trusteddomainproject/OpenARC/archive/rel-${PN}-${PV//./-}.tar.gz -> ${P}.tar.gz"
@@ -26,7 +27,6 @@ RDEPEND="${DEPEND}
 	acct-user/openarc"
 
 PATCHES=(
-	"${FILESDIR}/openarc-issue52.patch"
 	"${FILESDIR}/openarc-issue137.patch"
 )
 
