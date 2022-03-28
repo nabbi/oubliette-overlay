@@ -1,0 +1,13 @@
+# https://github.com/trusteddomainproject/OpenARC/issues/72
+# https://github.com/andreasschulze/OpenARC/commit/ba6507d843a0a26fe3fe18eed0221dbcd1d15cd9
+--- a/openarc/openarc.c	2022-03-27 22:55:10.317297278 -0500
++++ b/openarc/openarc.c	2022-03-27 22:55:44.711177261 -0500
+@@ -1281,7 +1281,7 @@
+ 		*err = strerror(errno);
+ 		return FALSE;
+ 	}
+-	v->value = str;
++	v->value = strdup(str);
+ 
+ 	LIST_INSERT_HEAD(list, v, entries);
+ 	return TRUE;
