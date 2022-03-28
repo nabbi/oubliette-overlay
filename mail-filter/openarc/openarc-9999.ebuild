@@ -32,6 +32,11 @@ PATCHES=(
 
 src_prepare() {
 	default
+
+	if [[ ${PV} == 9999 ]]; then
+		sed -i -e "s:v%s\\\n:v%s $(git rev-parse --short HEAD)-${EGIT_BRANCH}-gentoo\\\n:" openarc/openarc.c || die
+	fi
+
 	eautoreconf
 }
 
