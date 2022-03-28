@@ -27,6 +27,7 @@ RDEPEND="${DEPEND}
 
 PATCHES=(
 	"${FILESDIR}/openarc-issue52.patch"
+	"${FILESDIR}/openarc-issue137.patch"
 )
 
 src_prepare() {

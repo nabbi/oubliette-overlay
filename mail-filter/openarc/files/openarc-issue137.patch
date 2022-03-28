@@ -1,0 +1,16 @@
+# https://github.com/trusteddomainproject/OpenARC/issues/137
+# https://github.com/trusteddomainproject/OpenARC/pull/121
+diff --git a/libopenarc/arc.c b/libopenarc/arc.c
+index b1b0b29..19d6d80 100644
+--- a/libopenarc/arc.c
++++ b/libopenarc/arc.c
+@@ -1670,8 +1670,7 @@ arc_process_set(ARC_MESSAGE *msg, arc_kvsettype_t type, u_char *str,
+ 		    arc_param_get(set, (u_char *) "b") == NULL ||
+ 		    arc_param_get(set, (u_char *) "s") == NULL ||
+ 		    arc_param_get(set, (u_char *) "d") == NULL ||
+-		    arc_param_get(set, (u_char *) "a") == NULL ||
+-		    arc_param_get(set, (u_char *) "t") == NULL)
++		    arc_param_get(set, (u_char *) "a") == NULL)
+ 		{
+ 			arc_error(msg, "missing parameter(s) in %s data",
+ 			          settype);
