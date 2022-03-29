@@ -1,0 +1,41 @@
+#!/sbin/openrc-run
+# Copyright 1999-2017 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+CONFFILE="/etc/dkimpy-milter/${SVCNAME}.conf"
+
+depend() {
+	use dns logger net
+	before mta
+}
+
+check_cfg() {
+	if [ ! -f "${CONFFILE}" ] ; then
+		eerror "Configuration file ${CONFFILE} is missing"
+		return 1
+	fi
+
+	PIDFILE=$(sed -ne 's/^[[:space:]]*PidFile[[:space:]]\+//p' "${CONFFILE}")
+	if [ -z "${PIDFILE}" ] ; then
+		eerror "Configuration file needs PidFile setting - recommend adding 'PidFile /var/run/dkimpy-milter/${SVCNAME}.pid' to ${CONFFILE}"
+		return 1
+	fi
+	local PIDDIR="${PIDFILE%/*}"
+    checkpath -q -d -o ${DKIMPY_USER}:${DKIMPY_GROUP} -m 0755 "${PIDDIR}" || return 1
+}
+
+start() {
+	check_cfg || return 1
+	
+	ebegin "Starting dkimpy-milter"
+	start-stop-daemon --start --pidfile "${PIDFILE}" \
+		--exec /usr/sbin/dkimpy-milter -- -c "${CONFFILE}"
+	eend $?
+}
+
+stop() {
+	check_cfg || return 1
+	ebegin "Stopping dkimpy-milter"
+	start-stop-daemon --stop --pidfile "${PIDFILE}"
+	eend $?
+}
