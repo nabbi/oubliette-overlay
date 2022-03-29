@@ -16,7 +16,8 @@ SLOT="0"
 KEYWORDS="amd64 arm64 x86"
 
 RDEPEND="
-	acct-user/dkimpy
+	acct-user/dkimpy-milter
+	dev-python/pymilter[${PYTHON_USEDEP}]
 	dev-python/dkimpy[${PYTHON_USEDEP}]
 	dev-python/dnspython[${PYTHON_USEDEP}]"
 BDEPEND=""

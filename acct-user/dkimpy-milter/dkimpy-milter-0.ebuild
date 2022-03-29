@@ -7,6 +7,6 @@ inherit acct-user
 
 DESCRIPTION="User for mail-filter/dkimpy-milter"
 ACCT_USER_ID=618
-ACCT_USER_GROUPS=( dkimpy )
+ACCT_USER_GROUPS=( dkimpy-milter )
 
 acct-user_add_deps
