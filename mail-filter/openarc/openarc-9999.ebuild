@@ -63,6 +63,7 @@ src_install() {
 		-e 's/^Socket\s.*/Socket inet:8895@localhost/' \
 		-e "s:^KeyFile\s.*:KeyFile ${EPREFIX}/etc/openarc/example.private:" \
 		-e "s:^# InternalHosts\s.*:InternalHosts ${EPREFIX}/etc/openarc/internalhosts:" \
+		-e "s:^FinalReceiver:#FinalReceiver:" \
 		"${S}"/openarc/openarc.conf.sample \
 		> "${ED}"/etc/openarc/openarc.conf \
 		|| die
