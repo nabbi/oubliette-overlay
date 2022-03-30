@@ -28,8 +28,8 @@ start() {
 	check_cfg || return 1
 	
 	ebegin "Starting dkimpy-milter"
-	start-stop-daemon --start --pidfile "${PIDFILE}" \
-		--exec /usr/sbin/dkimpy-milter -- -c "${CONFFILE}"
+	start-stop-daemon --start --pidfile "${PIDFILE}" --background \
+		--exec /usr/bin/dkimpy-milter -- "${CONFFILE}"
 	eend $?
 }
 
