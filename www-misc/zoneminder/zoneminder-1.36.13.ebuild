@@ -6,9 +6,9 @@ EAPI=7
 inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd
 
 MY_PN="ZoneMinder"
-MY_CRUD_V="0bd63fb464957080ead342db58ca9e01532cf1ef"
-MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
-MY_RTSP_V="cd7fd49becad6010a1b8466bfebbd93999a39878"
+MY_CRUD_V="3.0"
+MY_CAKEPHP_V="master"
+MY_RTSP_V="master"
 
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
 HOMEPAGE="http://www.zoneminder.com/"
@@ -19,9 +19,9 @@ if [[ ${PV} == 9999 ]]; then
 else
 	SRC_URI="
 		https://github.com/${MY_PN}/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
-		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_V}.tar.gz -> Crud-${MY_CRUD_V}.tar.gz
-		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
-		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz"
+		https://github.com/FriendsOfCake/crud/archive/refs/heads/${MY_CRUD_V}.zip -> Crud-${MY_CRUD_V}.zip
+		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/refs/heads/${MY_CAKEPHP_V}.zip -> CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.zip
+		https://github.com/ZoneMinder/RtspServer/archive/refs/heads/${MY_RTSP_V}.zip -> RtspServer-${MY_RTSP_V}.zip"
 	KEYWORDS="~amd64"
 fi
 
@@ -107,6 +107,8 @@ src_configure() {
 		-DZM_TMPDIR=/var/tmp/zm
 		-DZM_SOCKDIR=/var/run/zm
 		-DZM_PATH_ZMS="/zm/cgi-bin/nph-zms"
+		-DZM_CONFIG_DIR="/etc/zm"
+		-DZM_CONFIG_SUBDIR="/etc/zm/conf.d"
 		-DZM_WEB_USER=apache
 		-DZM_WEB_GROUP=apache
 		-DZM_WEBDIR=${MY_ZM_WEBDIR}
@@ -147,8 +149,8 @@ src_install() {
 	fowners -R apache:apache ${MY_ZM_WEBDIR}/temp
 
 	# the configuration file
-	fperms 0640 /etc/zm.conf
-	fowners root:apache /etc/zm.conf
+	fperms 0640 /etc/zm/zm.conf
+	fowners root:apache /etc/zm/zm.conf
 
 	# init scripts etc
 	newinitd "${FILESDIR}"/init.d zoneminder
@@ -178,9 +180,41 @@ pkg_postinst() {
 	else
 		local v
 		for v in ${REPLACING_VERSIONS}; do
-			if ver_test ${PV} -ge ${v}; then
+			if ver_test ${PV} -gt ${v}; then
 				elog "You have upgraded zoneminder and may have to upgrade your database now using the 'zmupdate.pl' script."
 			fi
 		done
+	fi
+
+	# 2022-02-10 The original ebuild omitted ZM_CONFIG_* at build time
+	# Check if user needs to migrate configs from /etc to /etc/zm
+	local legacy="/etc/zm.conf /etc/conf.d/01-system-paths.conf /etc/conf.d/02-multiserver.conf /etc/conf.d/zmcustom.conf"
+	local lf
+	local lfwarn=0
+	for lf in ${legacy}; do
+		if [[ -f "${lf}" ]]; then
+			ewarn "Found deprecated ZoneMinder config ${lf}"
+			lfwarn=1
+		fi
+	done
+	if [ ${lfwarn} -ne 0 ]; then
+		ewarn ""
+		ewarn "Gentoo's ebuild previously installed ZoneMinder's configurations directly into /etc"
+		ewarn "This conflicts with OpenRC /etc/conf.d as ZoneMinder also has its own conf.d subdirectory"
+		ewarn "Your newly compiled ZoneMinder now looks for configurations under /etc/zm"
+		ewarn ""
+		ewarn "    Please merge your local changes into /etc/zm/conf.d/99-local.conf"
+		ewarn "    This includes any user created *.conf files for ZM within /etc/conf.d/"
+		ewarn "    Then remove those old files to complete the migration."
+		ewarn ""
+		elog ""
+		elog "Remember to set appropriate permisions on user created files (i.e. /etc/zm/conf.d/*.conf):"
+		elog "    chmod 640 local.conf"
+		elog "    chown root:apache local.conf"
+		elog ""
+		ewarn ""
+		ewarn "ZoneMinder will **NO LONGER FUNCTION UNTIL** these configuration items have been migrated!"
+		ewarn "In particular, ensuring the database hostname and credentials are defined within the new locations."
+		ewarn ""
 	fi
 }
