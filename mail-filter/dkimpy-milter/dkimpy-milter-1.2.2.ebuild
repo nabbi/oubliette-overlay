@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python3_{8..10} )
 
 inherit distutils-r1
 
-DESCRIPTION="Milter for dkimpy; DKIM and ARC email signing and verification"
+DESCRIPTION="Milter for dkimpy; DKIM signing and verification"
 HOMEPAGE="https://launchpad.net/dkimpy-milter"
 SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
 
