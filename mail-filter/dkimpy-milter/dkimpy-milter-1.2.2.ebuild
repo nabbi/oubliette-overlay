@@ -40,7 +40,6 @@ python_install_all() {
 	#adjust config
 	sed \
 		-e 's:/run/:/var/run/:g' \
-		-e 's:^UserID.*$:UserID dkimpy:' \
 		"${S}"/etc/dkimpy-milter.conf \
 		> "${ED}"/etc/dkimpy-milter/dkimpy-milter.conf \
 		|| die
