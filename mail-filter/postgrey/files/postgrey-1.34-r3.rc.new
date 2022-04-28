@@ -75,6 +75,12 @@ start() {
 		POSTGREY_TEXT_ARG="--greylist-text=${POSTGREY_TEXT}"
 	fi
 
+	if [ -z "${POSTGREY_HEADER}" ] ; then
+		POSTGREY_HEADER_ARG=""
+	else
+		POSTGREY_HEADER_ARG="--x-greylist-header=${POSTGREY_HEADER}"
+	fi
+
 	start-stop-daemon --start --quiet --background \
 		--pidfile=${POSTGREY_PID} \
 		--name postgrey \
@@ -84,7 +90,8 @@ start() {
 		--pidfile=${POSTGREY_PID} \
 		${POSTGREY_DELAY_ARG} \
 		${POSTGREY_OPTS} \
-		"${POSTGREY_TEXT_ARG}"
+		"${POSTGREY_TEXT_ARG}" \
+		"${POSTGREY_HEADER_ARG}"
 	eend ${?}
 }
 
