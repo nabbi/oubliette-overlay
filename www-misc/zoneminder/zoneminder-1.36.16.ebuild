@@ -65,7 +65,7 @@ sys-libs/zlib
 media-video/ffmpeg[x264,x265,jpeg2k]
 encode? ( media-libs/libmp4v2 )
 virtual/httpd-php:*
-virtual/jpeg:0
+media-libs/openjpeg
 virtual/perl-ExtUtils-MakeMaker
 virtual/perl-Getopt-Long
 virtual/perl-Sys-Syslog
