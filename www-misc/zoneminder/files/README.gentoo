@@ -9,13 +9,15 @@ New Installation:
        Once you completed that you should execute the following:
          mysql -p < /usr/share/zoneminder/db/zm_create.sql
 
-    2. Set your database settings in /etc/zm/zm.conf, including above zmpass
+    2. Set your database settings in /etc/zm/conf.d/99-local.conf, including above zmpass
+         ZM_DB_USER=zmuser
+         ZM_DB_PASS=zmpass
 
-    3. Configure apache to use zoneminder, see /usr/share/doc/zoneminder*/10_zoneminder.conf
+    3. Verify zoneminder apache configuration /etc/apache2/vhosts.d/10_zoneminder.conf
        for an example configuration snippet.
          bzcat /usr/share/doc/zoneminder*/10_zoneminder.conf.bz2
 
-    4. Enable PHP in your webserver configuration,
+    4. Enable PHP in your webserver configuration /etc/conf.d/apache2
        APACHE2_OPTS="-D DEFAULT_VHOST -D INFO -D SSL -D SSL_DEFAULT_VHOST -D LANGUAGE -D PHP -D PROXY"
 
     5. set date.timezone in /etc/php/apache2-php*/php.ini
