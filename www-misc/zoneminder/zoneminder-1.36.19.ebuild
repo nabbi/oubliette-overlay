@@ -83,7 +83,7 @@ RDEPEND="${DEPEND}"
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
 
 PATCHES=(
-	"${FILESDIR}/${PN}-1.36.19-semaphore.patch"
+	"${FILESDIR}/${PN}-1.36.18-semaphore.patch"
 )
 
 src_prepare() {
