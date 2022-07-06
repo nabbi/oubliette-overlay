@@ -46,3 +46,6 @@ DEPEND="
 RDEPEND="
 	${COMMON_DEPEND}
 "
+BDEPEND="${RDEPEND}
+	dev-perl/Module-Build
+"
