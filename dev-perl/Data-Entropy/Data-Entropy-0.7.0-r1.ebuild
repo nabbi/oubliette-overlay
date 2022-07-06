@@ -2,15 +2,16 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-MODULE_AUTHOR=ZEFRAM
-MODULE_VERSION=0.007
+DIST_AUTHOR=ZEFRAM
+DIST_VERSION=0.007
+
 inherit perl-module
 
 DESCRIPTION="entropy (randomness) management"
 
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE=""
+
 comment() { echo ''; }
 COMMON_DEPEND="
 	$(comment virtual/perl-Carp)

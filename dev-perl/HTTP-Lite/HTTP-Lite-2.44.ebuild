@@ -2,15 +2,17 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-MODULE_AUTHOR=NEILB
-MODULE_VERSION=2.4
+
+DIST_AUTHOR=NEILB
+DIST_VERSION=2.44
+
 inherit perl-module
 
 DESCRIPTION='Lightweight HTTP implementation'
 
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE=""
+
 perl_meta_configure() {
 	# ExtUtils::MakeMaker 6.42 ( 6.420.0 )
 	echo \>=virtual/perl-ExtUtils-MakeMaker-6.42
