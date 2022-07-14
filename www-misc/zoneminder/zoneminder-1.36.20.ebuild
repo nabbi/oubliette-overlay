@@ -82,10 +82,6 @@ RDEPEND="${DEPEND}"
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
 
-PATCHES=(
-	"${FILESDIR}/${PN}-1.36.18-semaphore.patch"
-)
-
 src_prepare() {
 	cmake_src_prepare
 
