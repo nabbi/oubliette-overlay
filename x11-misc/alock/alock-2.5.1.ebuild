@@ -2,16 +2,17 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-inherit autotools toolchain-funcs git-r3
+inherit autotools toolchain-funcs
 
 DESCRIPTION="Simple screen lock application for X server"
-HOMEPAGE="https://github.com/mgumz/alock"
+# forked from mgumz/alock
+HOMEPAGE="https://github.com/Arkq/alock"
 
-EGIT_REPO_URI="https://github.com/mgumz/${PN}"
-EGIT_BRANCH=master
+SRC_URI="https://github.com/Arkq/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
+KEYWORDS="~amd64 ~ppc ~x86"
 IUSE="debug imlib pam xbacklight"
 
 DEPEND="
@@ -28,10 +29,6 @@ DEPEND="
 	pam? ( sys-libs/pam )
 	xbacklight? ( x11-apps/xbacklight )"
 RDEPEND="${DEPEND}"
-
-src_unpack() {
-	git-r3_src_unpack
-}
 
 src_prepare() {
 	default
