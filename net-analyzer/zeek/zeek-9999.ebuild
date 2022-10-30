@@ -82,9 +82,10 @@ src_prepare() {
 			auxil/paraglob/src/CMakeLists.txt
 	fi
 
-	if ! use kerberos; then
-		sed -i 's:USE_KRB5\ true:USE_KRB5\ false:' CMakeLists.txt || die
-	fi
+	# TODO: per package flag enablement should be honored. below is incomplete
+	#if ! use kerberos; then
+	#	sed -i 's:USE_KRB5\ true:USE_KRB5\ false:' CMakeLists.txt || die
+	#fi
 
 	if [[ ${PV} == 9999 ]]; then
 		suffix="$(git rev-parse --short HEAD)-gentoo"
