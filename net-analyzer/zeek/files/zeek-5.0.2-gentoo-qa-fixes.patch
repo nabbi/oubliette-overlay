@@ -1,0 +1,60 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 648f65e..22e8005 100644
+--- a/auxil/broker/CMakeLists.txt
++++ b/auxil/broker/CMakeLists.txt
+@@ -257,9 +257,9 @@ if (ENABLE_STATIC_ONLY)
+ endif ()
+ 
+ # Make sure there are no old header versions on disk.
+-install(
+-  CODE "MESSAGE(STATUS \"Removing: ${CMAKE_INSTALL_PREFIX}/include/broker\")"
+-  CODE "file(REMOVE_RECURSE \"${CMAKE_INSTALL_PREFIX}/include/broker\")")
++#install(
++#  CODE "MESSAGE(STATUS \"Removing: ${CMAKE_INSTALL_PREFIX}/include/broker\")"
++#  CODE "file(REMOVE_RECURSE \"${CMAKE_INSTALL_PREFIX}/include/broker\")")
+ 
+ # Install all headers except the files from broker/internal.
+ install(DIRECTORY include/broker
+--- a/CMakeLists.txt    2022-10-25 00:42:48.310915789 -0500
++++ b/CMakeLists.txt	2022-10-25 00:44:37.743172359 -0500
+@@ -82,7 +82,7 @@
+ endif ()
+ 
+ install(DIRECTORY DESTINATION ${ZEEK_ETC_INSTALL_DIR})
+-install(DIRECTORY DESTINATION ${ZEEK_STATE_DIR})
++#install(DIRECTORY DESTINATION ${ZEEK_STATE_DIR})
+ install(DIRECTORY DESTINATION ${ZEEK_SPOOL_DIR})
+ install(DIRECTORY DESTINATION ${ZEEK_LOG_DIR})
+ 
+@@ -639,7 +639,7 @@
+         ${CMAKE_CURRENT_SOURCE_DIR}/zkg-config.in
+         ${CMAKE_CURRENT_BINARY_DIR}/zkg-config @ONLY)
+ 
+-    install(DIRECTORY DESTINATION var/lib/zkg)
++#   install(DIRECTORY DESTINATION var/lib/zkg)
+     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/zkg-config
+         DESTINATION ${ZEEK_ZKG_CONFIG_DIR} RENAME config)
+ endif ()
+--- a/src/CMakeLists.txt	2022-10-25 22:09:03.215250744 -0500
++++ b/src/CMakeLists.txt	2022-10-25 22:09:48.448701572 -0500
+@@ -564,13 +564,13 @@
+ 
+ # Remove some stale files and scripts that previous Zeek versions put in
+ # place, yet make confuse us now. This makes upgrading easier.
+-install(CODE "
+-   file(REMOVE_RECURSE
+-       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/dataseries.bro
+-       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/elasticsearch.bro
+-       ${ZEEK_SCRIPT_INSTALL_PATH}/policy/tuning/logs-to-elasticsearch.bro
+-   )
+-")
++#install(CODE "
++#   file(REMOVE_RECURSE
++#       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/dataseries.bro
++#       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/elasticsearch.bro
++#       ${ZEEK_SCRIPT_INSTALL_PATH}/policy/tuning/logs-to-elasticsearch.bro
++#   )
++#")
+ 
+ # Make sure to escape a bunch of special characters in the path before trying to use it as a
+ # regular expression below.

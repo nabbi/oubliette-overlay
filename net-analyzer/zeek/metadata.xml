@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+    <maintainer type="person">
+        <email>nic+gentoo@boet.cc</email>
+    </maintainer>
+    <use>
+        <flag name="caf">Build against external C++ Actor Framework (for development only)</flag>
+        <flag name="geoip2">Enable support for Maxmind's GeoIP library</flag>
+        <flag name="ipsumdump">Enables ipsumdump support for trace-summary</flag>
+        <flag name="python">Enable Python bindings for broker</flag>
+        <flag name="sendmail">Enables Zeek and ZeekControl to send mail</flag>
+        <flag name="tcmalloc">Enable Google's performance analysis tools</flag>
+        <flag name="tools">Auxiliary tools for Bro: adtrace, zeek-cut, rst</flag>
+        <flag name="zeekctl">Enable ZeekControl, a tool for operating Zeek installations</flag>
+    </use>
+    <upstream>
+        <remote-id type="github">zeek/zeek</remote-id>
+    </upstream>
+    <longdescription lang="en">
+        Oubliette package inspired from vklimovs/portage-overlay and Bug 704850
+        Zeek is a powerful network analysis framework that is much different from the typical IDS you may know.
+    </longdescription>
+</pkgmetadata>
