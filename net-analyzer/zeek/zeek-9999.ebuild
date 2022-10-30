@@ -82,9 +82,13 @@ src_prepare() {
 			auxil/paraglob/src/CMakeLists.txt
 	fi
 
+	if ! use kerberos; then
+		sed -i 's:USE_KRB5\ true:USE_KRB5\ false:' CMakeLists.txt || die
+	fi
+
 	if [[ ${PV} == 9999 ]]; then
 		suffix="$(git rev-parse --short HEAD)-gentoo"
-		sed -i "s/$/_$(git rev-parse --short HEAD)-gentoo/" VERSION
+		sed -i "s/$/_$(git rev-parse --short HEAD)-gentoo/" VERSION	|| die "version sed failed"
 	fi
 
 	cmake_src_prepare
