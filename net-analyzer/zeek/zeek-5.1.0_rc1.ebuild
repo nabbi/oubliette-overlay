@@ -22,14 +22,14 @@ fi
 LICENSE="BSD"
 SLOT="0"
 IUSE="curl debug geoip2 ipsumdump ipv6 jemalloc kerberos +python sendmail
-	static-libs tcmalloc +tools +zeekctl caf"
+	static-libs tcmalloc +btest +tools +zeekctl caf"
 
 RDEPEND="
 	caf? ( >=dev-libs/caf-0.18.2:0= )
 	dev-libs/openssl:0=
 	net-libs/libpcap
 	sys-libs/zlib:0=
-	dev-python/btest
+	btest? ( dev-python/btest )
 	curl? ( net-misc/curl )
 	geoip2? ( dev-libs/libmaxminddb:0= )
 	ipsumdump? ( net-analyzer/ipsumdump[ipv6?] )
@@ -58,7 +58,9 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-5.0.2-gentoo-qa-fixes.patch
 )
 
-S="${WORKDIR}/${MY_P}"
+if [[ ! ${PV} == 9999 ]]; then
+	S="${WORKDIR}/${MY_P}"
+fi
 
 src_prepare() {
 	if use caf; then
@@ -75,9 +77,14 @@ src_prepare() {
 
 	if ! use static-libs; then
 		sed -i 's:add_library(paraglob STATIC:add_library(paraglob SHARED:' \
-		auxil/paraglob/src/CMakeLists.txt
+			auxil/paraglob/src/CMakeLists.txt
 		sed -i 's:DESTINATION lib:DESTINATION ${INSTALL_LIB_DIR}:' \
-		auxil/paraglob/src/CMakeLists.txt
+			auxil/paraglob/src/CMakeLists.txt
+	fi
+
+	if [[ ${PV} == 9999 ]]; then
+		suffix="$(git rev-parse --short HEAD)-gentoo"
+		sed -i "s/$/_$(git rev-parse --short HEAD)-gentoo/" VERSION
 	fi
 
 	cmake_src_prepare
@@ -110,6 +117,14 @@ src_configure() {
 		-DZEEK_SPOOL_DIR="/var/spool/${PN}"
 	)
 	use caf &&  mycmakeargs+=( -DCAF_ROOT="${EPREFIX}/usr/include/caf" )
+
+	use btest && mycmakeargs+=(
+		-DBROKER_DISABLE_TESTS=true
+		-DBROKER_DISABLE_DOC_EXAMPLES=true
+		-DINSTALL_BTEST=false
+		-DINSTALL_BTEST_PCAPS=false
+		-DENABLE_ZEEK_UNIT_TESTS=false
+	)
 
 	cmake_src_configure
 

@@ -5,6 +5,7 @@
         <email>nic+gentoo@boet.cc</email>
     </maintainer>
     <use>
+        <flag name="btest">Enable packages systems tests using BTest</flag>
         <flag name="caf">Build against external C++ Actor Framework (for development only)</flag>
         <flag name="geoip2">Enable support for Maxmind's GeoIP library</flag>
         <flag name="ipsumdump">Enables ipsumdump support for trace-summary</flag>
