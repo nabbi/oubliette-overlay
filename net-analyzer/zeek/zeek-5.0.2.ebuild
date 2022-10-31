@@ -26,6 +26,7 @@ IUSE="curl debug geoip2 ipsumdump ipv6 jemalloc kerberos +python sendmail
 
 RDEPEND="
 	caf? ( >=dev-libs/caf-0.18.2:0= )
+	debug? ( sys-devel/gdb )
 	dev-libs/openssl:0=
 	net-libs/libpcap
 	sys-libs/zlib:0=
