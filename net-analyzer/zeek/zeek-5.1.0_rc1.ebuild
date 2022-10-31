@@ -82,10 +82,9 @@ src_prepare() {
 			auxil/paraglob/src/CMakeLists.txt
 	fi
 
-	# TODO: per package flag enablement should be honored. below is incomplete
-	#if ! use kerberos; then
-	#	sed -i 's:USE_KRB5\ true:USE_KRB5\ false:' CMakeLists.txt || die
-	#fi
+	if ! use kerberos; then
+		eapply ${FILESDIR}/${PN}-5.0.2-disable-kerberos.patch
+	fi
 
 	if [[ ${PV} == 9999 ]]; then
 		suffix="$(git rev-parse --short HEAD)-gentoo"
@@ -109,6 +108,7 @@ src_configure() {
 		-DDISABLE_PYTHON_BINDINGS=$(usex python no yes)
 		-DPYTHON_EXECUTABLE="${PYTHON}"
 		-DZEEK_ETC_INSTALL_DIR="/etc/${PN}"
+		-DZEEK_STATE_DIR="/var/lib"
 		-DPY_MOD_INSTALL_DIR="$(python_get_sitedir)"
 		-DBINARY_PACKAGING_MODE=true
 		-DBUILD_SHARED_LIBS=ON
@@ -150,11 +150,12 @@ src_install() {
 	keepdir \
 		/var/log/"${PN}" \
 		/var/spool/"${PN}"/{tmp,brokerstore} \
-		/usr/var/lib/zkg
+		/var/lib/zkg
 
 	# Make sure local config does not get overwritten on reinstalls
 	mv "${ED}"/usr/share/zeek/site "${ED}"/etc/zeek/ || die
 
 	# set config paths
 	sed -i "s:^SitePolicyScripts.*$:SitePolicyScripts = /etc/zeek/site/local.zeek:" "${ED}"/etc/zeek/zeekctl.cfg || die
+	sed -i "s:^state_dir.*$:state_dir = /var/lib/zkg:" "${ED}"/etc/zeek/zkg/config || die
 }
