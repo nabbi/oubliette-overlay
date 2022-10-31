@@ -124,13 +124,15 @@ src_configure() {
 	)
 	use caf &&  mycmakeargs+=( -DCAF_ROOT="${EPREFIX}/usr/include/caf" )
 
-	use btest && mycmakeargs+=(
-		-DBROKER_DISABLE_TESTS=true
-		-DBROKER_DISABLE_DOC_EXAMPLES=true
-		-DINSTALL_BTEST=false
-		-DINSTALL_BTEST_PCAPS=false
-		-DENABLE_ZEEK_UNIT_TESTS=false
-	)
+	if ! use btest; then
+		mycmakeargs+=(
+			-DBROKER_DISABLE_TESTS=true
+			-DBROKER_DISABLE_DOC_EXAMPLES=true
+			-DINSTALL_BTEST=false
+			-DINSTALL_BTEST_PCAPS=false
+			-DENABLE_ZEEK_UNIT_TESTS=false
+		)
+	fi
 
 	cmake_src_configure
 
