@@ -1,0 +1,49 @@
+https://github.com/trusteddomainproject/OpenARC/issues/143
+https://github.com/trusteddomainproject/OpenARC/pull/145
+
+The proposed change fixes a bug where OpenARC produces syntactically invalid Authentication-Results headers, by applying quoting to the result values where appropriate. It also fixes an off-by-one error when producing the arc.chain result value.
+
+diff --git a/libopenarc/arc.c b/libopenarc/arc.c
+index 1c6c9de..9216b34 100644
+--- a/libopenarc/arc.c
++++ b/libopenarc/arc.c
+@@ -3711,7 +3711,7 @@ arc_chain_custody_str(ARC_MESSAGE *msg, u_char *buf, size_t buflen)
+ 		kvset = msg->arc_sets[set].arcset_ams->hdr_data;
+ 		str = arc_param_get(kvset, "d");
+ 		(void) arc_dstring_printf(tmpbuf, "%s%s",
+-		                          (set < msg->arc_nsets ? ":" : ""),
++		                          (set < msg->arc_nsets - 1 ? ":" : ""),
+ 		                          str);
+ 	}
+ 
+diff --git a/openarc/openarc.c b/openarc/openarc.c
+index 7e191dc..39312b3 100644
+--- a/openarc/openarc.c
++++ b/openarc/openarc.c
+@@ -3851,14 +3851,24 @@ mlfi_eom(SMFICTX *ctx)
+ 
+ 		if (ipout != NULL)
+ 		{
++			_Bool quote = strchr(ipout, ':') != NULL;
++
+ 			arcf_dstring_printf(afc->mctx_tmpstr,
+-			                    " smtp.remote-ip=%s", ipout);
++			                    " smtp.remote-ip=%s%s%s",
++			                    quote ? "\"" : "",
++			                    ipout,
++			                    quote ? "\"" : "");
+ 		}
+ 
+ 		if (conf->conf_finalreceiver && arcchainlen > 0)
+ 		{
++			_Bool quote = strchr(arcchainbuf, ':') != NULL;
++
+ 			arcf_dstring_printf(afc->mctx_tmpstr,
+-			                    " arc.chain=%s", arcchainbuf);
++			                    " arc.chain=%s%s%s",
++			                    quote ? "\"" : "",
++			                    arcchainbuf,
++			                    quote ? "\"" : "");
+ 		}
+ 
+ 		if (arcf_insheader(ctx, 1, AUTHRESULTSHDR,

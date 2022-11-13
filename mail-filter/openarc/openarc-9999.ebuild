@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit autotools multilib systemd
+inherit autotools systemd
 
 DESCRIPTION="Open source ARC implementation"
 HOMEPAGE="https://github.com/trusteddomainproject/OpenARC"
@@ -27,7 +27,12 @@ RDEPEND="${DEPEND}
 	acct-user/openarc"
 
 PATCHES=(
-	"${FILESDIR}/openarc-issue137.patch"
+	"${FILESDIR}"/${PN}-issue137.patch
+	"${FILESDIR}"/${PN}-issue141.patch
+	"${FILESDIR}"/${PN}-issue142.patch
+	"${FILESDIR}"/${PN}-issue143.patch
+	"${FILESDIR}"/${PN}-pr117.patch
+	"${FILESDIR}"/${PN}-pr158.patch
 )
 
 src_prepare() {

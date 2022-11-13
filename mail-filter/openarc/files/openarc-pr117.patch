@@ -1,0 +1,27 @@
+https://github.com/trusteddomainproject/OpenARC/pull/117
+
+strncpy(hnbuf, h->hdr_text, h->hdr_namelen) assumes that hdr_namelen will never be longer than ARC_MAXHEADER, but that assumption wasn't enforced anywhere. Enforcing the maximum field name length in arc_parse_header_field() seems reasonable, and prevents malformed headers from overrunning this buffer.
+
+diff --git a/libopenarc/arc.c b/libopenarc/arc.c
+index 1c6c9de..8dd2990 100644
+--- a/libopenarc/arc.c
++++ b/libopenarc/arc.c
+@@ -2411,6 +2407,10 @@ arc_parse_header_field(ARC_MESSAGE *msg, u_char *hdr, size_t hlen,
+ 	while (end > hdr && isascii(*(end - 1)) && isspace(*(end - 1)))
+ 		end--;
+ 
++	/* don't allow incredibly large field names */
++	if (end - hdr > ARC_MAXHEADER)
++		return ARC_STAT_SYNTAX;
++
+ 	/* don't allow a field name containing a semicolon */
+ 	semicolon = memchr(hdr, ';', hlen);
+ 	if (semicolon != NULL && colon != NULL && semicolon < colon)
+@@ -2759,6 +2759,7 @@ arc_eoh(ARC_MESSAGE *msg)
+ 	for (h = msg->arc_hhead; h != NULL; h = h->hdr_next)
+ 	{
+ 		char hnbuf[ARC_MAXHEADER + 1];
++		assert(h->hdr_namelen <= ARC_MAXHEADER);
+ 
+ 		memset(hnbuf, '\0', sizeof hnbuf);
+ 		strncpy(hnbuf, h->hdr_text, h->hdr_namelen);

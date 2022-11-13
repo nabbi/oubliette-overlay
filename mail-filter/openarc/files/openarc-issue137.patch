@@ -1,5 +1,9 @@
-# https://github.com/trusteddomainproject/OpenARC/issues/137
-# https://github.com/trusteddomainproject/OpenARC/pull/121
+https://github.com/trusteddomainproject/OpenARC/issues/137
+https://github.com/trusteddomainproject/OpenARC/pull/121
+
+"t" is imported from RFC 6376 section 3.5
+Its inclusion in this list results in spurious ARC verification failures
+
 diff --git a/libopenarc/arc.c b/libopenarc/arc.c
 index b1b0b29..19d6d80 100644
 --- a/libopenarc/arc.c
