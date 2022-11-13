@@ -55,7 +55,6 @@ REQUIRED_USE="zeekctl? ( python )
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-3.2-do-not-strip-broker-binary.patch
-	"${FILESDIR}"/${PN}-5.0.2-cmake-replace-qoutes.patch
 	"${FILESDIR}"/${PN}-5.0.2-gentoo-qa-fixes.patch
 )
 
