@@ -1,0 +1,73 @@
+https://github.com/trusteddomainproject/OpenARC/pull/161
+
+Senders using MS Exchange / Outlook / M365 cloud hosted mail chains many headers together
+
+The ARC-Message-Signature body as truncating at 1024 resulting in incomplete ARC headers
+
+Unclear which BUFRSZ capped so doubled them all.
+
+diff --git a/libopenarc/arc-internal.h b/libopenarc/arc-internal.h
+index c8efd62..f6e80bb 100644
+--- a/libopenarc/arc-internal.h
++++ b/libopenarc/arc-internal.h
+@@ -48,7 +48,7 @@
+ #endif /* __STDC__ */
+ 
+ /* limits, macros, etc. */
+-#define	BUFRSZ			1024	/* base temp buffer size */
++#define	BUFRSZ			2048	/* base temp buffer size */
+ #define	BASE64SIZE(x)		(((x + 2) / 3) * 4)
+ 					/* base64 encoding growth ratio */
+ #define MAXADDRESS		256	/* biggest user@host we accept */
+diff --git a/libopenarc/arc.c b/libopenarc/arc.c
+index 1c6c9de..41aba1e 100644
+--- a/libopenarc/arc.c
++++ b/libopenarc/arc.c
+@@ -77,7 +77,7 @@ void arc_error __P((ARC_MESSAGE *, const char *, ...));
+ 
+ #define	CRLF			"\r\n"
+ 
+-#define	BUFRSZ			1024
++#define	BUFRSZ			2048
+ #define	DEFERRLEN		128
+ #define	DEFTIMEOUT		10
+ 
+diff --git a/openarc/config.c b/openarc/config.c
+index cf5e5ce..e769702 100644
+--- a/openarc/config.c
++++ b/openarc/config.c
+@@ -37,7 +37,7 @@
+ #include "config.h"
+ 
+ /* limits */
+-#define	BUFRSZ		1024		/* generic buffer size */
++#define	BUFRSZ		2048		/* generic buffer size */
+ #define	MAXLEVEL	5		/* max. include recursion */
+ 
+ #ifndef FALSE
+diff --git a/openarc/openarc-ar.c b/openarc/openarc-ar.c
+index 48acec6..52b6cf4 100644
+--- a/openarc/openarc-ar.c
++++ b/openarc/openarc-ar.c
+@@ -761,7 +761,7 @@ main(int argc, char **argv)
+ 	char *p;
+ 	char *progname;
+ 	struct authres ar;
+-	u_char buf[1024];
++	u_char buf[2048];
+ 	u_char *toks[NTOKENS];
+ 
+ 	progname = (p = strrchr(argv[0], '/')) == NULL ? argv[0] : p + 1;
+diff --git a/openarc/openarc.h b/openarc/openarc.h
+index a413baa..5004eee 100644
+--- a/openarc/openarc.h
++++ b/openarc/openarc.h
+@@ -42,7 +42,7 @@
+ #endif /* !TRUE */
+ 
+ /* defaults, limits, etc. */
+-#define	BUFRSZ		1024
++#define	BUFRSZ		2048
+ #define CONFIGOPTS	"Ac:flnp:P:rt:u:vV"
+ #define	DEFCONFFILE	CONFIG_BASE "/openarc.conf"
+ #define	DEFINTERNAL	"csl:127.0.0.1,::1"

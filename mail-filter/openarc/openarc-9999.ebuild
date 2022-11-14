@@ -34,6 +34,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-pr117.patch
 	"${FILESDIR}"/${PN}-pr158.patch
 	"${FILESDIR}"/${PN}-header-canonicalization.patch
+	"${FILESDIR}"/${PN}-morebuff.patch
 )
 
 src_prepare() {
