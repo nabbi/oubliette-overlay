@@ -33,6 +33,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-issue143.patch
 	"${FILESDIR}"/${PN}-pr117.patch
 	"${FILESDIR}"/${PN}-pr158.patch
+	"${FILESDIR}"/${PN}-header-canonicalization.patch
 )
 
 src_prepare() {
