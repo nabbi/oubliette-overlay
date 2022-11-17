@@ -8,7 +8,14 @@ My personal unofficial Portage overlay containing forgotten ebuilds for Gentoo L
 * [oubliette-overlay-dev](https://github.com/nabbi/oubliette-overlay-dev) is an experimental  sandbox
 * [oubliette-ebuild-verbump](https://github.com/nabbi/oubliette-ebuild-verbump) auto version bumps a few packages contained here
 
-To add the overlay using layman:
+
+## Install
+To add the overlay using app-portage/layman:
 ```
 layman -a oubliette
+```
+
+To add the overlay using app-eselect/eselect-repository:
+```
+eselect repository enable oubliette
 ```
