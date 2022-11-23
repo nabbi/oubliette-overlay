@@ -10,8 +10,4 @@
 		Gentoo system up to date. It can operate in non-interactive (default)
 		or interactive mode.
 </longdescription>
-<use>
-		<flag name='buildkernel'>Enable support for buildkernel (include buildkernel dependency).</flag>
-		<flag name='emtee'>Enable support for emtee (include emtee dependency).</flag>
-</use>
 </pkgmetadata>

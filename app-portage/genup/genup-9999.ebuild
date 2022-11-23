@@ -16,22 +16,11 @@ else
 	SRC_URI="https://github.com/nabbi/${PB}/archive/${PV}.tar.gz"
 fi
 
-IUSE="+buildkernel emtee"
-
 RESTRICT="mirror"
 
 DEPEND="
 	app-portage/eix
 	app-portage/gentoolkit
-	emtee? ( >=app-portage/emtee-1.0.5 )
-	amd64? (
-		buildkernel? (
-			|| (
-				>=sys-kernel/buildkernel-dracut-1.0.37
-				>=sys-kernel/buildkernel-1.0.13
-			)
-		)
-	)
 "
 src_install () {
 	dosbin "${PN}"
