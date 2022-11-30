@@ -21,6 +21,7 @@ RESTRICT="mirror"
 DEPEND="
 	app-portage/eix
 	app-portage/gentoolkit
+	app-portage/portage-utils
 "
 src_install () {
 	dosbin "${PN}"
