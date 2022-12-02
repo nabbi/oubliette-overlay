@@ -56,6 +56,7 @@ dev-perl/Crypt-Eksblowfish
 dev-perl/Data-Entropy
 dev-perl/HTTP-Lite
 dev-perl/MIME-Lite
+dev-perl/MIME-tools
 dev-perl/X10
 dev-perl/DateTime
 dev-perl/Device-SerialPort
