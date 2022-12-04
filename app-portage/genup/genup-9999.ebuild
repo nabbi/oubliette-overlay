@@ -23,6 +23,15 @@ DEPEND="
 	app-portage/gentoolkit
 	app-portage/portage-utils
 "
+src_prepare() {
+	default
+
+	if [[ ${PV} == 9999 ]]; then
+		suffix="$(git rev-parse --short HEAD)-gentoo"
+		sed -i -e "s/\(^VERSION=\".*\)\"/\1-${suffix}\"/" genup || die
+	fi
+}
+
 src_install () {
 	dosbin "${PN}"
 	doman "${PN}.8"
