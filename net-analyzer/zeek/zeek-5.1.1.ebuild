@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{8,9,10} )
+PYTHON_COMPAT=( python3_{8,9,10,11} )
 inherit cmake python-single-r1
 
 DESCRIPTION="The Zeek Network Security Monitor"
@@ -56,8 +56,6 @@ REQUIRED_USE="zeekctl? ( python )
 PATCHES=(
 	"${FILESDIR}"/${PN}-3.2-do-not-strip-broker-binary.patch
 	"${FILESDIR}"/${PN}-5.0.2-gentoo-qa-fixes.patch
-#	"${FILESDIR}"/${PN}-5.0.2-replace-lambda-class.patch
-#	"${FILESDIR}"/${PN}-5.0.2-cmake-replace-qoutes.patch
 )
 
 if [[ ! ${PV} == 9999 ]]; then
@@ -85,7 +83,7 @@ src_prepare() {
 	fi
 
 	if ! use kerberos; then
-		eapply ${FILESDIR}/${PN}-5.0.2-disable-kerberos.patch
+		eapply "${FILESDIR}/${PN}-5.0.2-disable-kerberos.patch"
 	fi
 
 	if [[ ${PV} == 9999 ]]; then
@@ -139,7 +137,7 @@ src_configure() {
 
 	# TODO: cmake target_compile_options appends priv_cflags without removing semicolon
 	# submodule impacted https://github.com/simonfxr/fiber
-	sed -iE 's:FLAGS\ =\(.*\);:FLAGS =\1 :' ${BUILD_DIR}/build.ninja || die
+	sed -iE 's:FLAGS\ =\(.*\);:FLAGS =\1 :' "${BUILD_DIR}/build.ninja" || die
 }
 
 src_install() {
