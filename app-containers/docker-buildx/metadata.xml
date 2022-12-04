@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic+Gentoo@boet.cc</email>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">docker/buildx</remote-id>
+	</upstream>
+	<longdescription lang="en">
+		Oubliette new package
+		buildx is a Docker CLI plugin for extended build capabilities with BuildKit.
+		BuildKit is a toolkit for converting source code to build artifacts in an efficient, expressive and repeatable manner.
+	</longdescription>
+</pkgmetadata>
