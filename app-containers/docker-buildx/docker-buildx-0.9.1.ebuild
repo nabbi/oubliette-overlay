@@ -12,7 +12,7 @@ SRC_URI="https://github.com/docker/buildx/archive/refs/tags/v${PV}.tar.gz -> ${P
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="~amd64 ~arm64"
 
 DEPEND=""
 RDEPEND="${DEPEND}"
@@ -21,16 +21,17 @@ BDEPEND=""
 S="${WORKDIR}/${MY_PN}-${PV}"
 
 src_compile() {
-
 	go build -mod=vendor -o docker-buildx ./cmd/buildx || die
-
 }
 
 src_install() {
-
 	insinto /usr/libexec/docker/cli-plugins
 	doins docker-buildx
 	fperms 0755 /usr/libexec/docker/cli-plugins/docker-buildx
 
 	dodoc README.md
+}
+
+src_test() {
+	go test ./... || die
 }
