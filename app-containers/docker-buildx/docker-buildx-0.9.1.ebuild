@@ -31,9 +31,8 @@ src_compile() {
 }
 
 src_install() {
-	insinto /usr/libexec/docker/cli-plugins
-	doins docker-buildx
-	fperms 0755 /usr/libexec/docker/cli-plugins/docker-buildx
+	exeinto /usr/libexec/docker/cli-plugins
+	doexe docker-buildx
 
 	dodoc README.md
 }
