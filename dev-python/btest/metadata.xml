@@ -5,6 +5,6 @@
 		<email>nic@boet.cc</email>
 	</maintainer>
 	<upstream>
-		<remote-id type="pypi">btest</remote-id>
+		<remote-id type="github">zeek/btest</remote-id>
 	</upstream>
 </pkgmetadata>

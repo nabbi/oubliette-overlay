@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit autotools multilib systemd
+inherit autotools systemd
 
 DESCRIPTION="Open source DMARC implementation"
 HOMEPAGE="http://www.trusteddomain.org/opendmarc/"

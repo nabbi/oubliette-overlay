@@ -4,14 +4,12 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_10 )
+PYTHON_COMPAT=( python3_{10,11} )
 inherit distutils-r1
 
 DESCRIPTION="BTest is a powerful framework for writing system tests."
-HOMEPAGE="
-	https://pypi.org/project/btest/
-"
-SRC_URI="https://github.com/zeek/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+HOMEPAGE="https://github.com/zeek/btest"
+SRC_URI="https://github.com/zeek/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.gh.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"

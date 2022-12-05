@@ -7,4 +7,7 @@
 			Oubliette - new ebuild based on nethack with qa cleanups
 		</description>
 	</maintainer>
+	<upstream>
+		<remote-id type="github">k21971/EvilHack</remote-id>
+	</upstream>
 </pkgmetadata>

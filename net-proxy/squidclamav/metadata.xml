@@ -7,4 +7,7 @@
 			SquidClamAV is an ICAP module for net-proxy/c-icap whicch allows easy antivirus file scanning.
 		</description>
 	</maintainer>
+	<upstream>
+		<remote-id type="github">darold/squidclamav</remote-id>
+	</upstream>
 </pkgmetadata>

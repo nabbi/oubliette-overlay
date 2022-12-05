@@ -3,7 +3,6 @@
 
 EAPI=8
 
-CMAKE_ECLASS=cmake
 inherit cmake-multilib
 
 DESCRIPTION="The C++ Actor Framework (CAF)"
@@ -15,8 +14,10 @@ SLOT="0/18.2"
 KEYWORDS="~amd64 ~x86"
 IUSE="debug doc examples +openssl static-libs test tools"
 
-RDEPEND="examples? ( net-misc/curl dev-libs/protobuf:=
-					 dev-qt/qtcore:5 )
+RDEPEND="
+	examples? (
+		net-misc/curl dev-libs/protobuf:=
+		dev-qt/qtcore:5 )
 	openssl? ( dev-libs/openssl:0=[${MULTILIB_USEDEP},static-libs?] )"
 
 DEPEND="${RDEPEND}"

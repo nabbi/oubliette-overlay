@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit flag-o-matic toolchain-funcs
+inherit toolchain-funcs
 
 DESCRIPTION="Distributed Checksum Clearinghouse"
 HOMEPAGE="https://www.rhyolite.com/dcc/"
@@ -39,9 +39,6 @@ dcc_libexec=usr/sbin
 dcc_man=usr/share/man
 dcc_rundir=var/run/dcc
 
-#PATCHES=(
-#)
-
 src_configure() {
 	tc-export CC AR RANLIB
 	local myconf=(
@@ -52,7 +49,6 @@ src_configure() {
 		--enable-dccifd
 		--enable-server
 		--with-DDC-MD5
-		--with-installroot="${D}"
 		--with-rundir="${EPREFIX}"/${dcc_rundir}
 		--with-uid=dcc
 		--with-updatedcc_pfile="${EPREFIX}"/${dcc_homedir}/updatecc.pfile

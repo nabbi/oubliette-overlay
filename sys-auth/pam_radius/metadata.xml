@@ -3,10 +3,12 @@
 <pkgmetadata>
 <!-- maintainer-needed -->
 	<longdescription>
-	Oubliette - ebuild version bump from Gentoo repository
-	
-	This is the PAM to RADIUS authentication module. It allows any
-	PAM-capable machine to become a RADIUS client for authentication
-	and accounting requests.
+		Oubliette - ebuild version bump from Gentoo repository
+		This is the PAM to RADIUS authentication module. It allows any
+		PAM-capable machine to become a RADIUS client for authentication
+		and accounting requests.
 	</longdescription>
+	<upstream>
+		<remote-id type="github">FreeRADIUS/pam_radius</remote-id>
+	</upstream>
 </pkgmetadata>
