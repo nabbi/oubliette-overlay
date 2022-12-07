@@ -21,7 +21,7 @@
 		<maintainer>
 			<name>Mathias Gumz</name>
 		</maintainer>
-		<remote-id type="github">mgumz/alock</remote-id>
+		<remote-id type="github">Arkq/alock</remote-id>
 	</upstream>
 	<use>
 		<flag name="xbacklight">Build with <pkg>x11-apps/xbacklight</pkg>.</flag>
