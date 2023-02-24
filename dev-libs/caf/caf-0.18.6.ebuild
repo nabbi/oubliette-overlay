@@ -25,7 +25,7 @@ DEPEND="${RDEPEND}"
 BDEPEND="doc? ( app-doc/doxygen[dot]
 	app-shells/bash:0
 	dev-python/sphinx
-	dev-python/sphinx_rtd_theme )"
+	dev-python/sphinx-rtd-theme )"
 
 RESTRICT="!test? ( test )"
 
