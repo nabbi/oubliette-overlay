@@ -42,7 +42,7 @@ RDEPEND="
 	sendmail? ( virtual/mta )
 	tcmalloc? ( dev-util/google-perftools )
 	tools? (
-		dev-python/semantic_version
+		dev-python/semantic-version
 		dev-python/GitPython )"
 
 DEPEND="${RDEPEND}"
