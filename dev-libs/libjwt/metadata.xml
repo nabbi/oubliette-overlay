@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>dek.devel@baisenvar.info</email>
+		<name>Bill Prendergast</name>
+		<description>
+			responsible for multi-ssl patch
+		</description>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">benmcollins/libjwt</remote-id>
+		<remote-id type="github">dekeonus/libjwt</remote-id>
+	</upstream>
+</pkgmetadata>
