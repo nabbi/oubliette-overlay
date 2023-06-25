@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<!-- maintainer-needed -->
+	<longdescription lang="en">
+		Multiwatch forks multiple instance of one application and keeps them running;
+		it is made to be used with spawn-fcgi, so all forks share the same fastcgi socket
+	</longdescription>
+</pkgmetadata>
