@@ -1,0 +1,71 @@
+#!/sbin/openrc-run
+# Copyright 1999-2023 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# spawn-fcgi init file modified for zoneminder with multiwatch
+
+PROGNAME=${SVCNAME#*.}
+SPAWNFCGI=/usr/bin/spawn-fcgi
+MULTIWATCH=/usr/bin/multiwatch
+PIDPATH=/run/spawn-fcgi
+PIDFILE=${PIDPATH}/${PROGNAME}
+
+depend() {
+    need net
+}
+
+start() {
+    local X E OPTIONS i RETVAL
+    FCGI_PROGRAM_EXEC=$(echo ${FCGI_PROGRAM} | awk "{print \$1}")
+
+    if [ -z "${FCGI_CHILDREN}" ]; then
+        FCGI_CHILDREN=1
+    fi
+
+    if [ -n "${FCGI_CHROOT}" ]; then
+        OPTIONS="${OPTIONS} -c ${FCGI_CHROOT}"
+    fi
+
+    if [ -n "${FCGI_CHDIR}" ]; then
+        OPTIONS="${OPTIONS} -d ${FCGI_CHDIR}"
+    fi
+
+    if [ -n "${FCGI_USER}" ] && [ "${FCGI_USER}" != "root" ]; then
+        OPTIONS="${OPTIONS} -u ${FCGI_USER}"
+    fi
+
+    if [ -n "${FCGI_GROUP}" ] && [ "${FCGI_GROUP}" != "root" ]; then
+        OPTIONS="${OPTIONS} -g ${FCGI_GROUP}"
+    fi
+
+    if [ -n "${FCGI_EXTRA_OPTIONS}" ]; then
+        OPTIONS="${OPTIONS} ${FCGI_EXTRA_OPTIONS}"
+    fi
+
+    unset E
+    for i in ${ALLOWED_ENV}; do
+        local j
+        eval j=$(echo \$"$i")
+        [ -n "${j}" ] && E="${E} --env ${i}=${j}"
+    done
+
+    ebegin "Starting FastCGI application ${PROGNAME}"
+    checkpath -q -d -m 700 /run/spawn-fcgi
+
+    start-stop-daemon --start --pidfile ${PIDFILE} --exec ${SPAWNFCGI} \
+        ${E} -- -s ${FCGI_SOCKET} \
+        -P ${PIDFILE} ${OPTIONS} -- ${MULTIWATCH} -f ${FCGI_CHILDREN} ${FCGI_PROGRAM}
+    RETVAL=$?
+
+    eend ${RETVAL}
+}
+
+stop() {
+    local X RETVAL=0
+
+    ebegin "Stopping FastCGI application ${PROGNAME}"
+    start-stop-daemon --stop --pidfile ${PIDFILE} || \
+        { RETVAL=$? && break ; }
+    eend ${RETVAL}
+}
+

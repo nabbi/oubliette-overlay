@@ -11,6 +11,8 @@
 	<use>
 		<flag name="curl">Enable using net-misc/curl for streaming from cameras</flag>
 		<flag name="gcrypt">...</flag>
+		<flag name="apache2">Use www-servers/apache2 as web server (and user:group)</flag>
+		<flag name="nginx">Use www-servers/nginx as web server (and user:group)</flag>
 		<flag name="vlc">Enable using media-libs/vlc for streaming from cameras</flag>
 	</use>
 	<upstream>

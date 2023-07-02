@@ -1,0 +1,59 @@
+# gentoo apache2 vhost include file
+ServerAdmin webmaster@localhost
+
+DocumentRoot "%ZM_WEBDIR%"
+
+## if zoneminder is the only thing on this named vhost you might want to
+## redirect root / to /zm/ so you don't have to remember to type the path
+#RedirectMatch ^/$ /zm/
+
+# Order matters. This alias must come first.
+Alias /zm/cache "/var/cache/zoneminder"
+<Directory "/var/cache/zoneminder">
+    Options -Indexes +FollowSymLinks
+    AllowOverride None
+    Require all granted
+</Directory>
+
+ScriptAlias /zm/cgi-bin "/usr/libexec/zoneminder/cgi-bin"
+Alias /zoneminder "%ZM_WEBDIR%"
+Alias /zm "%ZM_WEBDIR%"
+
+<Directory "%ZM_WEBDIR%">
+    Options -Indexes +MultiViews +FollowSymLinks
+    AllowOverride None
+    Require all granted
+</Directory>
+
+<Directory "/usr/libexec/zoneminder/cgi-bin">
+    Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+    AllowOverride All
+    Require all granted
+</Directory>
+
+# For better visibility, the following directives have been migrated from the
+# default .htaccess files included with the CakePHP project.
+# Parameters not set here are inherited from the parent directive above.
+<Directory "%ZM_WEBDIR%/api">
+    RewriteEngine on
+    RewriteRule ^$ app/webroot/ [L]
+    RewriteRule (.*) app/webroot/$1 [L]
+    RewriteBase /zm/api
+</Directory>
+
+<Directory "%ZM_WEBDIR%/api/app">
+    RewriteEngine on
+    RewriteRule ^$ webroot/ [L]
+    RewriteRule (.*) webroot/$1 [L]
+    RewriteBase /zm/api
+</Directory>
+
+<Directory "%ZM_WEBDIR%/api/app/webroot">
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+    RewriteBase /zm/api
+</Directory>
+
+# vim: ts=4 filetype=apache

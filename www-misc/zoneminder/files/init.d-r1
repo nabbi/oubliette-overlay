@@ -1,0 +1,41 @@
+#!/sbin/openrc-run
+# Copyright 1999-2022 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+command="/usr/bin/zmpkg.pl"
+extra_started_commands="reload rotate"
+
+depend() {
+	use %WWW_SERVER% mysql php-fpm
+}
+
+start_pre() {
+	checkpath -d -m 0775 -o %ZM_OWNER% /run/zm
+	checkpath -d -m 0775 -o %ZM_OWNER% /var/tmp/zm
+	checkpath -d -m 0775 -o %ZM_OWNER% /var/cache/zoneminder
+}
+
+start() {
+	ebegin "Starting zoneminder"
+	${command} start
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping zoneminder"
+	${command} stop
+	eend $?
+}
+
+reload() {
+	ebegin "Restarting zoneminder"
+	${command} restart
+	eend $?
+}
+
+rotate() {
+	ebegin "Notifiying zoneminder of log rotation"
+	${command} logrot
+	eend $?
+}
+

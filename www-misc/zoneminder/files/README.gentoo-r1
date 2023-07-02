@@ -1,0 +1,56 @@
+See https://wiki.gentoo.org/wiki/ZoneMinder for more details
+
+New Installation:
+    1. If this is a new installation, you will need to create a MySQL database for zoneminder to use
+       (see https://wiki.gentoo.org/wiki/MySQL/Startup_Guide).
+
+       E.g., when logged into mysql as root,
+         mysql> CREATE DATABASE zm;
+         mysql> grant lock tables,alter,drop,select,insert,update,delete,create,index,alter routine,create routine,trigger,execute on zm.* to 'zmuser'@localhost identified by 'zmpass';
+         mysql> flush privileges;
+
+       Once you completed that you should execute the following:
+         mysql -p < /usr/share/zoneminder/db/zm_create.sql
+
+    2. Zoneminder developers recommend that you don't edit the supplied default configuration files,
+        instead make modifications to files in /etc/zm/conf.d/*.conf to override defaults
+
+        Set your database settings in /etc/zm/conf.d/<ZM_HOST>.conf, including above zmuser & zmpass
+            grep -v DB_TYPE /etc/zm/zm.conf|grep -B3 -A1 ZM_DB > /etc/zm/conf.d/<ZM_HOST>.conf
+
+        Where "<ZM_HOST>" is a filename meaningful to you eg. name the file: 99-local.conf
+
+    3. Configure apache|nginx to use zoneminder
+
+        if using apache see /usr/share/doc/zoneminder*/zoneminder_vhost*
+        for an example configuration snippet.
+
+        /etc/init.d/apache2 start
+
+
+        if using nginx see /usr/share/doc/zoneminder*/nginx.conf*
+        for an example configuration snippet.
+
+        /etc/init.d/nginx start
+        /etc/init.d/spawn-fcgi.zoneminder start
+
+
+    4. Enable PHP in your webserver configuration
+
+        for apache with apache php sapi you will need to add -D PHP to /etc/conf.d/apache2
+        eg: APACHE2_OPTS="-D DEFAULT_VHOST -D INFO -D MANUAL -D SSL -D SSL_DEFAULT_VHOST -D LANGUAGE -D PHP"
+        https://wiki.gentoo.org/wiki/Apache#Enabling_PHP-FPM_through_mod_proxy_fcgi_in_Apache_2.4
+
+        for nginx or apache with php-fpm you will need to configure the php-fpm service see
+        https://wiki.gentoo.org/wiki/Nginx#PHP_support
+
+    5. Start the zoneminder daemon
+
+       /etc/init.d/zoneminder start
+
+    6. Finally point your browser to http://your.webserver/zm
+
+
+Upgrading:
+    You will need to run the zmupdate.pl script
+
