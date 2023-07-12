@@ -1,4 +1,5 @@
 # Oubliette Gentoo overlay 
+
 [![gentoo qa-reports](https://img.shields.io/badge/gentoo-QA%20check-6E56AF.svg)](https://qa-reports.gentoo.org/output/repos/oubliette.html)
 [![repoman](https://github.com/nabbi/oubliette-overlay/actions/workflows/repoman.yml/badge.svg)](https://github.com/nabbi/oubliette-overlay/actions/workflows/repoman.yml)
 [![pkgcheck](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml/badge.svg)](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml)
@@ -11,10 +12,6 @@
 
 
 ## Install
-To add the overlay using app-portage/layman:
-```
-layman -a oubliette
-```
 
 To add the overlay using app-eselect/eselect-repository:
 ```
