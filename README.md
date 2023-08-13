@@ -6,6 +6,7 @@
 [![mirror](https://img.shields.io/badge/gentoo-mirror-purple)](https://github.com/gentoo-mirror/oubliette)
 
 [Oubliette](https://github.com/nabbi/oubliette-overlay) is my personal unofficial Portage overlay containing forgotten and fixed ebuilds for Gentoo Linux.
+
 * [oubliette-patches](https://github.com/nabbi/oubliette-patches) compliments what this misses.
 * [oubliette-overlay-dev](https://github.com/nabbi/oubliette-overlay-dev) is an experimental development sandbox
 * [oubliette-ebuild-verbump](https://github.com/nabbi/oubliette-ebuild-verbump) auto version bumps a few packages found here
@@ -14,6 +15,8 @@
 ## Install
 
 To add the overlay using app-eselect/eselect-repository:
-```
+
+```shell
 eselect repository enable oubliette
+emaint sync -r oubliette
 ```
