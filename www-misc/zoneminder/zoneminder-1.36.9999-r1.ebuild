@@ -80,7 +80,7 @@ dev-perl/Device-SerialPort
 dev-php/pecl-apcu:*
 sys-auth/polkit
 sys-libs/zlib
-media-video/ffmpeg[x264,x265,jpeg2k]
+>=media-video/ffmpeg-5[x264,x265,jpeg2k]
 virtual/httpd-php:*
 media-libs/libjpeg-turbo:0
 virtual/perl-ExtUtils-MakeMaker
