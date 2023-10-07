@@ -18,13 +18,10 @@ fi
 
 LICENSE="MPL-2.0"
 SLOT="0"
-IUSE="gnutls ssl"
+IUSE="gnutls"
 
-REQUIRED_USE="
-	|| ( ssl gnutls )
-"
 RDEPEND="
-	ssl? (
+	!gnutls? (
 		>=dev-libs/openssl-0.9.8:0=
 	)
 	gnutls? (
@@ -45,16 +42,11 @@ src_prepare() {
 src_configure() {
 	local myconf
 
-	if use ssl; then
-		myconf=" --with-default-ssl=openssl"
-	elif use gnutls; then
-		myconf=" --with-default-ssl=gnutls"
+	if use gnutls; then
+		myconf=" --without-openssl"
 	fi
 
 	econf \
-		--enable-multi-ssl \
-		$(use_with gnutls) \
-		$(use_with ssl openssl) \
 		${myconf}
 }
 

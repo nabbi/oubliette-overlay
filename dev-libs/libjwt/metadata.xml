@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<maintainer type="person">
+	<maintainer type="person" proxied="yes">
+		<email>nic@boet.cc</email>
+		<name>Nic Boet</name>
+	</maintainer>
+	<maintainer type="person" proxied="yes">
+		<email>jaco@uls.co.za</email>
+		<name>Jaco Kroon</name>
+	<maintainer type="person" proxied="yes">
 		<email>dek.devel@baisenvar.info</email>
 		<name>Bill Prendergast</name>
-		<description>
-			responsible for multi-ssl patch
-		</description>
+	</maintainer>
+	<maintainer type="project" proxied="proxy">
+		<email>proxy-maint@gentoo.org</email>
+		<name>Proxy Maintainers</name>
 	</maintainer>
 	<upstream>
 		<remote-id type="github">benmcollins/libjwt</remote-id>
-		<remote-id type="github">dekeonus/libjwt</remote-id>
 	</upstream>
 </pkgmetadata>

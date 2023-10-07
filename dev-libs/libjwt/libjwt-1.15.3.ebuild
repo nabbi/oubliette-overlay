@@ -7,18 +7,21 @@ inherit autotools
 
 DESCRIPTION="JWT C Library"
 HOMEPAGE="https://github.com/benmcollins/libjwt"
-SRC_URI="https://github.com/benmcollins/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+
+if [[ ${PV} == 9999 ]]; then
+	inherit git-r3
+	EGIT_REPO_URI="https://github.com/benmcollins/libjwt"
+else
+	SRC_URI="https://github.com/benmcollins/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+	KEYWORDS="~amd64 ~x86"
+fi
 
 LICENSE="MPL-2.0"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
-IUSE="gnutls ssl"
+IUSE="gnutls"
 
-REQUIRED_USE="
-	|| ( ssl gnutls )
-"
 RDEPEND="
-	ssl? (
+	!gnutls? (
 		>=dev-libs/openssl-0.9.8:0=
 	)
 	gnutls? (
@@ -31,10 +34,6 @@ DEPEND="
 	dev-libs/jansson
 "
 
-PATCHES=(
-	"${FILESDIR}/${PN}-1.13.1_multi_ssl_atools.patch"
-)
-
 src_prepare() {
 	default
 	eautoreconf
@@ -43,16 +42,11 @@ src_prepare() {
 src_configure() {
 	local myconf
 
-	if use ssl; then
-		myconf=" --with-default-ssl=openssl"
-	elif use gnutls; then
-		myconf=" --with-default-ssl=gnutls"
+	if use gnutls; then
+		myconf=" --without-openssl"
 	fi
 
 	econf \
-		--enable-multi-ssl \
-		$(use_with gnutls) \
-		$(use_with ssl openssl) \
 		${myconf}
 }
 
