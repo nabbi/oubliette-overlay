@@ -91,7 +91,7 @@ curl? ( net-misc/curl )
 gcrypt? ( dev-libs/libgcrypt:0= )
 gnutls? (
 		net-libs/gnutls
-		dev-libs/libjwt[gnutls]
+		dev-libs/libjwt[gnutls,ssl?]
 )
 mmap? ( dev-perl/Sys-Mmap )
 ssl? ( dev-libs/openssl:0= )
