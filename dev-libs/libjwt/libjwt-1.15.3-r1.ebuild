@@ -29,7 +29,7 @@ RDEPEND="
 		>=dev-libs/openssl-0.9.8:0=
 	)
 	gnutls? (
-		>=net-libs/gnutls-3.6.0:0=
+		>=net-libs/gnutls-3.5.8:0=
 	)
 "
 
@@ -40,7 +40,7 @@ DEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}/libjwt-1.16.0_multi_ssl_atools.patch"
+	"${FILESDIR}/libjwt-1.15.3_multi_ssl_atools-r1.patch"
 )
 
 src_prepare() {

@@ -12,7 +12,8 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://github.com/benmcollins/libjwt"
 else
 	SRC_URI="https://github.com/benmcollins/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~x86"
+	#version 1.16.0 regarded by upstream as unstable - fails make check (rsa-pss types)
+	#KEYWORDS=""
 fi
 
 LICENSE="MPL-2.0"
