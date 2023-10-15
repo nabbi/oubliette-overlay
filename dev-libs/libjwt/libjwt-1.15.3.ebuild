@@ -27,10 +27,10 @@ RESTRICT="!test? ( test )"
 RDEPEND="
 	dev-libs/jansson
 	openssl? (
-		>=dev-libs/openssl-0.9.8:0=
+		>=dev-libs/openssl-0.9.8:=
 	)
 	gnutls? (
-		>=net-libs/gnutls-3.5.8:0=
+		>=net-libs/gnutls-3.5.8:=
 	)
 "
 
