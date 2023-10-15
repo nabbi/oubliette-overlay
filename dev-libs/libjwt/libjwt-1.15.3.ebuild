@@ -17,13 +17,16 @@ fi
 
 LICENSE="MPL-2.0"
 SLOT="0"
-IUSE="gnutls ssl"
+IUSE="gnutls +openssl test"
 
 REQUIRED_USE="
-	|| ( ssl gnutls )
+	|| ( openssl gnutls )
 "
+RESTRICT="!test? ( test )"
+
 RDEPEND="
-	ssl? (
+	dev-libs/jansson
+	openssl? (
 		>=dev-libs/openssl-0.9.8:0=
 	)
 	gnutls? (
@@ -33,11 +36,11 @@ RDEPEND="
 
 DEPEND="
 	${RDEPEND}
-	dev-libs/jansson
+	test? ( dev-libs/check )
 "
 
 PATCHES=(
-	"${FILESDIR}/${PN}-1.15.3_multi_ssl_atools.patch"
+	"${FILESDIR}/libjwt-1.15.3_multi_ssl_atools.patch"
 )
 
 src_prepare() {
@@ -46,19 +49,19 @@ src_prepare() {
 }
 
 src_configure() {
-	local myconf
+	local myeconfargs=(
+		--enable-multi-ssl
+		$(use_with gnutls)
+		$(use_with openssl)
+	)
 
-	if use ssl; then
-		myconf=" --with-default-ssl=openssl"
+	if use openssl; then
+		myeconfargs+=( --with-default-ssl=openssl )
 	elif use gnutls; then
-		myconf=" --with-default-ssl=gnutls"
+		myeconfargs+=( --with-default-ssl=gnutls )
 	fi
 
-	econf \
-		--enable-multi-ssl \
-		$(use_with gnutls) \
-		$(use_with ssl openssl) \
-		${myconf}
+	econf "${myeconfargs[@]}"
 }
 
 src_install() {

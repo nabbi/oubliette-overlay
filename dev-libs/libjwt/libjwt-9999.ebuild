@@ -25,6 +25,7 @@ REQUIRED_USE="
 RESTRICT="!test? ( test )"
 
 RDEPEND="
+	dev-libs/jansson
 	openssl? (
 		>=dev-libs/openssl-0.9.8:0=
 	)
@@ -35,7 +36,6 @@ RDEPEND="
 
 DEPEND="
 	${RDEPEND}
-	dev-libs/jansson
 	test? ( dev-libs/check )
 "
 
@@ -49,19 +49,19 @@ src_prepare() {
 }
 
 src_configure() {
-	local myconf
+	local myeconfargs=(
+		--enable-multi-ssl
+		$(use_with gnutls)
+		$(use_with openssl)
+	)
 
 	if use openssl; then
-		myconf=" --with-default-ssl=openssl"
+		myeconfargs+=( --with-default-ssl=openssl )
 	elif use gnutls; then
-		myconf=" --with-default-ssl=gnutls"
+		myeconfargs+=( --with-default-ssl=gnutls )
 	fi
 
-	econf \
-		--enable-multi-ssl \
-		$(use_with gnutls) \
-		$(use_with openssl) \
-		${myconf}
+	econf "${myeconfargs[@]}"
 }
 
 src_install() {
