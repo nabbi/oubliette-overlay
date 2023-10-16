@@ -31,11 +31,11 @@ else
 fi
 
 LICENSE="GPL-2"
+# first webserver in the list is the default, users will need to disable to select others
 IUSE_WEB_SERVER="apache2 nginx"
-IUSE="curl gcrypt gnutls +mmap +ssl vlc +apache2 nginx"
+IUSE="curl gcrypt gnutls +mmap vlc +${IUSE_WEB_SERVER}"
 SLOT="0"
 REQUIRED_USE="
-	|| ( ssl gnutls )
 	^^ ( ${IUSE_WEB_SERVER} )
 "
 
@@ -90,11 +90,13 @@ virtual/perl-Time-HiRes
 curl? ( net-misc/curl )
 gcrypt? ( dev-libs/libgcrypt:0= )
 gnutls? (
-		net-libs/gnutls
-		dev-libs/libjwt[gnutls,ssl?]
+	net-libs/gnutls
+	dev-libs/libjwt[gnutls]
+)
+!gnutls? (
+	dev-libs/openssl:=
 )
 mmap? ( dev-perl/Sys-Mmap )
-ssl? ( dev-libs/openssl:0= )
 vlc? ( media-video/vlc[live] )
 ${DEPEND_WEB_SERVER}
 "
@@ -174,8 +176,8 @@ src_configure() {
 		-DZM_NO_X10=OFF
 		-DZM_NO_CURL="$(usex curl OFF ON)"
 		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
+		-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="$(usex gnutls ON OFF)"
 		-DZM_NO_RTSPSERVER=OFF
-		-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="$(usex ssl OFF ON)"
 	)
 
 	cmake_src_configure
