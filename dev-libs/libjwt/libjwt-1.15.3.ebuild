@@ -17,33 +17,27 @@ fi
 
 LICENSE="MPL-2.0"
 SLOT="0"
-# openssl / gnutls set which ssl implementations to use (build libjwt-ossl.so / libjwt-gnutls.so)
-# IF openssl is enabled it will be the implementation used for libjwt.so
-# gnutls will only be used for libjwt.so if openssl is disabled
-IUSE="gnutls +openssl test"
+IUSE="gnutls ssl"
 
 REQUIRED_USE="
-	|| ( openssl gnutls )
+	|| ( ssl gnutls )
 "
-RESTRICT="!test? ( test )"
-
 RDEPEND="
-	dev-libs/jansson
-	openssl? (
-		>=dev-libs/openssl-0.9.8:=
+	ssl? (
+		>=dev-libs/openssl-0.9.8:0=
 	)
 	gnutls? (
-		>=net-libs/gnutls-3.5.8:=
+		>=net-libs/gnutls-3.5.8:0=
 	)
 "
 
 DEPEND="
 	${RDEPEND}
-	test? ( dev-libs/check )
+	dev-libs/jansson
 "
 
 PATCHES=(
-	"${FILESDIR}/libjwt-1.15.3_multi_ssl_atools.patch"
+	"${FILESDIR}/${PN}-1.15.3_multi_ssl_atools.patch"
 )
 
 src_prepare() {
@@ -52,19 +46,19 @@ src_prepare() {
 }
 
 src_configure() {
-	local myeconfargs=(
-		--enable-multi-ssl
-		$(use_with gnutls)
-		$(use_with openssl)
-	)
+	local myconf
 
-	if use openssl; then
-		myeconfargs+=( --with-default-ssl=openssl )
+	if use ssl; then
+		myconf=" --with-default-ssl=openssl"
 	elif use gnutls; then
-		myeconfargs+=( --with-default-ssl=gnutls )
+		myconf=" --with-default-ssl=gnutls"
 	fi
 
-	econf "${myeconfargs[@]}"
+	econf \
+		--enable-multi-ssl \
+		$(use_with gnutls) \
+		$(use_with ssl openssl) \
+		${myconf}
 }
 
 src_install() {
