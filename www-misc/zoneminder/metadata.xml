@@ -14,7 +14,6 @@
 		<flag name="apache2">Use www-servers/apache2 as web server (and user:group)</flag>
 		<flag name="nginx">Use www-servers/nginx as web server (and user:group)</flag>
 		<flag name="vlc">Enable using media-libs/vlc for streaming from cameras</flag>
-		<flag name="openssl">Use openssl libs for crypto functions</flag>
 	</use>
 	<upstream>
 		<remote-id type="github">ZoneMinder/ZoneMinder</remote-id>
