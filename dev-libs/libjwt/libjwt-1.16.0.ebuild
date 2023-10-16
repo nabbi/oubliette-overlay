@@ -18,6 +18,9 @@ fi
 
 LICENSE="MPL-2.0"
 SLOT="0"
+# openssl / gnutls set which ssl implementations to use (build libjwt-ossl.so / libjwt-gnutls.so)
+# IF openssl is enabled it will be the implementation used for libjwt.so
+# gnutls will only be used for libjwt.so if openssl is disabled
 IUSE="gnutls +openssl test"
 
 REQUIRED_USE="
