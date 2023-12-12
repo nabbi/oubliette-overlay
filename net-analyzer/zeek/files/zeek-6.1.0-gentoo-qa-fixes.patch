@@ -1,5 +1,19 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 94119d4c9..c2dd10ad1 100644
+# gentoo QA fixes zeek 6
+--- a/auxil/broker/CMakeLists.txt
++++ b/auxil/broker/CMakeLists.txt
+@@ -251,9 +251,9 @@
+ endif ()
+
+ # Make sure there are no old header versions on disk.
+-install(
+-  CODE "MESSAGE(STATUS \"Removing: ${CMAKE_INSTALL_PREFIX}/include/broker\")"
+-  CODE "file(REMOVE_RECURSE \"${CMAKE_INSTALL_PREFIX}/include/broker\")")
++#install(
++#  CODE "MESSAGE(STATUS \"Removing: ${CMAKE_INSTALL_PREFIX}/include/broker\")"
++#  CODE "file(REMOVE_RECURSE \"${CMAKE_INSTALL_PREFIX}/include/broker\")")
+
+ # Install all headers except the files from broker/internal.
+ install(DIRECTORY include/broker
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -506,7 +506,7 @@ if (NOT MSVC)
@@ -47,3 +61,24 @@ index 37f6109cd..f25d3b3a8 100644
  
  # Make sure to escape a bunch of special characters in the path before trying to
  # use it as a regular expression below.
+--- a/testing/CMakeLists.txt
++++ b/testing/CMakeLists.txt
+@@ -10,12 +10,12 @@ if (INSTALL_BTEST_PCAPS)
+ endif ()
+
+ # The remainder is for backwards-compatability with existing Spicy zkg packages.
+-install(
+-    CODE "execute_process( \
+-    COMMAND ${CMAKE_COMMAND} -E create_symlink \
+-    ${ZEEK_CONFIG_BTEST_TOOLS_DIR}/data \
+-    ${CMAKE_INSTALL_PREFIX}/share/zeek/tests \
+-    )")
++#install(
++#    CODE "execute_process( \
++#    COMMAND ${CMAKE_COMMAND} -E create_symlink \
++#    ${ZEEK_CONFIG_BTEST_TOOLS_DIR}/data \
++#    ${CMAKE_INSTALL_PREFIX}/share/zeek/tests \
++#    )")
+
+ install(DIRECTORY scripts/spicy/ DESTINATION ${ZEEK_CONFIG_BTEST_TOOLS_DIR}/data/Scripts
+         USE_SOURCE_PERMISSIONS)
