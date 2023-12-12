@@ -13,7 +13,7 @@ if [[ ${PV} == 9999 ]]; then
 else
 	SRC_URI="https://github.com/benmcollins/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 	#version 1.16.0 regarded by upstream as unstable - fails make check (rsa-pss types)
-	KEYWORDS="-*"
+	KEYWORDS=""
 fi
 
 LICENSE="MPL-2.0"
