@@ -12,7 +12,8 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://github.com/benmcollins/libjwt"
 else
 	SRC_URI="https://github.com/benmcollins/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~x86"
+	#version 1.16.0 regarded by upstream as unstable - fails make check (rsa-pss types)
+	#KEYWORDS=""
 fi
 
 LICENSE="MPL-2.0"
@@ -33,7 +34,7 @@ RDEPEND="
 		>=dev-libs/openssl-0.9.8:=
 	)
 	gnutls? (
-		>=net-libs/gnutls-3.5.8:=
+		>=net-libs/gnutls-3.6.0:=
 	)
 "
 
@@ -43,7 +44,7 @@ DEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}/libjwt-1.15.3_multi_ssl_atools.patch"
+	"${FILESDIR}/libjwt-1.16.0_multi_ssl_atools.patch"
 )
 
 src_prepare() {
