@@ -106,7 +106,7 @@ src_configure() {
 		-DINSTALL_AUX_TOOLS=$(usex tools)
 		-DINSTALL_ZEEK_ARCHIVER=$(usex tools)
 		-DDISABLE_PYTHON_BINDINGS=$(usex python no yes)
-		-DPYTHON_EXECUTABLE="${PYTHON}"
+		-DPYTHON_EXECUTABLE="${EPREFIX}/usr/bin/${EPYTHON}"
 		-DZEEK_ETC_INSTALL_DIR="/etc/${PN}"
 		-DZEEK_STATE_DIR="/var/lib"
 		-DPY_MOD_INSTALL_DIR="$(python_get_sitedir)"
@@ -148,8 +148,6 @@ src_install() {
 		"${D}"/usr/"$(get_libdir)"/zeek/python/broker \
 		"${D}"/usr/"$(get_libdir)"/zeek/python/zeekctl/ZeekControl \
 		"${D}"/usr/"$(get_libdir)"/zeek/python/zeekctl/plugins
-
-	python_fix_shebang "${ED}"/usr/bin/
 
 	keepdir \
 		/var/log/"${PN}" \
