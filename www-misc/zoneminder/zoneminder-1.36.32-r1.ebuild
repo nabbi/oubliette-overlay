@@ -29,11 +29,8 @@ else
 fi
 
 LICENSE="GPL-2"
-IUSE="curl encode gcrypt gnutls +mmap +ssl vlc"
+IUSE="curl encode gcrypt gnutls +mmap vlc"
 SLOT="0"
-REQUIRED_USE="
-	|| ( ssl gnutls )
-"
 
 DEPEND="
 app-eselect/eselect-php[apache2]
@@ -78,8 +75,8 @@ www-servers/apache
 curl? ( net-misc/curl )
 gcrypt? ( dev-libs/libgcrypt:0= )
 gnutls? ( net-libs/gnutls )
+!gnutls? ( dev-libs/openssl:0= )
 mmap? ( dev-perl/Sys-Mmap )
-ssl? ( dev-libs/openssl:0= )
 vlc? ( media-video/vlc[live] )
 "
 RDEPEND="${DEPEND}"
@@ -122,7 +119,7 @@ src_configure() {
 		-DZM_NO_X10=OFF
 		-DZM_NO_CURL="$(usex curl OFF ON)"
 		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
-		-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="$(usex ssl OFF ON)"
+		-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="$(usex gnutls ON OFF)"
 		-DHAVE_LIBGNUTLS="$(usex gnutls ON OFF)"
 		-DHAVE_LIBGCRYPT="$(usex gcrypt ON OFF)"
 	)
