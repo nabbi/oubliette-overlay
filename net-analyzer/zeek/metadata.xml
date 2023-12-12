@@ -14,6 +14,7 @@
         <flag name="tcmalloc">Enable Google's performance analysis tools</flag>
         <flag name="tools">Auxiliary tools for Bro: adtrace, zeek-cut, rst</flag>
         <flag name="zeekctl">Enable ZeekControl, a tool for operating Zeek installations</flag>
+        <flag name="nodejs">JavaScript runtime, optional for nodejs zeek scripts</flag>
     </use>
     <upstream>
         <remote-id type="github">zeek/zeek</remote-id>

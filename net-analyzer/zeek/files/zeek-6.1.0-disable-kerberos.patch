@@ -1,0 +1,28 @@
+# zeek compiles krb8 support if lib is found, which can cause problems
+# with Gentoo spirt allowing per package kerberos enablement and
+# bin package redistribution
+--- a/CMakeLists.txt	2023-12-11 21:14:22.274463990 -0600
++++ b/CMakeLists.txt	2023-12-11 21:15:38.427931957 -0600
+@@ -993,14 +993,14 @@
+ endif ()
+ 
+ set(USE_KRB5 false)
+-if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
+-    find_package(LibKrb5)
+-    if (LIBKRB5_FOUND)
+-        set(USE_KRB5 true)
+-        include_directories(BEFORE ${LibKrb5_INCLUDE_DIR})
+-        list(APPEND OPTLIBS ${LibKrb5_LIBRARY})
+-    endif ()
+-endif ()
++#if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
++#    find_package(LibKrb5)
++#    if (LIBKRB5_FOUND)
++#        set(USE_KRB5 true)
++#        include_directories(BEFORE ${LibKrb5_INCLUDE_DIR})
++#        list(APPEND OPTLIBS ${LibKrb5_LIBRARY})
++#    endif ()
++#endif ()
+ 
+ set(HAVE_PERFTOOLS false)
+ set(USE_PERFTOOLS_DEBUG false)

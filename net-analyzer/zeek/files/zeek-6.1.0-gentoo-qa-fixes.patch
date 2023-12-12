@@ -1,0 +1,49 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 94119d4c9..c2dd10ad1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -506,7 +506,7 @@ if (NOT MSVC)
+ endif ()
+ 
+ install(DIRECTORY DESTINATION ${ZEEK_ETC_INSTALL_DIR})
+-install(DIRECTORY DESTINATION ${ZEEK_STATE_DIR})
++#install(DIRECTORY DESTINATION ${ZEEK_STATE_DIR})
+ install(DIRECTORY DESTINATION ${ZEEK_SPOOL_DIR})
+ install(DIRECTORY DESTINATION ${ZEEK_LOG_DIR})
+ 
+@@ -1197,7 +1197,7 @@ if (INSTALL_ZKG)
+     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake_templates/zkg-config.in
+                    ${CMAKE_CURRENT_BINARY_DIR}/zkg-config @ONLY)
+ 
+-    install(DIRECTORY DESTINATION var/lib/zkg)
++    #install(DIRECTORY DESTINATION var/lib/zkg)
+     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/zkg-config DESTINATION ${ZEEK_ZKG_CONFIG_DIR}
+             RENAME config)
+ endif ()
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 37f6109cd..f25d3b3a8 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -578,14 +578,14 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+ 
+ # Remove some stale files and scripts that previous Zeek versions put in place,
+ # yet make confuse us now. This makes upgrading easier.
+-install(
+-    CODE "
+-   file(REMOVE_RECURSE
+-       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/dataseries.bro
+-       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/elasticsearch.bro
+-       ${ZEEK_SCRIPT_INSTALL_PATH}/policy/tuning/logs-to-elasticsearch.bro
+-   )
+-")
++#install(
++#    CODE "
++#   file(REMOVE_RECURSE
++#       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/dataseries.bro
++#       ${ZEEK_SCRIPT_INSTALL_PATH}/base/frameworks/logging/writers/elasticsearch.bro
++#       ${ZEEK_SCRIPT_INSTALL_PATH}/policy/tuning/logs-to-elasticsearch.bro
++#   )
++#")
+ 
+ # Make sure to escape a bunch of special characters in the path before trying to
+ # use it as a regular expression below.
