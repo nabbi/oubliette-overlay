@@ -30,7 +30,6 @@ RDEPEND="
 	dev-libs/openssl:0=
 	net-libs/libpcap
 	sys-libs/zlib:0=
-	btest? ( dev-python/btest )
 	curl? ( net-misc/curl )
 	geoip2? ( dev-libs/libmaxminddb:0= )
 	ipsumdump? ( net-analyzer/ipsumdump[ipv6?] )
