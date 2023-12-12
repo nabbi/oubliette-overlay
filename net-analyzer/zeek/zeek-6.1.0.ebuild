@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10,11,12} )
+PYTHON_COMPAT=( python3_{10..12} )
 inherit cmake python-single-r1
 
 DESCRIPTION="The Zeek Network Security Monitor"
@@ -148,6 +148,8 @@ src_install() {
 		"${D}"/usr/"$(get_libdir)"/zeek/python/broker \
 		"${D}"/usr/"$(get_libdir)"/zeek/python/zeekctl/ZeekControl \
 		"${D}"/usr/"$(get_libdir)"/zeek/python/zeekctl/plugins
+
+	python_fix_shebang "${ED}"/usr/bin/
 
 	keepdir \
 		/var/log/"${PN}" \
