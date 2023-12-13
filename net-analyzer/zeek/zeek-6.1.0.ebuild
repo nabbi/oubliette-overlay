@@ -106,7 +106,7 @@ src_configure() {
 		-DINSTALL_AUX_TOOLS=$(usex tools)
 		-DINSTALL_ZEEK_ARCHIVER=$(usex tools)
 		-DDISABLE_PYTHON_BINDINGS=$(usex python no yes)
-		-DPYTHON_EXECUTABLE="${EPREFIX}/usr/bin/${EPYTHON}"
+		-DPython_EXECUTABLE="${PYTHON}"
 		-DZEEK_ETC_INSTALL_DIR="/etc/${PN}"
 		-DZEEK_STATE_DIR="/var/lib"
 		-DPY_MOD_INSTALL_DIR="$(python_get_sitedir)"
