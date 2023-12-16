@@ -106,7 +106,7 @@ src_configure() {
 		-DINSTALL_AUX_TOOLS=$(usex tools)
 		-DINSTALL_ZEEK_ARCHIVER=$(usex tools)
 		-DDISABLE_PYTHON_BINDINGS=$(usex python no yes)
-		-DPython_EXECUTABLE="${PYTHON}"
+		-DPYTHON_EXECUTABLE="${PYTHON}"
 		-DZEEK_ETC_INSTALL_DIR="/etc/${PN}"
 		-DZEEK_STATE_DIR="/var/lib"
 		-DPY_MOD_INSTALL_DIR="$(python_get_sitedir)"
@@ -116,7 +116,6 @@ src_configure() {
 	)
 
 	use debug && use tcmalloc && mycmakeargs+=( -DENABLE_PERFTOOLS_DEBUG=yes )
-	use python && mycmakeargs+=( -DPYTHON_CONFIG="${PYTHON}-config" )
 	use zeekctl && mycmakeargs+=(
 		-DZEEK_LOG_DIR="/var/log/${PN}"
 		-DZEEK_SPOOL_DIR="/var/spool/${PN}"

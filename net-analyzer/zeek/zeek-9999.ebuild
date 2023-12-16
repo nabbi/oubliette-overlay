@@ -116,13 +116,13 @@ src_configure() {
 	)
 
 	use debug && use tcmalloc && mycmakeargs+=( -DENABLE_PERFTOOLS_DEBUG=yes )
-	use python && mycmakeargs+=( -DPYTHON_CONFIG="${PYTHON}-config" )
 	use zeekctl && mycmakeargs+=(
 		-DZEEK_LOG_DIR="/var/log/${PN}"
 		-DZEEK_SPOOL_DIR="/var/spool/${PN}"
 	)
 	use caf &&  mycmakeargs+=( -DCAF_ROOT="${EPREFIX}/usr/include/caf" )
 
+	# TODO: is >=dev-python/btest-1.1 needed ? btest bins are installed with zeek release
 	if ! use btest; then
 		mycmakeargs+=(
 			-DBROKER_DISABLE_TESTS=true

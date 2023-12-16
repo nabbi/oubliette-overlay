@@ -116,7 +116,6 @@ src_configure() {
 	)
 
 	use debug && use tcmalloc && mycmakeargs+=( -DENABLE_PERFTOOLS_DEBUG=yes )
-	use python && mycmakeargs+=( -DPYTHON_CONFIG="${PYTHON}-config" )
 	use zeekctl && mycmakeargs+=(
 		-DZEEK_LOG_DIR="/var/log/${PN}"
 		-DZEEK_SPOOL_DIR="/var/spool/${PN}"
