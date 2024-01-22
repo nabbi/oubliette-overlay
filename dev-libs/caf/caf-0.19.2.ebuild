@@ -22,7 +22,7 @@ RDEPEND="
 
 DEPEND="${RDEPEND}"
 
-BDEPEND="doc? ( app-doc/doxygen[dot]
+BDEPEND="doc? ( app-text/doxygen[dot]
 	app-shells/bash:0
 	dev-python/sphinx
 	dev-python/sphinx-rtd-theme )"
