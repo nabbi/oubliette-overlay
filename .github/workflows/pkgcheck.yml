@@ -15,6 +15,6 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Run pkgcheck
-      uses: pkgcore/pkgcheck-action@v1
+      uses: nabbi/pkgcheck-action@v1
       with:
         args: --checks=-RedundantVersionCheck --keywords=-PotentialStable
