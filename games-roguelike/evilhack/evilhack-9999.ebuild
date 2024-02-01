@@ -20,7 +20,7 @@ SLOT="0"
 
 RDEPEND="acct-group/gamestat
 	sys-libs/ncurses:0=
-	sys-devel/gdb"
+	dev-debug/gdb"
 DEPEND="${RDEPEND}
 	"
 BDEPEND="virtual/pkgconfig"
