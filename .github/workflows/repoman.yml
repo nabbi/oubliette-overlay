@@ -105,15 +105,15 @@ jobs:
       PROFILE: ${{ matrix.profile }}
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: 3.11
     - name: Setup repoman
       run: |
         python -m pip install --upgrade pip
         pip install lxml pyyaml
-        wget -qO - "https://github.com/gentoo/portage/archive/portage-3.0.23.tar.gz" | tar xz
+        wget -qO - "https://github.com/gentoo/portage/archive/portage-3.0.61.tar.gz" | tar xz
         sudo groupadd -g 250 portage
         sudo useradd -g portage -d /var/tmp/portage -s /bin/false -u 250 portage
     - name: Setup master gentoo repository
@@ -125,4 +125,4 @@ jobs:
         sudo ln -s /var/db/repos/gentoo/profiles/default/linux/amd64/17.0 /etc/portage/make.profile
     - name: Test with repoman
       run: |
-        python3 portage-portage-3.0.23/repoman/bin/repoman full -dx --jobs=$(nproc) --include-profiles="${PROFILE}"
+        python3 portage-portage-3.0.61/repoman/bin/repoman full -dx --jobs=$(nproc) --include-profiles="${PROFILE}"
