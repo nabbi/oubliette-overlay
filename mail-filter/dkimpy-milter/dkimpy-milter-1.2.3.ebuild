@@ -20,10 +20,13 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm64 ~x86"
 
 RDEPEND="
+	acct-user/dkimpy-milter
+	acct-group/dkimpy-milter
 	>=dev-python/dnspython-2.0.0[${PYTHON_USEDEP}]
 	dev-python/dkimpy
 	dev-python/pycparser
 	dev-python/pymilter
+	dev-python/authres
 "
 BDEPEND="
 	test? (
