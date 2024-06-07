@@ -1,0 +1,3 @@
+# user/group to run dkimpy-milter daemon as
+DKIMPY_USER=dkimpy-milter
+DKIMPY_GROUP=dkimpy-milter

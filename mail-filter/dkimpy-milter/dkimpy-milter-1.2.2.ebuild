@@ -7,7 +7,7 @@ DISTUTILS_USE_PEP517=setuptools
 PYPI_NO_NORMALIZE=1
 PYTHON_COMPAT=( python3_{10..12} )
 
-inherit distutils-r1 optfeature pypi
+inherit distutils-r1 pypi
 
 DESCRIPTION="Domain Keys Identified Mail (DKIM) signing/verifying milter for Postfix/Sendmail"
 HOMEPAGE="
@@ -21,20 +21,9 @@ KEYWORDS="~amd64 ~arm64 ~x86"
 
 RDEPEND="
 	acct-user/dkimpy-milter
-	>=dev-python/dnspython-2.0.0[${PYTHON_USEDEP}]
-	dev-python/dkimpy
-	dev-python/pycparser
-	dev-python/pymilter
-	dev-python/authres
-"
-BDEPEND="
-	test? (
-		dev-python/authres[${PYTHON_USEDEP}]
-		dev-python/pynacl[${PYTHON_USEDEP}]
-	)
-"
-
-distutils_enable_tests unittest
+	dev-python/pymilter[${PYTHON_USEDEP}]
+	dev-python/dkimpy[${PYTHON_USEDEP}]
+	dev-python/dnspython[${PYTHON_USEDEP}]"
 
 python_install_all() {
 	distutils-r1_python_install_all
@@ -65,8 +54,4 @@ python_install_all() {
 	insopts -o root -g root -m 640
 	newconfd "${FILESDIR}"/${PN}.confd ${PN}
 
-}
-
-pkg_postinst() {
-	optfeature "ed25519 capability" dev-python/pynacl
 }
