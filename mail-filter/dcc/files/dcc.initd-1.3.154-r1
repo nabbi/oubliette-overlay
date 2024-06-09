@@ -50,7 +50,7 @@ start() {
 		ebegin "Starting dccm"
 		${DCC_LIBEXEC}/start-dccm >/dev/null 2>&1
 		eend ${?}
-		if !(echo ${DCCM_ARGS}|grep -q "^\-p\|[[:space:]]\-p"); then
+		if !(echo ${DCCM_ARGS}|grep -q "^-p\|[[:space:]]-p"); then
 			local dccmtimeout=0
 			while [ ${dccmtimeout} -le 20 ] ; do
 				if [ -S "${DCC_RUNDIR}/dccm" ] || [ -r "${DCC_RUNDIR}/dccm" ]; then

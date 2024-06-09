@@ -130,7 +130,7 @@ src_install() {
 	# place configuration files into /etc instead of /var/dcc
 	moveconf dcc_conf flod grey_flod grey_whitelist ids map map.txt whiteclnt whitecommon whitelist
 
-	newinitd "${FILESDIR}"/dcc.initd-1.3.154 dcc
+	newinitd "${FILESDIR}"/dcc.initd-1.3.154-r1 dcc
 	newconfd "${FILESDIR}"/dcc.confd dcc
 
 	rmdir "${ED}"/var/dcc/log/ || die
