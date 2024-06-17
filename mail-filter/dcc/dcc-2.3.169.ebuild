@@ -1,9 +1,9 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit toolchain-funcs
+inherit systemd toolchain-funcs
 
 DESCRIPTION="Distributed Checksum Clearinghouse"
 HOMEPAGE="https://www.rhyolite.com/dcc/"
@@ -11,8 +11,7 @@ SRC_URI="https://www.rhyolite.com/dcc/source/old/${P}.tar.Z"
 
 LICENSE="DCC GPL-2"
 SLOT="0"
-KEYWORDS=""
-#KEYWORDS="~alpha amd64 arm ~arm64 ~hppa ~ia64 ppc ppc64 sparc x86"
+KEYWORDS="~alpha amd64 arm ~arm64 ~hppa ~ia64 ppc ppc64 sparc x86"
 IUSE="cgi ipv6 rrdtool milter"
 
 RDEPEND="
@@ -25,20 +24,20 @@ RDEPEND="
 		net-misc/wget
 		www-client/fetch
 	)
-	milter? (
-		|| (
-			mail-filter/libmilter
-			mail-mta/sendmail
-		)
-	)
+	milter? ( mail-filter/libmilter:= )
 	rrdtool? ( net-analyzer/rrdtool )"
 DEPEND="${RDEPEND}"
 
 dcc_cgibin=var/www/localhost/cgi-bin/dcc
-dcc_homedir=var/dcc
+dcc_homedir=var/lib/dcc
 dcc_libexec=usr/sbin
 dcc_man=usr/share/man
 dcc_rundir=var/run/dcc
+
+PATCHES=(
+	"${FILESDIR}"/${PN}-2.3.169-clang16.patch
+	"${FILESDIR}"/${PN}-1.3.158-c2x.patch
+)
 
 src_configure() {
 	tc-export CC AR RANLIB
@@ -50,6 +49,7 @@ src_configure() {
 		--enable-dccifd
 		--enable-server
 		--with-DDC-MD5
+		--with-installroot="${D}"
 		--with-rundir="${EPREFIX}"/${dcc_rundir}
 		--with-uid=dcc
 		--with-updatedcc_pfile="${EPREFIX}"/${dcc_homedir}/updatecc.pfile
@@ -73,12 +73,13 @@ moveconf() {
 	local i
 	for i in $@; do
 		mv "${ED}/${dcc_homedir}/${i}" "${ED}"/etc/dcc || die
-		dosym ../../etc/dcc/"${i}" "${dcc_homedir}/${i}"
+		dosym ../../../etc/dcc/"${i}" "${dcc_homedir}/${i}"
 	done
 }
 
 src_install() {
 	# stolen from the RPM .spec and modified for gentoo
+	export NOMAN=y
 	export MANOWN=root
 	export MANGRP=$(id -g -n root)
 	export BINOWN="${MANOWN}"
@@ -134,12 +135,12 @@ src_install() {
 	newinitd "${FILESDIR}"/dcc.initd-1.3.154-r1 dcc
 	newconfd "${FILESDIR}"/dcc.confd dcc
 
-	rmdir "${ED}"/var/dcc/log/ || die
+	rmdir "${ED}"/"${dcc_homedir}"/log || die
 
 	dodoc CHANGES
 	doman *.{0,8}
-	rm "${ED}"/usr/share/man/man*/*.gz || die
 
+	systemd_dounit "${FILESDIR}/dccifd.service"
 	# set permisions
 	chgrp -R dcc "${ED}"/etc/dcc || die
 	chmod o-rwx "${ED}"/etc/dcc || die
