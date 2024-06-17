@@ -35,7 +35,7 @@ dcc_man=usr/share/man
 dcc_rundir=var/run/dcc
 
 PATCHES=(
-	# "${FILESDIR}"/${PN}-2.3.169-clang16.patch
+	"${FILESDIR}"/${PN}-2.3.169-clang16.patch
 	"${FILESDIR}"/${PN}-1.3.158-c2x.patch
 )
 
@@ -79,7 +79,7 @@ moveconf() {
 
 src_install() {
 	# stolen from the RPM .spec and modified for gentoo
-	export NOMAN=y
+	export NOMAN=run-doman-instead
 	export MANOWN=root
 	export MANGRP=$(id -g -n root)
 	export BINOWN="${MANOWN}"
@@ -102,7 +102,7 @@ src_install() {
 	sed -e "s/BRAND=\$/BRAND='Gentoo ${PF}'/;" \
 		-e "s/GREY_ENABLE=\$/GREY_ENABLE=off/;" \
 		-e "s/DCCM_LOG_AT=5\$/DCCM_LOG_AT=50/;" \
-		-e "s,DCCM_LOGDIR=\"log\"\$,DCCM_LOGDIR=\"/var/log/dcc\",;" \
+		-e "s,DCCM_LOGDIR=\"D?log\"\$,DCCM_LOGDIR=\"D?/var/log/dcc\",;" \
 		-e "s/DCCM_ARGS=\$/DCCM_ARGS='-SHELO -Smail_host -SSender -SList-ID'/;" \
 		-e "s/DCCIFD_ARGS=\$/DCCIFD_ARGS=\"\$DCCM_ARGS\"/;" \
 		-e 's/DCCIFD_ENABLE=off/DCCIFD_ENABLE=on/' \
@@ -141,7 +141,9 @@ src_install() {
 	doman *.{0,8}
 
 	systemd_dounit "${FILESDIR}/dccifd.service"
-	# set permisions
+
+	# set permisions for non-root daemon
+	chown dcc:dcc "${ED}"/var/log/dcc || die
 	chgrp -R dcc "${ED}"/etc/dcc || die
 	chmod o-rwx "${ED}"/etc/dcc || die
 }
