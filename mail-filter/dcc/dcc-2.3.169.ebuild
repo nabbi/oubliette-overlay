@@ -35,7 +35,7 @@ dcc_man=usr/share/man
 dcc_rundir=var/run/dcc
 
 PATCHES=(
-	"${FILESDIR}"/${PN}-2.3.169-clang16.patch
+	# "${FILESDIR}"/${PN}-2.3.169-clang16.patch
 	"${FILESDIR}"/${PN}-1.3.158-c2x.patch
 )
 
