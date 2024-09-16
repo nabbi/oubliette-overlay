@@ -27,80 +27,13 @@ jobs:
         # Feel free to double up more of these if needed, or uncomment
         # architectures.
         profile:
-          # - default/linux/alpha/17.0
-          # - default/linux/alpha/17.0/desktop
-          # - default/linux/alpha/17.0/desktop/gnome
-          # - default/linux/alpha/17.0/desktop/gnome/systemd
-          # - default/linux/alpha/17.0/developer
           - default/linux/amd64/17.1 default/linux/amd64/17.1/selinux
           - default/linux/amd64/17.1/hardened default/linux/amd64/17.1/hardened/selinux
           - default/linux/amd64/17.1/desktop
-          # - default/linux/amd64/17.1/desktop/gnome
-          # - default/linux/amd64/17.1/desktop/gnome/systemd
-          # - default/linux/amd64/17.1/desktop/plasma
-          # - default/linux/amd64/17.1/desktop/plasma/systemd
-          # - default/linux/amd64/17.1/developer
-          # - default/linux/amd64/17.1/no-multilib
-          # - default/linux/amd64/17.1/no-multilib/hardened
-          # - default/linux/amd64/17.1/no-multilib/hardened/selinux
-          # - default/linux/amd64/17.1/systemd
-          # - default/linux/arm/17.0
-          # - default/linux/arm64/17.0
-          # - default/linux/arm64/17.0/desktop
-          # - default/linux/arm64/17.0/desktop/gnome
-          # - default/linux/arm64/17.0/desktop/gnome/systemd
-          # - default/linux/arm64/17.0/desktop/plasma
-          # - default/linux/arm64/17.0/desktop/plasma/systemd
-          # - default/linux/arm64/17.0/desktop/systemd
-          # - default/linux/arm64/17.0/developer
-          # - default/linux/arm64/17.0/systemd
-          # - default/linux/hppa/17.0
-          # - default/linux/hppa/17.0/desktop
-          # - default/linux/hppa/17.0/developer
-          # - default/linux/ia64/17.0
-          # - default/linux/ia64/17.0/desktop
-          # - default/linux/ia64/17.0/desktop/gnome
-          # - default/linux/ia64/17.0/desktop/gnome/systemd
-          # - default/linux/ia64/17.0/developer
-          # - default/linux/powerpc/ppc32/17.0
-          # - default/linux/powerpc/ppc32/17.0/desktop
-          # - default/linux/powerpc/ppc32/17.0/desktop/gnome
-          # - default/linux/powerpc/ppc32/17.0/desktop/gnome/systemd
-          # - default/linux/powerpc/ppc32/17.0/developer
-          # - default/linux/powerpc/ppc64/17.0/32bit-userland
-          # - default/linux/powerpc/ppc64/17.0/32bit-userland/desktop
-          # - default/linux/powerpc/ppc64/17.0/32bit-userland/desktop/gnome
-          # - default/linux/powerpc/ppc64/17.0/32bit-userland/desktop/gnome/systemd
-          # - default/linux/powerpc/ppc64/17.0/32bit-userland/developer
-          # - default/linux/powerpc/ppc64/17.0/64bit-userland
-          # - default/linux/powerpc/ppc64/17.0/64bit-userland/desktop
-          # - default/linux/powerpc/ppc64/17.0/64bit-userland/desktop/gnome
-          # - default/linux/powerpc/ppc64/17.0/64bit-userland/desktop/gnome/systemd
-          # - default/linux/powerpc/ppc64/17.0/64bit-userland/developer
-          # - default/linux/powerpc/ppc64/17.0/64bit-userland/little-endian
-          # - default/linux/powerpc/ppc64/17.0/64bit-userland/little-endian/systemd
-          # - default/linux/ppc64le/17.0
-          # - default/linux/ppc64le/17.0/desktop
-          # - default/linux/ppc64le/17.0/systemd
-          # - default/linux/ppc64le/17.0/developer
-          # - default/linux/riscv/17.0/rv64gc/lp64d
-          # - default/linux/riscv/17.0/rv64gc/lp64d/systemd
-          # - default/linux/riscv/17.0/rv64gc/lp64
-          # - default/linux/riscv/17.0/rv64gc/lp64/systemd
-          # - default/linux/sparc/17.0
-          # - default/linux/sparc/17.0/desktop
-          # - default/linux/sparc/17.0/developer
-          # - default/linux/sparc/17.0/systemd
-          # - default/linux/sparc/17.0/64ul
-          # - default/linux/sparc/17.0/64ul/desktop
-          # - default/linux/sparc/17.0/64ul/developer
-          # - default/linux/sparc/17.0/64ul/systemd
-          # - default/linux/x86/17.0
-          # - default/linux/x86/17.0/selinux default/linux/x86/17.0/hardened
-          # - default/linux/x86/17.0/hardened/selinux default/linux/x86/17.0/desktop
-          # - default/linux/x86/17.0/desktop/gnome default/linux/x86/17.0/desktop/gnome/systemd
-          # - default/linux/x86/17.0/desktop/plasma default/linux/x86/17.0/desktop/plasma/systemd
-          # - default/linux/x86/17.0/developer default/linux/x86/17.0/systemd
+          - default/linux/amd64/23.0/split-usr
+          - default/linux/amd64/23.0/split-usr/desktop
+          - default/linux/amd64/23.0/split-usr/hardened default/linux/amd64/23.0/split-usr/hardened/selinux
+
     env:
       PROFILE: ${{ matrix.profile }}
     steps:
@@ -122,7 +55,7 @@ jobs:
         wget -qO - "https://github.com/gentoo-mirror/gentoo/archive/master.tar.gz" | sudo tar xz -C /var/db/repos/gentoo --strip-components=1
         sudo wget "https://www.gentoo.org/dtd/metadata.dtd" -O /var/cache/distfiles/metadata.dtd
         sudo wget "https://gitweb.gentoo.org/proj/portage.git/plain/cnf/repos.conf" -O /etc/portage/repos.conf
-        sudo ln -s /var/db/repos/gentoo/profiles/default/linux/amd64/17.1 /etc/portage/make.profile
+        sudo ln -s /var/db/repos/gentoo/profiles/default/linux/amd64/23.0 /etc/portage/make.profile
     - name: Test with repoman
       run: |
         python3 portage-portage-3.0.30/repoman/bin/repoman full -dx --jobs=$(nproc) --include-profiles="${PROFILE}"
