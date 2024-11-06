@@ -9,7 +9,8 @@ DESCRIPTION="Swap endianness of a cram filesystem (cramfs)"
 HOMEPAGE="https://github.com/julijane/cramfsswap"
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
-	EGIT_REPO_URI="https://github.com/julijane/${PN}.git"
+	EGIT_REPO_URI="https://github.com/nabbi/${PN}.git"
+	EGIT_BRANCH="void-write"
 fi
 
 LICENSE="GPL-2"
