@@ -82,7 +82,7 @@ src_install() {
 
 	mv src/evilhack "${ED}/usr/$(get_libdir)/evilhack/" || die
 
-	newman doc/nethack.6 evilhack.6
+	newman doc/evilhack.6 evilhack.6
 	newman doc/recover.6 recover-evilhack.6
 	dodoc doc/Guidebook.txt
 
