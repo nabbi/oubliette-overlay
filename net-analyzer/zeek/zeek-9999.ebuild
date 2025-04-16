@@ -43,7 +43,7 @@ RDEPEND="
 	tcmalloc? ( dev-util/google-perftools )
 	tools? (
 		dev-python/semantic-version
-		dev-python/GitPython )"
+		dev-python/gitpython )"
 
 DEPEND="${RDEPEND}"
 
