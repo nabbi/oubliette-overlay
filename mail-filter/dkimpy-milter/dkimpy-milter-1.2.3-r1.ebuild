@@ -39,24 +39,25 @@ distutils_enable_tests unittest
 src_install() {
 	distutils-r1_src_install
 
-	# Move init scripts to /etc/init.d
-	if [[ -f "${ED}usr/etc/init.d/dkimpy-milter" ]]; then
-		newinitd "${ED}usr/etc/init.d/dkimpy-milter" dkimpy-milter
-		rm -f "${ED}usr/etc/init.d/dkimpy-milter"
+	# Fix install path from /usr/etc to /etc
+	if [[ -f "${ED}/usr/etc/init.d/dkimpy-milter" ]]; then
+		newinitd "${ED}/usr/etc/init.d/dkimpy-milter" dkimpy-milter
+		rm -f "${ED}/usr/etc/init.d/dkimpy-milter"
 	fi
-	if [[ -f "${ED}usr/etc/init.d/dkimpy-milter.openrc" ]]; then
-		newinitd "${ED}usr/etc/init.d/dkimpy-milter.openrc" dkimpy-milter
-		rm -f "${ED}usr/etc/init.d/dkimpy-milter.openrc"
+	if [[ -f "${ED}/usr/etc/init.d/dkimpy-milter.openrc" ]]; then
+		newinitd "${ED}/usr/etc/init.d/dkimpy-milter.openrc" dkimpy-milter
+		rm -f "${ED}/usr/etc/init.d/dkimpy-milter.openrc"
 	fi
 
-	# Move config to /etc/dkimpy-milter
-	if [[ -f "${ED}usr/etc/dkimpy-milter/dkimpy-milter.conf" ]]; then
+	if [[ -f "${ED}/usr/etc/dkimpy-milter/dkimpy-milter.conf" ]]; then
 		insinto /etc/dkimpy-milter
-		doins "${ED}usr/etc/dkimpy-milter/dkimpy-milter.conf"
-		rm -rf "${ED}usr/etc/dkimpy-milter"
+		doins "${ED}/usr/etc/dkimpy-milter/dkimpy-milter.conf"
+		rm -rf "${ED}/usr/etc/dkimpy-milter"
 	fi
-}
 
+	# Clean up leftover /usr/etc/
+	rm -rf "${ED}/usr/etc/"
+}
 
 pkg_postinst() {
 	optfeature "ed25519 capability" dev-python/pynacl
