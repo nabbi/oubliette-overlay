@@ -3,7 +3,6 @@
 [![gentoo qa-reports](https://img.shields.io/badge/gentoo-QA%20check-6E56AF.svg)](https://qa-reports.gentoo.org/output/repos/oubliette.html)
 [![repoman](https://github.com/nabbi/oubliette-overlay/actions/workflows/repoman.yml/badge.svg)](https://github.com/nabbi/oubliette-overlay/actions/workflows/repoman.yml)
 [![pkgcheck](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml/badge.svg)](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml)
-[![mirror](https://img.shields.io/badge/gentoo-mirror-purple)](https://github.com/gentoo-mirror/oubliette)
 
 [Oubliette](https://github.com/nabbi/oubliette-overlay) is my personal unofficial Portage overlay containing forgotten and fixed ebuilds for Gentoo Linux.
 
