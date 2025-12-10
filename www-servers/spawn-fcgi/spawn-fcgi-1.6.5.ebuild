@@ -12,9 +12,6 @@ SLOT="0"
 KEYWORDS="~alpha amd64 arm ~hppa ppc ppc64 sparc x86"
 IUSE="ipv6"
 
-DEPEND=""
-RDEPEND=""
-
 src_configure() {
 	econf $(use_enable ipv6)
 }
