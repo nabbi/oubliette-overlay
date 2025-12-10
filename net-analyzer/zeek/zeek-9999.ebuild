@@ -29,7 +29,7 @@ RDEPEND="
 	debug? ( dev-debug/gdb )
 	dev-libs/openssl:0=
 	net-libs/libpcap
-	sys-libs/zlib:0=
+	virtual/zlib:0=
 	curl? ( net-misc/curl )
 	geoip2? ( dev-libs/libmaxminddb:0= )
 	ipsumdump? ( net-analyzer/ipsumdump[ipv6?] )

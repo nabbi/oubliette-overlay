@@ -61,7 +61,7 @@ dev-perl/DateTime
 dev-perl/Device-SerialPort
 dev-php/pecl-apcu:*
 sys-auth/polkit
-sys-libs/zlib
+virtual/zlib
 media-video/ffmpeg[x264,x265,jpeg2k]
 encode? ( media-libs/libmp4v2 )
 virtual/httpd-php:*
