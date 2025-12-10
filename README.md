@@ -17,6 +17,6 @@ Related repositories:
 Enable via `eselect-repository`:
 
 ```shell
-eseselect repository enable oubliette
+eselect repository enable oubliette
 emaint sync -r oubliette
 ```
