@@ -3,8 +3,6 @@
 
 EAPI=8
 
-inherit cargo pax-utils toolchain-funcs
-
 CRATES="
 	aho-corasick@1.1.3
 	bindgen@0.72.1
@@ -117,17 +115,19 @@ CRATES="
 	zeroize@1.8.1
 "
 
+inherit pax-utils toolchain-funcs cargo
+
 DESCRIPTION="World's fastest and most advanced password recovery utility"
 HOMEPAGE="https://github.com/hashcat/hashcat"
 if [[ ${PV} == "9999" ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/hashcat/hashcat.git"
-	SRC_URI="$(cargo_crate_uris)"
+	SRC_URI="${CARGO_CRATE_URIS}"
 
 else
 	KEYWORDS="~amd64"
 	SRC_URI="https://github.com/hashcat/hashcat/archive/v${PV}.tar.gz -> ${P}.tar.gz
-		$(cargo_crate_uris)"
+		${CARGO_CRATE_URIS}"
 fi
 
 LICENSE="MIT"
