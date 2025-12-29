@@ -268,7 +268,7 @@ src_install() {
 	# But first, merge any content that was already placed there
 	if [[ -d "${ED}/${CUDA_PATH}/include" && ! -L "${ED}/${CUDA_PATH}/include" ]]; then
 		einfo "Merging existing include content before creating symlink"
-	
+
 		# Ensure target directory exists
 		mkdir -p "${ED}/${CUDA_PATH}/targets/${narch}-linux/include" || die "failed to create target include directory"
 
