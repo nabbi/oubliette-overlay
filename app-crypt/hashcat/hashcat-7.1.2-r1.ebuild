@@ -95,7 +95,7 @@ src_unpack() {
 
 src_prepare() {
 	if [[ ! ${PV} == "9999" ]]; then
-		# MAINTAINER NOTE: Hashcat's build system (src/bridges/*.mk) uses '|| true' 
+		# MAINTAINER NOTE: Hashcat's build system (src/bridges/*.mk) uses '|| true'
 		# for Cargo calls. We strip these to make failures visible to emake.
 		# This is not present in master
 		einfo "Forcing Cargo errors to be fatal..."
@@ -165,7 +165,7 @@ src_compile() {
 		ENABLE_BRAIN=$(usex brain 1 0) \
 		USE_SYSTEM_LZMA=0 \
 		USE_SYSTEM_OPENCL=1 \
-		USE_SYSTEM_UNRAR=0 \
+		USE_SYSTEM_UNRAR=1 \
 		USE_SYSTEM_ZLIB=1 \
 		USE_SYSTEM_XXHASH=1 \
 		VERSION_PURE="${PV}" || die "emake failed"

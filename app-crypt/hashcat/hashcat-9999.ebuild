@@ -160,7 +160,7 @@ src_unpack() {
 
 src_prepare() {
 	if [[ ! ${PV} == "9999" ]]; then
-		# MAINTAINER NOTE: Hashcat's build system (src/bridges/*.mk) uses '|| true' 
+		# MAINTAINER NOTE: Hashcat's build system (src/bridges/*.mk) uses '|| true'
 		# for Cargo calls. We strip these to make failures visible to emake.
 		# This is not present in master
 		einfo "Forcing Cargo errors to be fatal..."
