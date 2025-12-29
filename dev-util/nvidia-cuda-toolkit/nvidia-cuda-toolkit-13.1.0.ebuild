@@ -30,7 +30,7 @@ LICENSE="NVIDIA-CUDA"
 SLOT="0/${PV}" # UNSLOTTED
 # SLOT="${PV}" # SLOTTED
 
-KEYWORDS="-* ~amd64 ~arm64 ~amd64-linux ~arm64-linux"
+KEYWORDS="-* ~amd64 ~arm64"
 IUSE="clang debugger examples nsight profiler rdma sanitizer"
 RESTRICT="bindist mirror strip test"
 
@@ -268,32 +268,32 @@ src_install() {
 	# But first, merge any content that was already placed there
 	if [[ -d "${ED}/${CUDA_PATH}/include" && ! -L "${ED}/${CUDA_PATH}/include" ]]; then
 		einfo "Merging existing include content before creating symlink"
-		
+	
 		# Ensure target directory exists
 		mkdir -p "${ED}/${CUDA_PATH}/targets/${narch}-linux/include" || die "failed to create target include directory"
-		
+
 		# Move any existing content from include/ to targets/.../include/
 		if [[ -n "$(ls -A "${ED}/${CUDA_PATH}/include" 2>/dev/null)" ]]; then
 			einfo "Moving existing include content to target directory"
 			cp -a "${ED}/${CUDA_PATH}/include"/* "${ED}/${CUDA_PATH}/targets/${narch}-linux/include/" || die "failed to merge include content"
 		fi
-		
+
 		# Now remove the directory
 		rm -rf "${ED}/${CUDA_PATH}/include" || die "failed to remove include directory"
 	fi
 
 	if [[ -d "${ED}/${CUDA_PATH}/$(get_libdir)" && ! -L "${ED}/${CUDA_PATH}/$(get_libdir)" ]]; then
 		einfo "Merging existing lib content before creating symlink"
-		
+
 		# Ensure target directory exists  
 		mkdir -p "${ED}/${CUDA_PATH}/targets/${narch}-linux/lib" || die "failed to create target lib directory"
-		
+
 		# Move any existing content from lib/ to targets/.../lib/
 		if [[ -n "$(ls -A "${ED}/${CUDA_PATH}/$(get_libdir)" 2>/dev/null)" ]]; then
 			einfo "Moving existing lib content to target directory"
 			cp -a "${ED}/${CUDA_PATH}/$(get_libdir)"/* "${ED}/${CUDA_PATH}/targets/${narch}-linux/lib/" || die "failed to merge lib content"
 		fi
-		
+
 		# Now remove the directory
 		rm -rf "${ED}/${CUDA_PATH}/$(get_libdir)" || die "failed to remove lib directory"
 	fi
@@ -307,7 +307,7 @@ src_install() {
 	for component in cub thrust libcudacxx; do
 		local direct_path="${ED}/${CUDA_PATH}/targets/${narch}-linux/include/${component}"
 		local cccl_path="${ED}/${CUDA_PATH}/targets/${narch}-linux/include/cccl/${component}"
-		
+
 		# Only create symlink if component exists in CCCL but not directly in include
 		if [[ ! -e "${direct_path}" && -d "${cccl_path}" ]]; then
 			einfo "Creating ${component} symlink in target include directory (CCCL location)"
@@ -367,7 +367,7 @@ src_install() {
 	# TODO drop and replace with runtime detection similar to what python does {{{
 	# ATTENTION: change requires revbump, see link below for supported GCC # versions
 	# https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements
-	
+
 	# Generate GCC version list dynamically from 10 to GCC_MAX_VER
 	# (keeping the legacy versions 8.5 and 9.5 for compatibility)
 	local cuda_supported_gcc=( 8.5 9.5 )
