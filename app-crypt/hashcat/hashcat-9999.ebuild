@@ -159,14 +159,6 @@ src_unpack() {
 }
 
 src_prepare() {
-	if [[ ! ${PV} == "9999" ]]; then
-		# MAINTAINER NOTE: Hashcat's build system (src/bridges/*.mk) uses '|| true'
-		# for Cargo calls. We strip these to make failures visible to emake.
-		# This is not present in master
-		einfo "Forcing Cargo errors to be fatal..."
-		sed -i 's/|| true//g' src/bridges/*.mk || die
-	fi
-
 	# Remove bundled stuff
 	rm -r deps/OpenCL-Headers || die "Failed to remove bundled OpenCL Headers"
 	rm -r deps/xxHash || die "Failed to remove bundled xxHash"
@@ -233,7 +225,7 @@ src_compile() {
 		USE_SYSTEM_UNRAR=0 \
 		USE_SYSTEM_ZLIB=1 \
 		USE_SYSTEM_XXHASH=1 \
-		VERSION_PURE="${PV}" || die "emake failed"
+		VERSION_PURE="${PV}"
 
 	pax-mark -mr hashcat || die "Failed to apply PaX markings"
 }
