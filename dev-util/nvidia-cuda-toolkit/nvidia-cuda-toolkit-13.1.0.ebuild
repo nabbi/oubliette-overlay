@@ -10,8 +10,8 @@ inherit check-reqs edo toolchain-funcs
 inherit python-r1
 
 DRIVER_PV="590.44.01"
-GCC_MAX_VER="14"
-CLANG_MAX_VER="19"
+GCC_MAX_VER="15"
+CLANG_MAX_VER="20"
 
 DESCRIPTION="NVIDIA CUDA Toolkit (compiler and friends)"
 HOMEPAGE="https://developer.nvidia.com/cuda-zone"
