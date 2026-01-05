@@ -104,8 +104,8 @@ pkg_pretend() {
 	# When building binpkgs you probably want to include all targets
 	if use cuda \
 		&& [[ ${MERGE_TYPE} == "buildonly" ]] \
-		&& [[ ${CUDA_ARCH} != "all" ]]; then
-		einfo "When building a binary package, set CUDA_ARCH=\"all\" to disable auto-detection and build all supported architectures."
+		&& [[ ${CUDAARCHS} != "all" ]]; then
+		einfo "When building a binary package, set CUDAARCHS=\"all\" to disable auto-detection and build all supported architectures."
 	fi
 }
 
@@ -240,9 +240,7 @@ src_configure() {
 	local mycmakeargs=(
 		-DGGML_CCACHE="no"
 
-		# backends end up in /usr/bin otherwise
 		-DGGML_BACKEND_DL="yes"
-		-DGGML_BACKEND_DIR="${EPREFIX}/usr/$(get_libdir)/${PN}/backends"
 
 		# -DGGML_CPU="yes"
 		-DGGML_BLAS="$(usex blas)"
@@ -285,9 +283,9 @@ src_configure() {
 
 		cuda_add_sandbox -w
 
-		if [[ -n ${CUDA_ARCH} ]]; then
-			einfo "Configured CUDA Architecture: ${CUDA_ARCH}"
-			mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="${CUDA_ARCH}" )
+		if [[ -n ${CUDAARCHS} ]]; then
+			einfo "Configured CUDA Architecture: ${CUDAARCHS}"
+			mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="${CUDAARCHS}" )
 
 		elif ! SANDBOX_WRITE=/dev/nvidiactl test -w /dev/nvidiactl ; then
 			ewarn
@@ -295,8 +293,8 @@ src_configure() {
 			ewarn "User $(id -nu) is not in the group \"video\"."
 			ewarn
 
-			einfo "Fallback CUDA Architecture: all"
-			mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="all" )
+			einfo "Fallback CUDA Architecture: all-major"
+			mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="all-major" )
 
 		else
 			local -x cuda_hardware
@@ -307,7 +305,7 @@ src_configure() {
 				mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="${cuda_hardware}" )
 			else
 				eerror "Automatic detection of the CUDA device architecture failed."
-				eerror "Verify that user $(id -nu) is in the \"video\" group, or set CUDA_ARCH manually in make.conf."
+				eerror "Verify that user $(id -nu) is in the \"video\" group, or set CUDAARCHS manually in make.conf."
 			fi
 		fi
 
