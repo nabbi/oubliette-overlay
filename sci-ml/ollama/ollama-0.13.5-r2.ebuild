@@ -240,7 +240,9 @@ src_configure() {
 	local mycmakeargs=(
 		-DGGML_CCACHE="no"
 
+		# backends end up in /usr/bin otherwise
 		-DGGML_BACKEND_DL="yes"
+		-DGGML_BACKEND_DIR="${EPREFIX}/usr/$(get_libdir)/${PN}"
 
 		# -DGGML_CPU="yes"
 		-DGGML_BLAS="$(usex blas)"
