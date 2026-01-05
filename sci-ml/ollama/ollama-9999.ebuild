@@ -279,11 +279,8 @@ src_configure() {
 		CUDAHOSTCXX="$(cuda_gccdir)"
 		CUDAHOSTLD="$(tc-getCXX)"
 
-		mycmakeargs+=(
-			-DGGML_NATIVE=OFF
-		)
-
 		cuda_add_sandbox -w
+		addpredict "/dev/char/"
 
 		if [[ -n ${CUDAARCHS} ]]; then
 			einfo "Configured CUDA Architecture: ${CUDAARCHS}"
