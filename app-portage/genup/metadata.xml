@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-<maintainer type="person">
+	<maintainer type="person">
 		<email>nic@boet.cc</email>
-</maintainer>
-<longdescription>
-		Oubliette: adjusted script to suit my deployments
-		This is a utility intended to simplify the process of keeping your
-		Gentoo system up to date. It can operate in non-interactive (default)
-		or interactive mode.
-</longdescription>
-<upstream>
-	<remote-id type="github">nabbi/genup</remote-id>
-</upstream>
+	</maintainer>
+
+	<longdescription>
+		Oubliette fork: script adjusted to suit my deployments.
+
+		Utility to simplify keeping a Gentoo system up to date.
+		Supports both non-interactive (default) and interactive modes.
+	</longdescription>
+
+	<upstream>
+		<remote-id type="github">nabbi/genup</remote-id>
+	</upstream>
 </pkgmetadata>
