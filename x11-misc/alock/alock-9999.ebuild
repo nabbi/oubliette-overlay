@@ -7,8 +7,8 @@ inherit autotools toolchain-funcs git-r3
 DESCRIPTION="Simple screen lock application for X server"
 HOMEPAGE="https://github.com/Arkq/alock"
 
-EGIT_REPO_URI="https://github.com/nabbi/${PN}"
-EGIT_BRANCH=pam_password
+EGIT_REPO_URI="https://github.com/Arkq/${PN}"
+EGIT_BRANCH=master
 
 LICENSE="MIT"
 SLOT="0"
