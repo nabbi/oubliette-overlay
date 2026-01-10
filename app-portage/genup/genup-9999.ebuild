@@ -22,6 +22,7 @@ RESTRICT="mirror"
 RDEPEND="
 	app-portage/eix
 	app-portage/gentoolkit
+	sys-apps/portage
 	app-portage/portage-utils
 "
 DEPEND="${RDEPEND}"
