@@ -36,4 +36,3 @@ DEPEND="${RDEPEND}"
 # Upstream tests currently fail in your environment (per your note)
 RESTRICT="test"
 # distutils_enable_tests pytest
-

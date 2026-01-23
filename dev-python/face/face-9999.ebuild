@@ -40,4 +40,3 @@ python_install_all() {
 	distutils-r1_python_install_all
 	find "${ED}" -type d -name "test" -exec rm -rv {} + || die "tests removing failed"
 }
-

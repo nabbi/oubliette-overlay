@@ -25,4 +25,3 @@ QA_PREBUILT="usr/bin/semgrep-core"
 src_install() {
 	dobin purelib/semgrep/bin/semgrep-core
 }
-

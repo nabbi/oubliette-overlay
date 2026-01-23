@@ -45,4 +45,3 @@ src_install() {
 
 	dosym fping /usr/sbin/fping6
 }
-

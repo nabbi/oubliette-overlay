@@ -51,4 +51,3 @@ src_install() {
 	dodoc doc/bot.html *.md
 	doman doc/masscan.8
 }
-
