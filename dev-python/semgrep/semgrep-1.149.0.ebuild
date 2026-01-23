@@ -18,7 +18,7 @@ if [[ ${PV} == 9999 ]]; then
 	KEYWORDS=""
 	inherit distutils-r1 git-r3
 else
-	KEYWORDS="amd64"
+	KEYWORDS="~amd64"
 	inherit distutils-r1 pypi
 fi
 
