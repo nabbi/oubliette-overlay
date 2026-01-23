@@ -40,10 +40,10 @@ jobs:
       PROFILE: ${{ matrix.profile }}
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.11
+    - name: Set up Python 3.14
       uses: actions/setup-python@v5
       with:
-        python-version: 3.11
+        python-version: 3.14
     - name: Setup repoman
       run: |
         python -m pip install --upgrade pip
