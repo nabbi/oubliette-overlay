@@ -6,20 +6,18 @@ EAPI=8
 DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{11..14} )
 
+inherit distutils-r1
+
 DESCRIPTION="Straightforward CLI parsing and dispatching microframework"
 HOMEPAGE="https://github.com/mahmoud/face"
 LICENSE="BSD"
 SLOT="0"
 
 if [[ ${PV} == 9999 ]]; then
-	inherit distutils-r1 git-r3
-
+	inherit git-r3
 	EGIT_REPO_URI="https://github.com/mahmoud/${PN}.git"
 	PROPERTIES="live"
-	KEYWORDS=""
 else
-	inherit distutils-r1
-
 	SRC_URI="https://github.com/mahmoud/face/archive/refs/tags/v${PV}.tar.gz -> ${P}.gh.tar.gz"
 	KEYWORDS="amd64 ~arm64 ~x86"
 fi

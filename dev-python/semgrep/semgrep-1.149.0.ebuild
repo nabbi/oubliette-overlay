@@ -6,6 +6,8 @@ EAPI=8
 DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{12..14} )
 
+inherit distutils-r1
+
 DESCRIPTION="Lightweight static analysis for many languages"
 HOMEPAGE="https://github.com/semgrep/semgrep"
 LICENSE="LGPL-2.1"
@@ -15,11 +17,10 @@ if [[ ${PV} == 9999 ]]; then
 	PROPERTIES="live"
 	EGIT_REPO_URI="https://github.com/semgrep/semgrep.git"
 	EGIT_BRANCH="develop"
-	KEYWORDS=""
-	inherit distutils-r1 git-r3
+	inherit git-r3
 else
 	KEYWORDS="~amd64"
-	inherit distutils-r1 pypi
+	inherit pypi
 fi
 
 RDEPEND="

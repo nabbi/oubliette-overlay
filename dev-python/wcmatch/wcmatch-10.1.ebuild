@@ -24,16 +24,15 @@ HOMEPAGE="
 "
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="amd64 ~arm arm64 ~ppc ~ppc64 ~riscv x86"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/facelessuser/wcmatch.git"
 	EGIT_BRANCH="main"
 	PROPERTIES="live"
-	KEYWORDS=""
 else
 	SRC_URI="https://github.com/facelessuser/wcmatch/archive/refs/tags/${PV}.tar.gz -> ${P}.gh.tar.gz"
+	KEYWORDS="amd64 ~arm arm64 ~ppc ~ppc64 ~riscv x86"
 fi
 
 RDEPEND="

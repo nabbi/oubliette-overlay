@@ -12,14 +12,13 @@ if [[ ${PV} == 9999 ]] ; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/robertdavidgraham/masscan.git"
 	EGIT_BRANCH="master"
-	KEYWORDS=""
 else
 	SRC_URI="https://github.com/robertdavidgraham/masscan/archive/${PV}.tar.gz -> ${P}.tar.gz"
 	KEYWORDS="~amd64 ~x86"
 fi
 
-SLOT="0"
 LICENSE="AGPL-3"
+SLOT="0"
 
 RDEPEND="net-libs/libpcap"
 
