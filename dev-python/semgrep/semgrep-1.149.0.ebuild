@@ -42,6 +42,8 @@ RDEPEND="
 	>=dev-python/typing-extensions-4.2[${PYTHON_USEDEP}]
 	>=dev-python/urllib3-2.0[${PYTHON_USEDEP}]
 	>=dev-python/wcmatch-8.3[${PYTHON_USEDEP}]
+	dev-python/opentelemetry-api[${PYTHON_USEDEP}]
+	dev-python/opentelemetry-exporter-otlp-proto-http[${PYTHON_USEDEP}]
 
 	dev-util/semgrep-core-bin
 "
