@@ -4,11 +4,11 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=hatchling
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit distutils-r1
 
-DESCRIPTION="OpenTelemetry Protobuf encoding"
+DESCRIPTION="OpenTelemetry Python Proto"
 HOMEPAGE="https://github.com/open-telemetry/opentelemetry-python"
 
 LICENSE="Apache-2.0"
@@ -21,8 +21,8 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_BRANCH="main"
 	EGIT_CHECKOUT_DIR="${WORKDIR}/${P}"
 
-	# This package lives inside the monorepo
-	S="${WORKDIR}/${P}/encoder/${PN}"
+	# This package lives at repo root in monorepo layout
+	S="${WORKDIR}/${P}/${PN}"
 else
 	inherit pypi
 
@@ -30,14 +30,7 @@ else
 fi
 
 RDEPEND="
-	dev-python/opentelemetry-proto[${PYTHON_USEDEP}]
+	dev-python/protobuf[${PYTHON_USEDEP}]
 "
 
-BDEPEND="
-	test? (
-		dev-python/opentelemetry-sdk[${PYTHON_USEDEP}]
-		dev-python/opentelemetry-test-utils[${PYTHON_USEDEP}]
-	)
-"
-
-distutils_enable_tests unittest
+distutils_enable_tests pytest

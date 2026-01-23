@@ -18,6 +18,7 @@ if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 
 	EGIT_REPO_URI="https://github.com/open-telemetry/opentelemetry-python.git"
+	EGIT_BRANCH="main"
 	EGIT_CHECKOUT_DIR="${WORKDIR}/${P}"
 
 	# This package lives inside the monorepo
