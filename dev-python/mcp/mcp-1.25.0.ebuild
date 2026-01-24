@@ -24,7 +24,7 @@ if [[ ${PV} == 9999 ]]; then
 	KEYWORDS=""
 else
 	inherit pypi
-	KEYWORDS="~amd64 ~arm64 ~x86"
+	KEYWORDS="~amd64"
 fi
 
 RDEPEND="
