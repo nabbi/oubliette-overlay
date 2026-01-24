@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{10,11,12} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit distutils-r1
 
 DESCRIPTION="BTest is a powerful framework for writing system tests."
@@ -15,7 +15,6 @@ LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 
-RDEPEND=""
 BDEPEND="
 	dev-python/sphinx
 	dev-util/perf

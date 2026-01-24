@@ -58,6 +58,8 @@ src_compile() {
 	append-cflags -DCURSES_GRAPHICS
 	append-cflags -DPANICLOG_FMT2
 	append-cflags -DTTY_TILES_ESCCODES
+	append-cflags -DSCORE_ON_BOTL
+	append-cflags -DREALTIME_ON_BOTL
 	append-cflags -DDGAMELAUNCH
 	append-cflags -DLIVELOG_ENABLE
 	append-cflags -DDUMPLOG
