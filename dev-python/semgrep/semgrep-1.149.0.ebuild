@@ -74,8 +74,8 @@ src_unpack() {
 	# For release tarballs, overlay the semgrep-interfaces tarball into the
 	# monorepo's interfaces/ directory (upstream uses it as a submodule).
 	if [[ ${PV} != 9999 ]]; then
-		rm -rf "${WORKDIR}/${P}/interfaces" || die
-		mv "${WORKDIR}/${PN}-interfaces-${SI_PV}" "${WORKDIR}/${P}/interfaces" || die
+		rm -rf "${WORKDIR}/${P}/cli/src/semgrep/semgrep_interfaces" || die
+		mv "${WORKDIR}/${PN}-interfaces-${SI_PV}" "${WORKDIR}/${P}/cli/src/semgrep/semgrep_interfaces" || die
 	fi
 }
 
@@ -87,11 +87,6 @@ python_prepare_all() {
 	# Old ebuild carried a setup.py constraint relax; keep it only if present.
 	if [[ -f setup.py ]]; then
 		sed -i -e 's|~=|>=|g' setup.py || die
-	fi
-
-	if [[ ${PV} != 9999 ]]; then
-		rm -rf "${S}/src/semgrep/semgrep_interfaces" || die
-		cp -a "${WORKDIR}/${P}/interfaces/semgrep_interfaces" "${S}/src/semgrep/" || die
 	fi
 
 	distutils-r1_python_prepare_all
