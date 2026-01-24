@@ -69,13 +69,17 @@ RDEPEND="
 DEPEND="${RDEPEND}"
 
 src_unpack() {
-	default
 
-	# For release tarballs, overlay the semgrep-interfaces tarball into the
-	# monorepo's interfaces/ directory (upstream uses it as a submodule).
-	if [[ ${PV} != 9999 ]]; then
+	if [[ ${PV} == 9999 ]]; then
+		git-r3_src_unpack
+
+	else
+		# For release tarballs, overlay the semgrep-interfaces tarball into the
+		# monorepo's interfaces/ directory (upstream uses it as a submodule).
 		rm -rf "${WORKDIR}/${P}/cli/src/semgrep/semgrep_interfaces" || die
 		mv "${WORKDIR}/${PN}-interfaces-${SI_PV}" "${WORKDIR}/${P}/cli/src/semgrep/semgrep_interfaces" || die
+
+		default
 	fi
 }
 
