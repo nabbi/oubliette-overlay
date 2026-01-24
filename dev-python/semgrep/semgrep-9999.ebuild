@@ -57,6 +57,7 @@ RDEPEND="
 	>=dev-python/wcmatch-8.3[${PYTHON_USEDEP}]
 	dev-python/pydantic[${PYTHON_USEDEP}]
 	dev-python/mcp[${PYTHON_USEDEP}]
+	dev-python/pydantic-settings[${PYTHON_USEDEP}]
 
 	dev-python/opentelemetry-api[${PYTHON_USEDEP}]
 	dev-python/opentelemetry-exporter-otlp-proto-http[${PYTHON_USEDEP}]
