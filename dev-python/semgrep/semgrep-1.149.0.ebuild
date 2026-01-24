@@ -21,7 +21,7 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://github.com/semgrep/semgrep.git"
 	EGIT_BRANCH="develop"
 	# Only fetch the submodule we actually need.
-	EGIT_SUBMODULES=( interfaces )
+	EGIT_SUBMODULES=( "OSS/cli/src/semgrep/semgrep_interfaces" )
 	inherit git-r3
 else
 	KEYWORDS="~amd64"
