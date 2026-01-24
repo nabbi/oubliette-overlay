@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
+	<use>
+		<flag name="cli">cli support</flag>
+		<flag name="rich">rich support</flag>
+		<flag name="ws">ws support</flag>
+	</use>
 	<upstream>
 		<remote-id type="pypi">mcp</remote-id>
 	</upstream>
