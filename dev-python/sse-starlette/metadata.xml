@@ -2,6 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<upstream>
+		<remote-id type="github">sysid/sse-starlette</remote-id>
 		<remote-id type="pypi">sse-starlette</remote-id>
 	</upstream>
 </pkgmetadata>

@@ -7,6 +7,7 @@
 		<flag name="ws">ws support</flag>
 	</use>
 	<upstream>
+		<remote-id type="github">modelcontextprotocol/python-sdk</remote-id>
 		<remote-id type="pypi">mcp</remote-id>
 	</upstream>
 </pkgmetadata>

@@ -2,6 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<upstream>
+		<remote-id type="github">florimondmanca/httpx-sse</remote-id>
 		<remote-id type="pypi">httpx-sse</remote-id>
 	</upstream>
 </pkgmetadata>

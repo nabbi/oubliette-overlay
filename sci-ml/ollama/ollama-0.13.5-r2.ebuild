@@ -104,8 +104,9 @@ pkg_pretend() {
 	# When building binpkgs you probably want to include all targets
 	if use cuda \
 		&& [[ ${MERGE_TYPE} == "buildonly" ]] \
-		&& [[ ${CUDAARCHS} != "all" ]]; then
-		einfo "When building a binary package, set CUDAARCHS=\"all\" to disable auto-detection and build all supported architectures."
+		&& [[ ${CUDAARCHS} != "all" || ${CUDAARCHS} != "all-major" ]]; then
+		einfo "When building binary packages, disable auto arch detection"
+		einfo 'Set CUDAARCHS="all" or CUDAARCHS="all-major"'
 	fi
 }
 

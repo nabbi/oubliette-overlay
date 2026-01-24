@@ -17,7 +17,6 @@ fi
 
 LICENSE="GPL-3"
 SLOT="0"
-IUSE=""
 
 DEPEND="
 	net-proxy/c-icap
@@ -25,7 +24,6 @@ DEPEND="
 	app-arch/libarchive
 	"
 RDEPEND="${DEPEND}"
-BDEPEND=""
 
 src_configure() {
 	econf \

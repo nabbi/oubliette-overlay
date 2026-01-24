@@ -29,7 +29,6 @@ DEPEND="
 	ldap? ( net-nds/openldap )
 	"
 RDEPEND="${DEPEND}"
-BDEPEND=""
 
 src_prepare() {
 	eapply_user

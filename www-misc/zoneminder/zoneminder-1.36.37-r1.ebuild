@@ -34,10 +34,10 @@ else
 fi
 
 LICENSE="GPL-2"
+SLOT="0"
 # first webserver in the list is the default, users will need to disable to select others
 IUSE_WEB_SERVER="apache2 nginx"
 IUSE="curl gcrypt gnutls +mmap vlc +${IUSE_WEB_SERVER}"
-SLOT="0"
 REQUIRED_USE="
 	^^ ( ${IUSE_WEB_SERVER} )
 "

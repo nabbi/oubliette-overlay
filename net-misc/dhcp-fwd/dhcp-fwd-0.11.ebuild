@@ -8,6 +8,8 @@ DESCRIPTION="Forwards DHCP messages between subnets with different sublayer broa
 HOMEPAGE="https://www.nongnu.org/dhcp-fwd/"
 SRC_URI="https://savannah.nongnu.org/download/${PN}/${PSRC}.tar.xz"
 
+S="${WORKDIR}/${PSRC}"
+
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
@@ -18,8 +20,6 @@ DEPEND="
 	acct-user/dhcp-fwd
 	diet? ( dev-libs/dietlibc )"
 RDEPEND="${DEPEND}"
-
-S="${WORKDIR}/${PSRC}"
 
 src_prepare() {
 	unpack ${A}

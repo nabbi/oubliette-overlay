@@ -28,7 +28,6 @@ DEPEND="
 	net-proxy/c-icap
 	"
 RDEPEND="${DEPEND}"
-BDEPEND=""
 
 src_prepare() {
 	eapply_user

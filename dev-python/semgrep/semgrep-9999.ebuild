@@ -8,6 +8,9 @@ PYTHON_COMPAT=( python3_{12..13} )
 
 inherit distutils-r1
 
+# The Python package lives under the monorepo's cli/ directory.
+S="${WORKDIR}/${P}/cli"
+
 DESCRIPTION="Lightweight static analysis for many languages"
 HOMEPAGE="https://github.com/semgrep/semgrep"
 LICENSE="LGPL-2.1"
@@ -31,9 +34,6 @@ else
 		https://github.com/${PN}/${PN}-interfaces/archive/refs/tags/v${SI_PV}.tar.gz -> ${PN}-interfaces-${SI_PV}.gh.tar.gz
 	"
 fi
-
-# The Python package lives under the monorepo's cli/ directory.
-S="${WORKDIR}/${P}/cli"
 
 RDEPEND="
 	>=dev-python/attrs-21.3[${PYTHON_USEDEP}]
@@ -103,4 +103,3 @@ python_compile() {
 	export SEMGREP_SKIP_BIN=true
 	distutils-r1_python_compile
 }
-

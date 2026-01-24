@@ -2,6 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<upstream>
+		<remote-id type="github">open-telemetry/opentelemetry-python</remote-id>
 		<remote-id type="pypi">opentelemetry-test-utils</remote-id>
 	</upstream>
 </pkgmetadata>

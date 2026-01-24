@@ -23,7 +23,6 @@ if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/sysid/sse-starlette.git"
 	EGIT_BRANCH="main"
-	KEYWORDS=""
 else
 	inherit pypi
 	KEYWORDS="amd64 ~arm64 ~x86"

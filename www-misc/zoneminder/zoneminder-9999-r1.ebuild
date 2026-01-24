@@ -32,13 +32,15 @@ else
 			CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
 		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz
 		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.zip -> CxxUrl-${MY_CXXURL_V}.zip"
+
+	BDEPEND="app-arch/unzip"
 fi
 
 LICENSE="GPL-2"
+SLOT="0"
 # first webserver in the list is the default, users will need to disable to select others
 IUSE_WEB_SERVER="apache2 nginx"
 IUSE="curl gcrypt gnutls +mmap vlc +${IUSE_WEB_SERVER}"
-SLOT="0"
 REQUIRED_USE="
 	^^ ( ${IUSE_WEB_SERVER} )
 "
