@@ -28,7 +28,6 @@ else
 fi
 
 RDEPEND="
-	>=dev-python/agent-client-protocol-0.6.3[${PYTHON_USEDEP}]
 	dev-python/anyio[${PYTHON_USEDEP}]
 	>=dev-python/jsonschema-4.20.0[${PYTHON_USEDEP}]
 	dev-python/httpx-sse[${PYTHON_USEDEP}]
