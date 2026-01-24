@@ -48,6 +48,7 @@ RDEPEND="
 	dev-python/opentelemetry-instrumentation-requests[${PYTHON_USEDEP}]
 	dev-python/opentelemetry-util-http[${PYTHON_USEDEP}]
 	dev-python/opentelemetry-test-utils[${PYTHON_USEDEP}]
+	dev-python/opentelemetry-instrumentation-threading[${PYTHON_USEDEP}]
 
 	dev-util/semgrep-core-bin
 "
