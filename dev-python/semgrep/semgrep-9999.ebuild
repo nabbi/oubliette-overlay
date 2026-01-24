@@ -89,6 +89,11 @@ python_prepare_all() {
 		sed -i -e 's|~=|>=|g' setup.py || die
 	fi
 
+	if [[ ${PV} != 9999 ]]; then
+		rm -rf "${S}/src/semgrep/semgrep_interfaces" || die
+		cp -a "${WORKDIR}/${P}/interfaces/semgrep_interfaces" "${S}/src/semgrep/" || die
+	fi
+
 	distutils-r1_python_prepare_all
 }
 
