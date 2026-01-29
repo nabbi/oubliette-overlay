@@ -140,7 +140,7 @@ DEPEND="app-arch/lzma
 	virtual/minizip:=
 	brain? ( dev-libs/xxhash )
 	video_cards_nvidia? (
-		>x11-drivers/nvidia-drivers-440.64
+		>x11-drivers/nvidia-drivers-440.64-r0
 		|| (
 			dev-util/nvidia-cuda-toolkit
 			virtual/opencl

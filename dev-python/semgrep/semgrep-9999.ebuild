@@ -10,9 +10,9 @@ inherit distutils-r1
 
 DESCRIPTION="Lightweight static analysis for many languages"
 HOMEPAGE="https://github.com/semgrep/semgrep"
-LICENSE="LGPL-2.1"
 # The Python package lives under the monorepo's cli/ directory.
 S="${WORKDIR}/${P}/cli"
+LICENSE="LGPL-2.1"
 SLOT="0"
 
 # semgrep-interfaces is a submodule in semgrep/semgrep; use matching release tag by default.

@@ -1,18 +1,22 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit cmake-multilib multibuild
+inherit cmake-multilib
 
 DESCRIPTION="The C++ Actor Framework (CAF)"
 HOMEPAGE="https://www.actor-framework.org/"
 SRC_URI="https://github.com/actor-framework/actor-framework/archive/${PV}.tar.gz
 	-> ${P}.tar.gz"
+
+S="${WORKDIR}/actor-framework-${PV}"
+
 LICENSE="BSD"
-SLOT="0/18.2"
+SLOT="0/$(ver_cut 1-2)"
 KEYWORDS="~amd64 ~x86"
 IUSE="debug doc examples +openssl static-libs test tools"
+RESTRICT="!test? ( test )"
 
 RDEPEND="
 	examples? (
@@ -26,14 +30,6 @@ BDEPEND="doc? ( app-text/doxygen[dot]
 	app-shells/bash:0
 	dev-python/sphinx
 	dev-python/sphinx-rtd-theme )"
-
-RESTRICT="!test? ( test )"
-
-S="${WORKDIR}/actor-framework-${PV}"
-
-PATCHES=(
-	"${FILESDIR}"/${PN}-use-stable-version.patch
-)
 
 multilib_src_configure() {
 	local mycmakeargs=(

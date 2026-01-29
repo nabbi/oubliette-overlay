@@ -20,7 +20,6 @@ fi
 
 LICENSE="GPL-2+"
 SLOT="0"
-IUSE=""
 
 DEPEND="sys-libs/pam"
 RDEPEND="${DEPEND}"
