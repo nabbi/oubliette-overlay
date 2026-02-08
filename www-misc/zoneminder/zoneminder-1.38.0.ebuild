@@ -6,7 +6,7 @@ EAPI=8
 inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd optfeature
 
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
-HOMEPAGE="http://www.zoneminder.com/"
+HOMEPAGE="https://www.zoneminder.com/"
 
 MY_PV_MM=$(ver_cut 1-2)
 MY_PV_P=$(ver_cut 3-)
@@ -34,6 +34,7 @@ else
 		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.zip -> CxxUrl-${MY_CXXURL_V}.zip"
 
 	BDEPEND="app-arch/unzip"
+	KEYWORDS="~amd64"
 fi
 
 LICENSE="GPL-2"
@@ -114,10 +115,6 @@ RDEPEND="${DEPEND}"
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
 
-PATCHES=(
-	# "${FILESDIR}/${PN}-1.34.17_dont_gz_man.patch"
-)
-
 pkg_setup() {
 	if use nginx ; then
 		MY_WEB_USER=nginx
@@ -164,10 +161,10 @@ src_configure() {
 	export TZ=UTC # bug 630470
 
 	if ! use gcrypt; then
-		sed -i '/find_library(GCRYPT_LIBRARIES/d' CMakeLists.txt
+		sed -i '/find_library(GCRYPT_LIBRARIES/d' CMakeLists.txt || die
 	fi
 	if ! use gnutls; then
-		sed -i '/find_library(GNUTLS_LIBRARIES/d' CMakeLists.txt
+		sed -i '/find_library(GNUTLS_LIBRARIES/d' CMakeLists.txt || die
 	fi
 
 	mycmakeargs=(
@@ -196,18 +193,14 @@ src_configure() {
 
 }
 
-src_compile() {
-	cmake_src_compile
-}
-
 src_install() {
 	cmake_src_install
 
-	rm -rf "${D}/usr/cmake"
+	rm -rf "${ED}/usr/cmake"
 
 	# decompress manpages installed by upstream
-	if [[ -d "${D}/usr/share/man" ]]; then
-		find "${D}/usr/share/man" -type f -name "*.gz" -exec gunzip {} \;
+	if [[ -d "${ED}/usr/share/man" ]]; then
+		find "${ED}/usr/share/man" -type f -name "*.gz" -exec gunzip {} \;
 	fi
 
 	# the log directory, can contain passwords - limit access
@@ -272,24 +265,24 @@ pkg_postinst() {
 	readme.gentoo_print_elog
 
 	if [[ -z "${REPLACING_VERSIONS}" ]]; then
-			elog "Fresh installs of zoneminder require a few additional steps. Please read the README.gentoo"
-			elog ""
-			elog "This package requires access to a Mysql compatible database server"
-			elog "ZoneMinder can connect to a remote database if desired"
-			optfeature_header "Mysql compatible database server"
-			optfeature "Install if you don't already have one" virtual/mysql
-			elog ""
-			elog "There are optional features/enhancements that can be added"
-			optfeature_header "Onvif Access"
-			optfeature "Verbose responses from camera" dev-perl/XML-LibXML
-			optfeature "Event monitoring" dev-perl/SOAP-Lite
-			optfeature_header "Email"
-			optfeature "Older email package (if new one isn't working)" dev-perl/MIME-tools
-			optfeature_header "Event creation enhancements"
-			optfeature "Retrieves image size" dev-perl/Image-Info
-			optfeature_header "Storage"
-			optfeature "Archive to SFTP server" dev-perl/Net-SFTP-Foreign
-			optfeature "Copy to Amazon S3 bucket" dev-perl/Net-Amazon-S3 dev-perl/File-Slurp
+		elog "Fresh installs of zoneminder require a few additional steps. Please read the README.gentoo"
+		elog ""
+		elog "This package requires access to a Mysql compatible database server"
+		elog "ZoneMinder can connect to a remote database if desired"
+		optfeature_header "Mysql compatible database server"
+		optfeature "Install if you don't already have one" virtual/mysql
+		elog ""
+		elog "There are optional features/enhancements that can be added"
+		optfeature_header "Onvif Access"
+		optfeature "Verbose responses from camera" dev-perl/XML-LibXML
+		optfeature "Event monitoring" dev-perl/SOAP-Lite
+		optfeature_header "Email"
+		optfeature "Older email package (if new one isn't working)" dev-perl/MIME-tools
+		optfeature_header "Event creation enhancements"
+		optfeature "Retrieves image size" dev-perl/Image-Info
+		optfeature_header "Storage"
+		optfeature "Archive to SFTP server" dev-perl/Net-SFTP-Foreign
+		optfeature "Copy to Amazon S3 bucket" dev-perl/Net-Amazon-S3 dev-perl/File-Slurp
 	else
 		local v
 		for v in ${REPLACING_VERSIONS}; do
@@ -309,7 +302,7 @@ pkg_postinst() {
 			ewarn "Example apache configs have been placed under /usr/share/doc/${PF}"
 			ewarn ""
 			ewarn "Your old configuration should be reviewed"
-			ewarn "To suppresee this message, name your local configuraiton file something else"
+			ewarn "To suppress this message, name your local configuration file something else"
 			ewarn ""
 		fi
 	fi
@@ -336,7 +329,7 @@ pkg_postinst() {
 		ewarn "    Then remove those old files to complete the migration."
 		ewarn ""
 		elog ""
-		elog "Remember to set appropriate permisions on user created files (i.e. /etc/zm/conf.d/*.conf):"
+		elog "Remember to set appropriate permissions on user created files (i.e. /etc/zm/conf.d/*.conf):"
 		elog "    chmod 640 local.conf"
 		elog "    chown root:${MY_WEB_GROUP} local.conf"
 		elog ""

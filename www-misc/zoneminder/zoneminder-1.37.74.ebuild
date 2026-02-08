@@ -34,6 +34,7 @@ else
 		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.zip -> CxxUrl-${MY_CXXURL_V}.zip"
 
 	BDEPEND="app-arch/unzip"
+	KEYWORDS="~amd64"
 fi
 
 LICENSE="GPL-2"
