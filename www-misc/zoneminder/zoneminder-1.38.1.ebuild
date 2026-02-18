@@ -115,13 +115,6 @@ RDEPEND="${DEPEND}"
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
 
-PATCHES=(
-	"${FILESDIR}/${PN}-1.38.0_MakefilePerl.patch"
-	"${FILESDIR}/${PN}-1.38.0_event-playback-fixes.patch"
-	"${FILESDIR}/${PN}-1.38.0_mariadb-legacynames.patch"
-	"${FILESDIR}/${PN}-1.38.0_perf-conditional-framesduration-subquery.patch"
-)
-
 pkg_setup() {
 	if use nginx ; then
 		MY_WEB_USER=nginx
