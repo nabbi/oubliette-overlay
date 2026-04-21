@@ -1,16 +1,15 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit pypi
-
-PY_TAG="cp310.cp311.cp312.cp313.cp314.py310.py311.py312.py313.py314"
-ABI_TAG="none-musllinux_1_0_x86_64.manylinux2014_x86_64"
-
-DESCRIPTION="Lightweight static analysis for many languages"
+DESCRIPTION="Lightweight static analysis for many languages (prebuilt semgrep-core)"
 HOMEPAGE="https://github.com/semgrep/semgrep"
-SRC_URI="$(pypi_wheel_url --unpack semgrep ${PV} ${PY_TAG} ${ABI_TAG})"
+
+WHEEL="semgrep-${PV}-cp310.cp311.cp312.cp313.cp314.py310.py311.py312.py313.py314-none-manylinux_2_35_x86_64.whl"
+SRC_URI="
+	https://files.pythonhosted.org/packages/db/17/1f71ccd8541b836d6509bf05a81033307b4f30a9c76695c18ee53580fc79/${WHEEL} -> ${P}.whl.zip
+"
 S="${WORKDIR}/semgrep-${PV}.data"
 
 LICENSE="LGPL-2.1"
