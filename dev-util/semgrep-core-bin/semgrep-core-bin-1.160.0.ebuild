@@ -18,14 +18,18 @@ KEYWORDS="~amd64"
 
 BDEPEND="app-arch/unzip"
 
-# Binary is prebuilt upstream and has RUNPATH=$ORIGIN/libs pointing at the
-# bundled libs we ship alongside it in /usr/libexec/.
+# Binary is prebuilt upstream with RUNPATH=$ORIGIN/libs. We ship the wheel's
+# bundled libs next to it, MINUS the glibc-internal ones (libm, libresolv) —
+# those must come from the system libc to avoid ABI skew (SIGSEGV).
 QA_PREBUILT="usr/libexec/${PN}/semgrep-core usr/libexec/${PN}/libs/*"
 
 src_install() {
 	local libexec="/usr/libexec/${PN}"
 	exeinto "${libexec}"
 	doexe semgrep-core
+
+	# Drop glibc-coupled libs so they resolve to the system libc's siblings.
+	rm -f libs/libm.so.* libs/libresolv.so.* libs/libc.so.* || die
 
 	insinto "${libexec}/libs"
 	insopts -m0755
