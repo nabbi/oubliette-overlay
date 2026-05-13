@@ -1,0 +1,56 @@
+commit 488eecc99a1002d185c76f1a40ff5f9889347a0e
+Author: Nic Boet <nic@boet.cc>
+Date:   Tue May 12 21:24:57 2026 -0500
+
+    Fix: curswins.c fails to compile on distros with split ncurses/ncursesw.
+    
+    Commit 85de85c added UTF-8 wide-character rendering via ncursesw APIs
+    (setcchar, mvwadd_wch, cchar_t).  It enabled these by pre-defining
+    NCURSES_WIDECHAR=1 before #include "curses.h".
+    
+    That approach works on distros where /usr/include/curses.h is already
+    the ncursesw header (Arch, Ubuntu, etc.) and respects the pre-define.
+    On Gentoo — and any distro that installs ncurses and ncursesw as
+    separate packages — it silently fails:
+    
+      /usr/include/curses.h   : non-wide ncurses; setcchar and mvwadd_wch
+                                are never declared here, regardless of
+                                NCURSES_WIDECHAR.
+      /usr/include/ncursesw/  : the wide header, but NCURSES_WIDECHAR
+                                still defaults to 0 unless pre-defined.
+    
+    Result: the compiler sees implicit declarations for setcchar and
+    mvwadd_wch and errors out (-Wimplicit-function-declaration).
+    
+    Fix: use __has_include (GCC 5+, Clang 3.9+, C23) to detect
+    <ncursesw/curses.h> and include it directly when present, keeping
+    NCURSES_WIDECHAR=1 defined before whichever header is chosen.
+    The original "curses.h" fallback continues to work on systems where
+    curses.h is already the wide-char version.
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+diff --git a/win/curses/curswins.c b/win/curses/curswins.c
+index 786d1622b..90d94d47d 100644
+--- a/win/curses/curswins.c
++++ b/win/curses/curswins.c
+@@ -3,10 +3,19 @@
+ /* Copyright (c) Karl Garrison, 2010. */
+ /* NetHack may be freely redistributed.  See license for details. */
+ 
++/* On distros that split ncurses and ncursesw into separate packages (e.g.
++ * Gentoo), the plain <curses.h> lacks the wide-char API even when
++ * NCURSES_WIDECHAR is pre-defined.  Prefer <ncursesw/curses.h> when present.
++ * NCURSES_WIDECHAR must be set before either header is included so that
++ * the wide-character type and function declarations are enabled. */
+ #ifndef NCURSES_WIDECHAR
+ #define NCURSES_WIDECHAR 1
+ #endif
++#if defined __has_include && __has_include(<ncursesw/curses.h>)
++#include <ncursesw/curses.h>
++#else
+ #include "curses.h"
++#endif
+ #include "hack.h"
+ #include "wincurs.h"
+ #include "curswins.h"

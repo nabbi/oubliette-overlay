@@ -25,8 +25,12 @@ DEPEND="${RDEPEND}
 	"
 BDEPEND="virtual/pkgconfig"
 
+PATCHES=(
+	"${FILESDIR}/evilhack_curswins-ncursesw-include.patch"
+)
+
 src_prepare() {
-	eapply_user
+	default
 
 	cp "${FILESDIR}/evilhack-hint-tty.1" hint || die "Failed to copy hint file"
 
@@ -50,6 +54,7 @@ src_compile() {
 ##	append-cflags -Wno-stringop-truncation
 ##	append-cflags -Wno-missing-field-initializers
 ##	append-cflags -Wno-format-overflow -Wno-stringop-overflow
+	append-cflags -Wno-old-style-definition
 	append-cflags -DSYSCF "-DSYSCF_FILE=\\\"${EPREFIX}/etc/evilhack.sysconf\\\"" -DSECURE
 	append-cflags -DTIMED_DELAY
 	append-cflags "-DHACKDIR=\\\"${EPREFIX}/usr/$(get_libdir)/evilhack\\\""
