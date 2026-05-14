@@ -25,10 +25,6 @@ DEPEND="${RDEPEND}
 	"
 BDEPEND="virtual/pkgconfig"
 
-PATCHES=(
-	"${FILESDIR}/evilhack_curswins-ncursesw-include.patch"
-)
-
 src_prepare() {
 	default
 
