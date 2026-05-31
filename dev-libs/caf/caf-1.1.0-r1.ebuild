@@ -21,7 +21,7 @@ RESTRICT="!test? ( test )"
 RDEPEND="
 	examples? (
 		net-misc/curl dev-libs/protobuf:=
-		dev-qt/qtcore:5 )
+		dev-qt/qtbase:6[gui,widgets] )
 	openssl? ( dev-libs/openssl:0=[${MULTILIB_USEDEP},static-libs?] )"
 
 DEPEND="${RDEPEND}"
@@ -46,6 +46,7 @@ multilib_src_configure() {
 			-DCAF_ENABLE_CURL_EXAMPLES="$(usex examples)"
 			-DCAF_ENABLE_EXAMPLES="$(usex examples)"
 			-DCAF_ENABLE_PROTOBUF_EXAMPLES="$(usex examples)"
+			-DCAF_ENABLE_QT6_EXAMPLES="$(usex examples)"
 			-DCAF_ENABLE_TESTING="$(usex test)"
 			-DCAF_ENABLE_TOOLS="$(usex tools)"
 		)
@@ -54,6 +55,7 @@ multilib_src_configure() {
 			-DCAF_ENABLE_CURL_EXAMPLES=no
 			-DCAF_ENABLE_EXAMPLES=no
 			-DCAF_ENABLE_PROTOBUF_EXAMPLES=no
+			-DCAF_ENABLE_QT6_EXAMPLES=no
 			-DCAF_ENABLE_TESTING=no
 			-DCAF_ENABLE_TOOLS=no
 		)
