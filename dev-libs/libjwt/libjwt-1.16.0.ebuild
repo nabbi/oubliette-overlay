@@ -14,7 +14,7 @@ else
 	SRC_URI="https://github.com/benmcollins/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 	#version 1.16.0 regarded by upstream as unstable - fails make check (rsa-pss types)
 	#tests are RESTRICTed unless USE=test, so normal installs are unaffected
-	KEYWORDS="~amd64"
+	KEYWORDS="~amd64 ~x86"
 fi
 
 LICENSE="MPL-2.0"

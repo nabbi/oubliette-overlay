@@ -25,7 +25,7 @@ RESTRICT="!test? ( test )"
 
 DEPEND="app-text/asciidoc"
 BDEPEND="${DEPEND}
-	test? ( dev-util/valgrind )"
+	test? ( dev-debug/valgrind )"
 
 src_prepare() {
 	default
