@@ -20,12 +20,8 @@ HOMEPAGE="https://github.com/nabbi/yubico-c"
 
 LICENSE="BSD-2"
 SLOT="0"
-IUSE="test"
-RESTRICT="!test? ( test )"
-
 DEPEND="app-text/asciidoc"
-BDEPEND="${DEPEND}
-	test? ( dev-debug/valgrind )"
+BDEPEND="${DEPEND}"
 
 src_prepare() {
 	default
