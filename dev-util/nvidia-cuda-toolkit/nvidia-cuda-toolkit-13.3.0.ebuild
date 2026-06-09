@@ -257,44 +257,44 @@ src_install() {
 
 	eend $? # }}}
 
-	# At this point ${ED}/${CUDA_PATH} should *not* be empty 
+	# At this point ${ED}/${CUDA_PATH} should *not* be empty
 	find "${ED}/${CUDA_PATH}" -empty -delete || die "empty CUDA installation dir"
 
 	# Remove directories created by manifest parsing before creating compatibility symlinks
 	# But first, merge any content that was already placed there
 	if [[ -d "${ED}/${CUDA_PATH}/include" && ! -L "${ED}/${CUDA_PATH}/include" ]]; then
 		einfo "Merging existing include content before creating symlink"
-		
+
 		# Ensure target directory exists
 		mkdir -p "${ED}/${CUDA_PATH}/targets/${narch}-linux/include" || die "failed to create target include directory"
-		
+
 		# Move any existing content from include/ to targets/.../include/
 		if [[ -n "$(ls -A "${ED}/${CUDA_PATH}/include" 2>/dev/null)" ]]; then
 			einfo "Moving existing include content to target directory"
 			cp -a "${ED}/${CUDA_PATH}/include"/* "${ED}/${CUDA_PATH}/targets/${narch}-linux/include/" || die "failed to merge include content"
 		fi
-		
+
 		# Now remove the directory
 		rm -rf "${ED}/${CUDA_PATH}/include" || die "failed to remove include directory"
 	fi
 
 	if [[ -d "${ED}/${CUDA_PATH}/$(get_libdir)" && ! -L "${ED}/${CUDA_PATH}/$(get_libdir)" ]]; then
 		einfo "Merging existing lib content before creating symlink"
-		
-		# Ensure target directory exists  
+
+		# Ensure target directory exists
 		mkdir -p "${ED}/${CUDA_PATH}/targets/${narch}-linux/lib" || die "failed to create target lib directory"
-		
+
 		# Move any existing content from lib/ to targets/.../lib/
 		if [[ -n "$(ls -A "${ED}/${CUDA_PATH}/$(get_libdir)" 2>/dev/null)" ]]; then
 			einfo "Moving existing lib content to target directory"
 			cp -a "${ED}/${CUDA_PATH}/$(get_libdir)"/* "${ED}/${CUDA_PATH}/targets/${narch}-linux/lib/" || die "failed to merge lib content"
 		fi
-		
+
 		# Now remove the directory
 		rm -rf "${ED}/${CUDA_PATH}/$(get_libdir)" || die "failed to remove lib directory"
 	fi
 
-	# Create symlinks for backward compatibility  
+	# Create symlinks for backward compatibility
 	dosym "targets/${narch}-linux/include" "${CUDA_PATH#/}/include"
 	dosym "targets/${narch}-linux/lib" "${CUDA_PATH#/}/$(get_libdir)"
 
@@ -303,11 +303,11 @@ src_install() {
 	for component in cub thrust libcudacxx; do
 		local direct_path="${ED}/${CUDA_PATH}/targets/${narch}-linux/include/${component}"
 		local cccl_path="${ED}/${CUDA_PATH}/targets/${narch}-linux/include/cccl/${component}"
-		
+
 		# Only create symlink if component exists in CCCL but not directly in include
 		if [[ ! -e "${direct_path}" && -d "${cccl_path}" ]]; then
 			einfo "Creating ${component} symlink in target include directory (CCCL location)"
-			# Create relative symlink from targets/.../include/cub to cccl/cub  
+			# Create relative symlink from targets/.../include/cub to cccl/cub
 			dosym "cccl/${component}" "${CUDA_PATH#/}/targets/${narch}-linux/include/${component}"
 		elif [[ -d "${direct_path}" ]]; then
 			einfo "Component ${component} already exists in direct location, no symlink needed"

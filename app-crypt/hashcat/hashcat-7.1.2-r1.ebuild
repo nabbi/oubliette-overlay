@@ -77,7 +77,7 @@ DEPEND="app-arch/lzma
 	video_cards_nvidia? (
 		>x11-drivers/nvidia-drivers-440.64-r0
 		|| (
-			dev-util/nvidia-cuda-toolkit
+			dev-util/nvidia-cuda-toolkit:*
 			virtual/opencl
 		)
 	)
