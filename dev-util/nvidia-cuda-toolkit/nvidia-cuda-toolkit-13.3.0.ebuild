@@ -27,8 +27,8 @@ S="${WORKDIR}"
 
 LICENSE="NVIDIA-CUDA"
 
-#SLOT="0/${PV}" # UNSLOTTED
-SLOT="${PV}" # SLOTTED
+SLOT="0/${PV}" # UNSLOTTED
+#SLOT="${PV}" # SLOTTED
 
 KEYWORDS="-* ~amd64 ~arm64"
 IUSE="clang debugger examples nsight profiler rdma sanitizer"
@@ -383,6 +383,14 @@ src_install() {
 	# fi
 
 	fowners -R root:root "${CUDA_PATH}"
+}
+
+pkg_preinst() {
+	# Remove any previous sandbox.d file (fixed or revord-suffixed) to avoid
+	# collision-protect failures during upgrade — sandbox.d loads all files
+	# in the directory, so the specific name does not matter.
+	rm -f "${EROOT}/etc/sandbox.d/80${PN}"
+	rm -f "${EROOT}/etc/sandbox.d/80${PN}"[0-9]*
 }
 
 pkg_postinst_check() {
