@@ -7,7 +7,7 @@ inherit cmake pam
 
 DESCRIPTION="PAM module for FIDO2 and U2F keys"
 HOMEPAGE="https://github.com/Yubico/pam-u2f"
-SRC_URI="https://developers.yubico.com/${PN/_/-}/Releases/${P}.tar.gz"
+SRC_URI="https://github.com/nabbi/${PN/_/-}/archive/refs/tags/${PN}-${PV}.tar.gz"
 
 LICENSE="BSD ISC"
 SLOT="0"
@@ -23,10 +23,9 @@ DEPEND="
 RDEPEND="${DEPEND}"
 BDEPEND="app-text/asciidoc"
 
-PATCHES=(
-	"${FILESDIR}/${PN}-1.4.0-001-syslog-logging.patch"
-	"${FILESDIR}/${PN}-1.4.0-002-fix-auth-oom.patch"
-)
+src_prepare() {
+	cmake_src_prepare
+}
 
 src_configure() {
 	local mycmakeargs=(
