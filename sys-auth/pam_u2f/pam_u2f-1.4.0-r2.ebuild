@@ -24,8 +24,8 @@ RDEPEND="${DEPEND}"
 BDEPEND="app-text/asciidoc"
 
 PATCHES=(
-	"${FILESDIR}/${PN}-1.4.0-syslog-audit-log.patch"
-	"${FILESDIR}/${PN}-1.4.0-cfg-rejection-diagnostics.patch"
+	"${FILESDIR}/${PN}-1.4.0-001-syslog-logging.patch"
+	"${FILESDIR}/${PN}-1.4.0-002-fix-auth-oom.patch"
 )
 
 src_configure() {

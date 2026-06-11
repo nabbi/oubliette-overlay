@@ -1,0 +1,2915 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0bf2614..5b9b9c1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -113,9 +113,13 @@ cmake_push_check_state(RESET)
+ 	set(CMAKE_REQUIRED_LIBRARIES PAM::PAM)
+ 	check_symbol_exists(openpam_borrow_cred security/pam_modules.h HAVE_OPENPAM_BORROW_CRED)
+ 	check_symbol_exists(pam_modutil_drop_priv security/pam_modutil.h HAVE_PAM_MODUTIL_DROP_PRIV)
++	check_symbol_exists(pam_syslog security/pam_ext.h HAVE_PAM_SYSLOG)
++	check_include_file(security/pam_ext.h HAVE_SECURITY_PAM_EXT_H)
+ 	foreach (v
+ 		HAVE_OPENPAM_BORROW_CRED
+ 		HAVE_PAM_MODUTIL_DROP_PRIV
++		HAVE_PAM_SYSLOG
++		HAVE_SECURITY_PAM_EXT_H
+ 	)
+ 		if (${v})
+ 			target_compile_definitions(common INTERFACE ${v})
+@@ -154,11 +158,11 @@ set(PAM_U2F_SOURCES
+ 	pam-u2f.c
+ 	b64.c
+ 	cfg.c
+-	debug.c
+ 	drop_privs.h
+ 	expand.c
+-	util.c
+ 	explicit_bzero.c
++	logging.c
++	util.c
+ )
+ list(TRANSFORM PAM_U2F_SOURCES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/)
+ 
+diff --git a/Makefile.am b/Makefile.am
+index bcd11eb..05e2ae9 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -22,10 +22,10 @@ AM_CPPFLAGS += -D SCONFDIR='"@SCONFDIR@"'
+ noinst_LTLIBRARIES = libmodule.la
+ libmodule_la_SOURCES = pam-u2f.c
+ libmodule_la_SOURCES += b64.c b64.h
+-libmodule_la_SOURCES += debug.c debug.h
+ libmodule_la_SOURCES += drop_privs.h
+ libmodule_la_SOURCES += expand.c
+ libmodule_la_SOURCES += explicit_bzero.c
++libmodule_la_SOURCES += logging.c logging.h
+ libmodule_la_SOURCES += util.c util.h
+ libmodule_la_SOURCES += cfg.c cfg.h
+ libmodule_la_LIBADD = -lpam $(LIBFIDO2_LIBS) $(LIBCRYPTO_LIBS)
+@@ -61,6 +61,7 @@ pam_u2f_la_LDFLAGS += -Wl,--wrap=pam_get_user
+ pam_u2f_la_LDFLAGS += -Wl,--wrap=pam_get_item
+ pam_u2f_la_LDFLAGS += -Wl,--wrap=pam_modutil_drop_priv
+ pam_u2f_la_LDFLAGS += -Wl,--wrap=pam_modutil_regain_priv
++pam_u2f_la_LDFLAGS += -Wl,--wrap=pam_syslog
+ pam_u2f_la_LDFLAGS += -Wl,--wrap=BIO_new
+ pam_u2f_la_LDFLAGS += -Wl,--wrap=BIO_write
+ pam_u2f_la_LDFLAGS += -Wl,--wrap=BIO_read
+diff --git a/README b/README
+index c36b148..e549703 100644
+--- a/README
++++ b/README
+@@ -197,15 +197,15 @@ Test your configuration thoroughly before closing the root shell.
+ 
+ [horizontal]
+ debug::
+-Enables debug output
++Enables debug output to syslog. Equivalent to `loglevel=debug` unless
++`loglevel` is also set, in which case `loglevel` takes precedence. See
++<<logging,Logging>>.
+ 
+-debug_file::
+-Filename to write debugging messages to. **If this file is missing,
+-nothing will be logged**. This regular file **has to be created by the
+-user** or **must exist and be a regular file** for anything getting
+-logged to it. It is not created by pam-u2f on purpose (for security
+-considerations). This filename may be alternatively set to "stderr"
+-(default), "stdout", or "syslog".
++loglevel=level::
++Set the minimum severity of messages sent to syslog: one of `debug`,
++`info` (the default), `notice`, `warning`, `err`, `crit`, `alert`, or
++`emerg`. An unrecognized value is logged and ignored. See
++<<logging,Logging>>.
+ 
+ origin=origin::
+ Set the relying party ID for the FIDO authentication procedure. If no
+@@ -519,6 +519,31 @@ A configuration file can be used to set the default
+ - The options specified on the module command line override the values from the
+   configuration file.
+ 
++[[logging]]
++== Logging
++
++pam_u2f always logs to syslog, via the `LOG_AUTHPRIV` facility, regardless
++of the `debug`/`loglevel` settings:
++
++- A successful FIDO authentication logs the public key of the credential
++  used and its index in the authorization mapping file, at `info` level.
++
++- A failed FIDO authentication logs the public key of the credential that
++  came closest to succeeding (if any) and the reason for the failure, at
++  `notice` level.
++
++- A configuration file that is rejected (wrong owner, unsafe permissions,
++  not a regular file, or unreadable) logs the reason, at `warning` level.
++
++Set `loglevel=warning` (or higher) to suppress the per-authentication audit
++records above while still receiving configuration warnings and errors. The
++public key logged on each attempt is not secret, but is identifying
++information; restrict access to the AUTHPRIV logs (typically
++`/var/log/auth.log` or `/var/log/secure`) accordingly.
++
++`debug` (or `loglevel=debug`) additionally enables verbose diagnostic
++messages at `debug` level, useful for troubleshooting.
++
+ == SELinux Note
+ 
+ Due to an issue with Fedora Linux, and possibly with other
+diff --git a/cfg.c b/cfg.c
+index 00cf82d..95e6249 100644
+--- a/cfg.c
++++ b/cfg.c
+@@ -13,15 +13,41 @@
+ #include <security/pam_modules.h>
+ 
+ #include "cfg.h"
+-#include "debug.h"
++#include "logging.h"
+ 
+ static void cfg_load_arg_debug(cfg_t *cfg, const char *arg) {
+   if (strcmp(arg, "debug") == 0)
+     cfg->debug = 1;
+-  else if (strncmp(arg, "debug_file=", strlen("debug_file=")) == 0) {
+-    debug_close(cfg->debug_file);
+-    cfg->debug_file = debug_open(arg + strlen("debug_file="));
++}
++
++static int cfg_parse_loglevel(const char *name) {
++  static const struct {
++    const char *name;
++    int level;
++  } levels[] = {
++    {"emerg", LOG_EMERG},     {"alert", LOG_ALERT}, {"crit", LOG_CRIT},
++    {"err", LOG_ERR},         {"error", LOG_ERR},   {"warning", LOG_WARNING},
++    {"warn", LOG_WARNING},    {"notice", LOG_NOTICE},
++    {"info", LOG_INFO},       {"debug", LOG_DEBUG},
++  };
++  size_t i;
++
++  for (i = 0; i < sizeof(levels) / sizeof(levels[0]); i++)
++    if (strcmp(name, levels[i].name) == 0)
++      return levels[i].level;
++
++  return -1;
++}
++
++static void cfg_load_arg_loglevel(cfg_t *cfg, const char *value) {
++  int level = cfg_parse_loglevel(value);
++
++  if (level < 0) {
++    LOG(LOG_WARNING, "unknown loglevel '%s', ignoring", value);
++    return;
+   }
++
++  cfg->loglevel = level;
+ }
+ 
+ static void cfg_load_arg(cfg_t *cfg, const char *arg) {
+@@ -66,6 +92,8 @@ static void cfg_load_arg(cfg_t *cfg, const char *arg) {
+     cfg->prompt = arg + strlen("prompt=");
+   } else if (strncmp(arg, "cue_prompt=", strlen("cue_prompt=")) == 0) {
+     cfg->cue_prompt = arg + strlen("cue_prompt=");
++  } else if (strncmp(arg, "loglevel=", strlen("loglevel=")) == 0) {
++    cfg_load_arg_loglevel(cfg, arg + strlen("loglevel="));
+   } else
+     cfg_load_arg_debug(cfg, arg);
+ }
+@@ -111,8 +139,11 @@ static int open_safely(int *outfd, size_t *outsize, const char *path) {
+   int fd, r = -EINVAL;
+   struct stat st;
+ 
+-  if (*path != '/')
++  if (*path != '/') {
++    LOG(LOG_WARNING, "configuration file path '%s' is not absolute, ignoring",
++        path);
+     return r;
++  }
+ 
+   fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW, 0);
+   if (fd == -1)
+@@ -122,11 +153,24 @@ static int open_safely(int *outfd, size_t *outsize, const char *path) {
+     goto fail;
+ 
+ #ifndef PAM_U2F_TESTING
+-  if (st.st_uid != 0)
++  if (st.st_uid != 0) {
++    LOG(LOG_WARNING, "configuration file '%s' is not owned by root, ignoring",
++        path);
+     goto fail;
++  }
+ #endif
+-  if (!S_ISREG(st.st_mode) || st.st_mode & (S_IWGRP | S_IWOTH))
++  if (!S_ISREG(st.st_mode)) {
++    LOG(LOG_WARNING, "configuration file '%s' is not a regular file, ignoring",
++        path);
+     goto fail;
++  }
++  if (st.st_mode & (S_IWGRP | S_IWOTH)) {
++    LOG(LOG_WARNING,
++        "permissions %04o for configuration file '%s' are too open. Please "
++        "change the file mode bits to 0644 or more restrictive",
++        (unsigned int) st.st_mode & 0777, path);
++    goto fail;
++  }
+   if (st.st_size < 0)
+     goto fail;
+ 
+@@ -212,8 +256,9 @@ static int cfg_load_defaults(cfg_t *cfg, const char *config_path) {
+   int fd = -1, r;
+   size_t fsize = 0;
+   char *buffer = NULL;
++  const char *path = config_path ? config_path : CFG_DEFAULT_PATH;
+ 
+-  r = open_safely(&fd, &fsize, config_path ? config_path : CFG_DEFAULT_PATH);
++  r = open_safely(&fd, &fsize, path);
+ 
+   /* Only the default config file is allowed to be missing. */
+   if (r == -ENOENT && config_path == NULL)
+@@ -223,8 +268,10 @@ static int cfg_load_defaults(cfg_t *cfg, const char *config_path) {
+     return PAM_SERVICE_ERR;
+ 
+   r = slurp(fd, fsize, &buffer);
+-  if (r)
++  if (r) {
++    LOG(LOG_WARNING, "unable to read configuration file '%s'", path);
+     goto exit;
++  }
+ 
+   cfg_load_buffer(cfg, buffer);
+   cfg->defaults_buffer = buffer;
+@@ -239,10 +286,10 @@ exit:
+ 
+ static void cfg_reset(cfg_t *cfg) {
+   memset(cfg, 0, sizeof(cfg_t));
+-  cfg->debug_file = DEFAULT_DEBUG_FILE;
+   cfg->userpresence = -1;
+   cfg->userverification = -1;
+   cfg->pinverification = -1;
++  cfg->loglevel = -1;
+ }
+ 
+ int cfg_init(cfg_t *cfg, int flags, int argc, const char **argv) {
+@@ -268,33 +315,37 @@ int cfg_init(cfg_t *cfg, int flags, int argc, const char **argv) {
+     cfg_load_arg(cfg, argv[i]);
+ 
+ exit:
+-  if (cfg->debug) {
+-    debug_dbg(cfg, "called.");
+-    debug_dbg(cfg, "flags %d argc %d", flags, argc);
+-    for (i = 0; i < argc; i++) {
+-      debug_dbg(cfg, "argv[%d]=%s", i, argv[i]);
+-    }
+-    debug_dbg(cfg, "max_devices=%d", cfg->max_devs);
+-    debug_dbg(cfg, "debug=%d", cfg->debug);
+-    debug_dbg(cfg, "interactive=%d", cfg->interactive);
+-    debug_dbg(cfg, "cue=%d", cfg->cue);
+-    debug_dbg(cfg, "nodetect=%d", cfg->nodetect);
+-    debug_dbg(cfg, "userpresence=%d", cfg->userpresence);
+-    debug_dbg(cfg, "userverification=%d", cfg->userverification);
+-    debug_dbg(cfg, "pinverification=%d", cfg->pinverification);
+-    debug_dbg(cfg, "manual=%d", cfg->manual);
+-    debug_dbg(cfg, "nouserok=%d", cfg->nouserok);
+-    debug_dbg(cfg, "openasuser=%d", cfg->openasuser);
+-    debug_dbg(cfg, "alwaysok=%d", cfg->alwaysok);
+-    debug_dbg(cfg, "sshformat=%d", cfg->sshformat);
+-    debug_dbg(cfg, "expand=%d", cfg->expand);
+-    debug_dbg(cfg, "authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)");
+-    debug_dbg(cfg, "authpending_file=%s",
+-              cfg->authpending_file ? cfg->authpending_file : "(null)");
+-    debug_dbg(cfg, "origin=%s", cfg->origin ? cfg->origin : "(null)");
+-    debug_dbg(cfg, "appid=%s", cfg->appid ? cfg->appid : "(null)");
+-    debug_dbg(cfg, "prompt=%s", cfg->prompt ? cfg->prompt : "(null)");
++  if (cfg->loglevel >= 0)
++    log_set_level(cfg->loglevel);
++  else if (cfg->debug)
++    log_set_level(LOG_DEBUG);
++
++  LOG(LOG_DEBUG, "called.");
++  LOG(LOG_DEBUG, "flags %d argc %d", flags, argc);
++  for (i = 0; i < argc; i++) {
++    LOG(LOG_DEBUG, "argv[%d]=%s", i, argv[i]);
+   }
++  LOG(LOG_DEBUG, "max_devices=%u", cfg->max_devs);
++  LOG(LOG_DEBUG, "debug=%d", cfg->debug);
++  LOG(LOG_DEBUG, "loglevel=%d", cfg->loglevel);
++  LOG(LOG_DEBUG, "interactive=%d", cfg->interactive);
++  LOG(LOG_DEBUG, "cue=%d", cfg->cue);
++  LOG(LOG_DEBUG, "nodetect=%d", cfg->nodetect);
++  LOG(LOG_DEBUG, "userpresence=%d", cfg->userpresence);
++  LOG(LOG_DEBUG, "userverification=%d", cfg->userverification);
++  LOG(LOG_DEBUG, "pinverification=%d", cfg->pinverification);
++  LOG(LOG_DEBUG, "manual=%d", cfg->manual);
++  LOG(LOG_DEBUG, "nouserok=%d", cfg->nouserok);
++  LOG(LOG_DEBUG, "openasuser=%d", cfg->openasuser);
++  LOG(LOG_DEBUG, "alwaysok=%d", cfg->alwaysok);
++  LOG(LOG_DEBUG, "sshformat=%d", cfg->sshformat);
++  LOG(LOG_DEBUG, "expand=%d", cfg->expand);
++  LOG(LOG_DEBUG, "authfile=%s", cfg->auth_file ? cfg->auth_file : "(null)");
++  LOG(LOG_DEBUG, "authpending_file=%s",
++      cfg->authpending_file ? cfg->authpending_file : "(null)");
++  LOG(LOG_DEBUG, "origin=%s", cfg->origin ? cfg->origin : "(null)");
++  LOG(LOG_DEBUG, "appid=%s", cfg->appid ? cfg->appid : "(null)");
++  LOG(LOG_DEBUG, "prompt=%s", cfg->prompt ? cfg->prompt : "(null)");
+ 
+   if (r != PAM_SUCCESS)
+     cfg_free(cfg);
+@@ -303,7 +354,6 @@ exit:
+ }
+ 
+ void cfg_free(cfg_t *cfg) {
+-  debug_close(cfg->debug_file);
+   free(cfg->defaults_buffer);
+   cfg_reset(cfg);
+ }
+diff --git a/cfg.h b/cfg.h
+index d414969..9800a63 100644
+--- a/cfg.h
++++ b/cfg.h
+@@ -14,6 +14,7 @@ typedef struct {
+   unsigned max_devs;
+   int manual;
+   int debug;
++  int loglevel;
+   int nouserok;
+   int openasuser;
+   int alwaysok;
+@@ -31,7 +32,6 @@ typedef struct {
+   const char *appid;
+   const char *prompt;
+   const char *cue_prompt;
+-  FILE *debug_file;
+   char *defaults_buffer;
+ } cfg_t;
+ 
+diff --git a/configure.ac b/configure.ac
+index ecdf4f5..6b672f6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -45,11 +45,11 @@ AM_CONDITIONAL([ENABLE_FUZZING], [test "$enable_fuzzing" = "yes"])
+ 
+ AC_CHECK_HEADERS([security/pam_appl.h], [],
+   [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
+-AC_CHECK_HEADERS([security/pam_modules.h security/pam_modutil.h security/openpam.h], [], [],
++AC_CHECK_HEADERS([security/pam_modules.h security/pam_modutil.h security/openpam.h security/pam_ext.h], [], [],
+   [#include <sys/types.h>
+ #include <security/pam_appl.h>])
+ AC_CHECK_LIB([pam], [pam_start])
+-AC_CHECK_FUNCS([pam_modutil_drop_priv openpam_borrow_cred])
++AC_CHECK_FUNCS([pam_modutil_drop_priv openpam_borrow_cred pam_syslog])
+ 
+ case "$host" in
+      *darwin*)  PAMDIR="/usr/lib/pam";;
+diff --git a/debug.c b/debug.c
+deleted file mode 100644
+index 2261ef7..0000000
+--- a/debug.c
++++ /dev/null
+@@ -1,92 +0,0 @@
+-/*
+- * Copyright (C) 2021 Yubico AB - See COPYING
+- */
+-
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <fcntl.h>
+-#include <stdarg.h>
+-#include <string.h>
+-#include <syslog.h>
+-#include <unistd.h>
+-
+-#include "debug.h"
+-
+-#define DEBUG_FMT "debug(pam_u2f): %s:%d (%s): %s%s"
+-#define MSGLEN 2048
+-
+-FILE *debug_open(const char *filename) {
+-  struct stat st;
+-  FILE *file;
+-  int fd;
+-
+-  if (strcmp(filename, "stdout") == 0)
+-    return stdout;
+-  if (strcmp(filename, "stderr") == 0)
+-    return stderr;
+-  if (strcmp(filename, "syslog") == 0)
+-    return NULL;
+-
+-  fd = open(filename, O_WRONLY | O_APPEND | O_CLOEXEC | O_NOFOLLOW | O_NOCTTY);
+-  if (fd == -1 || fstat(fd, &st) != 0)
+-    goto err;
+-
+-#ifndef WITH_FUZZING
+-  if (!S_ISREG(st.st_mode))
+-    goto err;
+-#endif
+-
+-  if ((file = fdopen(fd, "a")) != NULL)
+-    return file;
+-
+-err:
+-  if (fd != -1)
+-    close(fd);
+-
+-  return DEFAULT_DEBUG_FILE; /* fallback to default */
+-}
+-
+-void debug_close(FILE *f) {
+-  if (f != NULL && f != stdout && f != stderr)
+-    fclose(f);
+-}
+-
+-static void do_log(FILE *debug_file, const char *file, int line,
+-                   const char *func, const char *msg, const char *suffix) {
+-#ifndef WITH_FUZZING
+-  if (debug_file == NULL) {
+-    syslog(LOG_AUTHPRIV | LOG_DEBUG, DEBUG_FMT, file, line, func, msg, suffix);
+-  } else {
+-    fprintf(debug_file, DEBUG_FMT "\n", file, line, func, msg, suffix);
+-  }
+-#else
+-  (void) debug_file;
+-  snprintf(NULL, 0, DEBUG_FMT, file, line, func, msg, suffix);
+-#endif
+-}
+-
+-ATTRIBUTE_FORMAT(printf, 5, 0)
+-static void debug_vfprintf(FILE *debug_file, const char *file, int line,
+-                           const char *func, const char *fmt, va_list args) {
+-  const char *bn;
+-  char msg[MSGLEN];
+-  int r;
+-
+-  if ((bn = strrchr(file, '/')) != NULL)
+-    file = bn + 1;
+-
+-  if ((r = vsnprintf(msg, sizeof(msg), fmt, args)) < 0)
+-    do_log(debug_file, file, line, func, __func__, "");
+-  else
+-    do_log(debug_file, file, line, func, msg,
+-           (size_t) r < sizeof(msg) ? "" : "[truncated]");
+-}
+-
+-void debug_fprintf(FILE *debug_file, const char *file, int line,
+-                   const char *func, const char *fmt, ...) {
+-  va_list ap;
+-
+-  va_start(ap, fmt);
+-  debug_vfprintf(debug_file, file, line, func, fmt, ap);
+-  va_end(ap);
+-}
+diff --git a/debug.h b/debug.h
+deleted file mode 100644
+index 9372e83..0000000
+--- a/debug.h
++++ /dev/null
+@@ -1,37 +0,0 @@
+-/*
+- * Copyright (C) 2021 Yubico AB - See COPYING
+- */
+-
+-#ifndef DEBUG_H
+-#define DEBUG_H
+-
+-#include <stdio.h>
+-
+-#define DEFAULT_DEBUG_FILE stderr
+-
+-#if defined(DEBUG_PAM)
+-#define D(file, ...)                                                           \
+-  debug_fprintf(file, __FILE__, __LINE__, __func__, __VA_ARGS__)
+-#else
+-#define D(file, ...) ((void) 0)
+-#endif /* DEBUG_PAM */
+-
+-#define debug_dbg(cfg, ...)                                                    \
+-  do {                                                                         \
+-    if (cfg->debug) {                                                          \
+-      D(cfg->debug_file, __VA_ARGS__);                                         \
+-    }                                                                          \
+-  } while (0)
+-
+-#ifdef __GNUC__
+-#define ATTRIBUTE_FORMAT(f, s, a) __attribute__((format(f, s, a)))
+-#else
+-#define ATTRIBUTE_FORMAT(f, s, a)
+-#endif
+-
+-FILE *debug_open(const char *);
+-void debug_close(FILE *f);
+-void debug_fprintf(FILE *, const char *, int, const char *, const char *, ...)
+-  ATTRIBUTE_FORMAT(printf, 5, 6);
+-
+-#endif /* DEBUG_H */
+diff --git a/expand.c b/expand.c
+index a0a470b..7018f94 100644
+--- a/expand.c
++++ b/expand.c
+@@ -2,12 +2,14 @@
+  * Copyright (C) 2023 Yubico AB - See COPYING
+  */
+ 
++#include <errno.h>
++#include <limits.h>
+ #include <stdint.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <limits.h>
+ 
+ #include "util.h"
++#include "logging.h"
+ 
+ static int buf_write(uint8_t **dst, size_t *size, const void *src, size_t n) {
+   if (*size < n) {
+@@ -42,7 +44,11 @@ char *expand_variables(const char *str, const char *user) {
+   size_t size = PATH_MAX;
+   int ok = -1;
+ 
+-  if (str == NULL || (tail = head = malloc(size)) == NULL) {
++  if (str == NULL)
++    return NULL;
++
++  if ((tail = head = malloc(size)) == NULL) {
++    LOG(LOG_CRIT, "Unable to allocate memory (errno=%d)", errno);
+     return NULL;
+   }
+ 
+diff --git a/fuzz/CMakeLists.txt b/fuzz/CMakeLists.txt
+index 9348ff9..16893ff 100644
+--- a/fuzz/CMakeLists.txt
++++ b/fuzz/CMakeLists.txt
+@@ -22,6 +22,7 @@ target_link_options(pam_u2f_fuzz PRIVATE
+ 	-Wl,--wrap=pam_get_item
+ 	-Wl,--wrap=pam_modutil_drop_priv
+ 	-Wl,--wrap=pam_modutil_regain_priv
++	-Wl,--wrap=pam_syslog
+ 	-Wl,--wrap=BIO_new
+ 	-Wl,--wrap=BIO_write
+ 	-Wl,--wrap=BIO_read
+diff --git a/fuzz/Makefile.am b/fuzz/Makefile.am
+index 0054a99..6c99b81 100644
+--- a/fuzz/Makefile.am
++++ b/fuzz/Makefile.am
+@@ -15,3 +15,4 @@ noinst_PROGRAMS = fuzz_format_parsers fuzz_auth
+ 
+ EXTRA_DIST = coverage.sh make_seed.py export.sym
+ EXTRA_DIST += export.gnu CMakeLists.txt
++EXTRA_DIST += make_seed_auth.c seed/auth_pin_invalid
+diff --git a/fuzz/fuzz_auth.c b/fuzz/fuzz_auth.c
+index 7d6928a..d2b7336 100644
+--- a/fuzz/fuzz_auth.c
++++ b/fuzz/fuzz_auth.c
+@@ -70,8 +70,7 @@ static const char dummy_conf_file[] = "max_devices=10\n"
+                                       "origin=pam://lolcalhost\n"
+                                       "appid=pam://lolcalhost\n"
+                                       "prompt=hello\n"
+-                                      "cue_prompt=howdy\n"
+-                                      "debug_file=stdout\n";
++                                      "cue_prompt=howdy\n";
+ 
+ /* conversation dummy for manual authentication */
+ static const char *dummy_conv =
+diff --git a/fuzz/fuzz_format_parsers.c b/fuzz/fuzz_format_parsers.c
+index 81e11b3..df1954e 100644
+--- a/fuzz/fuzz_format_parsers.c
++++ b/fuzz/fuzz_format_parsers.c
+@@ -77,7 +77,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
+   fp_len = size - offset;
+   fp = tmpfile();
+   if (fp == NULL || (fwrite(&data[offset], 1, fp_len, fp)) != fp_len) {
+-    fprintf(stderr, "failed to create file for parser: %s\n", strerror(errno));
++    fprintf(stderr, "failed to create file for parser (errno=%d)\n", errno);
+     if (fp != NULL) {
+       fclose(fp);
+     }
+diff --git a/fuzz/make_seed_auth.c b/fuzz/make_seed_auth.c
+new file mode 100644
+index 0000000..00aa42d
+--- /dev/null
++++ b/fuzz/make_seed_auth.c
+@@ -0,0 +1,138 @@
++/* Copyright (C) 2026 Yubico AB - See COPYING */
++
++/* Generate a seed corpus entry for fuzz_auth that drives
++ * do_authentication() down the failure path that logs the
++ * authenticator's public key via AUDIT_LOG(), i.e.
++ * "Failed FIDO authentication with publicKey %s (idx %u): %s".
++ *
++ * This is achieved by making the (mocked) authenticator return
++ * CTAP2_ERR_PIN_INVALID for the final fido_dev_get_assert() call, so
++ * that do_authentication() falls through to the AUDIT_LOG() call with
++ * a fido_failure_reason()-recognized error.
++ *
++ * Build and run from the fuzz/ directory:
++ *   cc -I.. -o make_seed_auth make_seed_auth.c pack.c
++ *   ./make_seed_auth seed/auth_pin_invalid
++ *
++ * Then merge the new seed into the corpus with:
++ *   ./fuzz_auth corpus seed -merge=1
++ *
++ * The SEED value below was found by brute force: libfido2's fuzzing
++ * PRNG (prng_init()/uniform_random()) deterministically derives the
++ * per-device HID report size from it, and only a report size of 64
++ * bytes (CTAP_MAX_REPORT_LEN) matches the pre-baked, 64-byte-aligned
++ * CTAPHID frames below. If libfido2's PRNG, or the sequence of calls
++ * pam-u2f makes into it, ever changes, a new seed satisfying that
++ * constraint will need to be found.
++ */
++#include <stdint.h>
++#include <stdio.h>
++#include <string.h>
++
++#include "fuzz/fuzz.h"
++#include "fuzz/wiredata.h"
++#include "fuzz/authfile.h"
++
++#define SEED 168
++
++static const char dummy_authfile[] = AUTHFILE_NEW;
++static const char dummy_conf[] = "pinverification=0;userverification=0;";
++
++/* INIT opens the device; the first CBOR_INFO/ASSERT_DISCOVER pair lets
++ * get_authenticators() recognize the device as FIDO2 and pick the
++ * matching credential; the second CBOR_INFO is consumed by
++ * get_device_opts() (fido_dev_get_cbor_info()) before
++ * do_authentication() issues the final getAssertion, whose response
++ * (ASSERT_AUTHENTICATE) is patched below to report PIN_INVALID. */
++static unsigned char dummy_wiredata[] = {
++  WIREDATA_CTAP_INIT,
++  WIREDATA_CTAP_CBOR_INFO,
++  WIREDATA_CTAP_CBOR_ASSERT_DISCOVER,
++  WIREDATA_CTAP_CBOR_INFO,
++  WIREDATA_CTAP_CBOR_ASSERT_AUTHENTICATE,
++};
++
++struct param {
++  uint32_t seed;
++  char user[MAXSTR];
++  char conf[MAXSTR];
++  char conv[MAXSTR];
++  struct blob authfile;
++  struct blob wiredata;
++  struct blob conf_file;
++};
++
++static int set_blob(struct blob *blob, const void *data, size_t len) {
++  if (len > MAXBLOB)
++    return 0;
++  memcpy(blob->body, data, len);
++  blob->len = len;
++  return 1;
++}
++
++static int set_string(char *dst, const char *src, size_t size) {
++  int n = snprintf(dst, size, "%s", src);
++  if (n < 0 || (size_t) n >= size)
++    return 0;
++  return 1;
++}
++
++static size_t pack(uint8_t *data, size_t len, const struct param *p) {
++  size_t ilen = len;
++
++  if (pack_u32(&data, &len, p->seed) != 1 ||
++      pack_string(&data, &len, p->user) != 1 ||
++      pack_string(&data, &len, p->conf) != 1 ||
++      pack_string(&data, &len, p->conv) != 1 ||
++      pack_blob(&data, &len, &p->authfile) != 1 ||
++      pack_blob(&data, &len, &p->wiredata) != 1 ||
++      pack_blob(&data, &len, &p->conf_file) != 1) {
++    return 0;
++  }
++
++  return ilen - len;
++}
++
++int main(int argc, char **argv) {
++  struct param dummy;
++  uint8_t out[64 * 1024];
++  size_t r;
++  FILE *f;
++
++  if (argc != 2) {
++    fprintf(stderr, "usage: %s <outfile>\n", argv[0]);
++    return 1;
++  }
++
++  /* Patch the CTAP2 status byte of the getAssertion response from
++   * CTAP2_OK (0x00) to CTAP2_ERR_PIN_INVALID (0x31). */
++  dummy_wiredata[sizeof(dummy_wiredata) - 256 + 7] = 0x31;
++
++  memset(&dummy, 0, sizeof(dummy));
++  if (!set_string(dummy.user, "user", MAXSTR) ||
++      !set_string(dummy.conf, dummy_conf, MAXSTR) ||
++      !set_string(dummy.conv, "", MAXSTR) ||
++      !set_blob(&dummy.authfile, dummy_authfile, sizeof(dummy_authfile)) ||
++      !set_blob(&dummy.wiredata, dummy_wiredata, sizeof(dummy_wiredata)) ||
++      !set_blob(&dummy.conf_file, "", 0)) {
++    fprintf(stderr, "failed to prepare seed\n");
++    return 1;
++  }
++  dummy.seed = SEED;
++
++  r = pack(out, sizeof(out), &dummy);
++  if (r == 0) {
++    fprintf(stderr, "failed to pack seed\n");
++    return 1;
++  }
++
++  f = fopen(argv[1], "wb");
++  if (!f || fwrite(out, 1, r, f) != r) {
++    fprintf(stderr, "failed to write %s\n", argv[1]);
++    return 1;
++  }
++  fclose(f);
++
++  fprintf(stderr, "wrote %zu bytes to %s (seed=%u)\n", r, argv[1], SEED);
++  return 0;
++}
+diff --git a/fuzz/seed/auth_pin_invalid b/fuzz/seed/auth_pin_invalid
+new file mode 100644
+index 0000000000000000000000000000000000000000..52a27e7b67767059fef09d971680b0632e8c9a3a
+GIT binary patch
+literal 1612
+zcmZQzU|7Mxz`#;koLU5=RSPon%2JCm(=wA2OEUBGYz?eIGH60Tg&=SoBxU97?Cp^n
+z<`(MeWoVgQY+~SMkX4$S9;{suX`G>*Y-CpGuN_sEsP7tK;Te&fX;9)@S(RK+WS9})
+zZ{e12Vw{zo;aZZHZ<$k6QkYnfR1lov>Kz!KZfmPkVdfH4Vd(0fX%<#cR-9N_Sm}{%
+zkelzElkD&2map%U<7HUn7?I&<9^vNXqwQF1;#h9sR9Wei9O+b05s~3j6=15JY*AX2
+zYZx5mXlfae<`NZP76>#rwb;niOh>z*D782>FF6(H6IO@+K+wh@sQdTLj`+1ren$&`
+zFfy^Svao_ZN(2GYFo7|OVIyNpTBwm*e3(&&o2QF^yivSC4wPXS9}wgU6E$RN%}y>#
+zO$jK<FG)=<$p-0X$jD7h)-6s2ikIZ%Bo?KoI_2aid8bxpfK-CmIk}m60hxI|sd?!o
+z8O#Ac76^Xs;qn!2U=s)FXB3p5cc+$Rby89G*QC;duPFsNi6vjantjuAOTK0%mX>7X
+z6*;G+f6YwJ$xO{F0h;wS3v3hE!yqe)zvcncKxmmGP;E$lc52?&{NmISU!c97eh_=V
+z7UU*or#b_j6k6t&UlLT9^0hP>q@Nim1T-`=F$ZK_Kv8O0W@`CYR!No(Y)wpz>>L~t
+z4V+EMd1=YXrNv2HO^cEfbJEpPN-7IdvkE}^SxS>~GLv<)Q!Bwz>QE`TD7PdF1J74p
+z7CtEkVASwSC<ri$NJu~;2c&-j!x@IfjEj;oQz9HVl-er;Lj>m5PC92I?(uFG%f6+(
+z4}YHBwc`EEz3Y#}9}+Lp)iu_+vutmo&3o3xy^lfq872wp&g)NIcWc(tT|p&I6Qa-^
+zz!agnpk}?on_tCA3=`tdJ6~w8w=h2SF~a7yHb_5X_#DMpwH<TwK~Calj_@#WV^U-|
+z!5i5!qh6KOfz#w!vdrZr)&>V}OkQ-l*US8_>r~l-W}uQip<E#SOcg8kt=rAITith7
+z=$*9dJXK85Q!;H%)w2GMoqzTj{zM4&|7iLf;PiLOa8RT_MqpYIWR7q%aA8vLj5Xk8
+zH*}o-g6pPozuT;qQ|@{*H>8@Bx3B)5>fXt*kx9W)Yucr|;PkgLe!`7+C!-lG9(?0o
+Yb?2zppW12HtR^;^ZLb%_pZXxO0CJv1@&Et;
+
+literal 0
+HcmV?d00001
+
+diff --git a/fuzz/wrap.c b/fuzz/wrap.c
+index 98f392b..a927c39 100644
+--- a/fuzz/wrap.c
++++ b/fuzz/wrap.c
+@@ -15,7 +15,7 @@
+ #include <openssl/ec.h>
+ #include <fido.h>
+ 
+-#include "debug.h"
++#include "logging.h"
+ #include "drop_privs.h"
+ #include "fuzz/fuzz.h"
+ 
+@@ -244,6 +244,26 @@ extern int __wrap_pam_modutil_regain_priv(pam_handle_t *pamh,
+   return uniform_random(400) < 1 ? -1 : 0;
+ }
+ 
++#ifdef HAVE_PAM_SYSLOG
++/* util.c's AUDIT_LOG() calls pam_syslog(pamh, ...) for audit records, but
++ * pamh is the fake FUZZ_PAM_HANDLE here, which a real pam_syslog() would
++ * dereference. Stand in for it, only validating the format string and its
++ * arguments (mirroring do_log()'s snprintf(NULL, 0, ...) no-op path). */
++extern void __wrap_pam_syslog(const pam_handle_t *, int, const char *, ...)
++  ATTRIBUTE_FORMAT(printf, 3, 4);
++extern void __wrap_pam_syslog(const pam_handle_t *pamh, int priority,
++                              const char *fmt, ...) {
++  va_list ap;
++
++  assert(pamh == (void *) FUZZ_PAM_HANDLE);
++  (void) priority;
++
++  va_start(ap, fmt);
++  (void) vsnprintf(NULL, 0, fmt, ap);
++  va_end(ap);
++}
++#endif /* HAVE_PAM_SYSLOG */
++
+ extern char *__wrap_secure_getenv(const char *);
+ extern char *__wrap_secure_getenv(const char *name) {
+   (void) name;
+diff --git a/logging.c b/logging.c
+new file mode 100644
+index 0000000..cf3ac27
+--- /dev/null
++++ b/logging.c
+@@ -0,0 +1,81 @@
++/*
++ * Copyright (C) 2021-2025 Yubico AB - See COPYING
++ */
++
++#include <stdarg.h>
++#include <string.h>
++#include <syslog.h>
++#include <stdio.h>
++
++#include "logging.h"
++
++#define FORMAT "%s(pam_u2f): %s:%d (%s): %s%s"
++#define MSGLEN 2048
++
++static _Thread_local int g_min_level = LOG_INFO;
++
++static const char *level_name(int level) {
++  switch (level) {
++    case LOG_EMERG:
++      return "emerg";
++    case LOG_ALERT:
++      return "alert";
++    case LOG_CRIT:
++      return "critical";
++    case LOG_ERR:
++      return "error";
++    case LOG_WARNING:
++      return "warning";
++    case LOG_NOTICE:
++      return "notice";
++    case LOG_INFO:
++      return "info";
++    case LOG_DEBUG:
++      return "debug";
++  }
++  return "-";
++}
++
++static void do_log(int level, const char *file, int line, const char *func,
++                   const char *msg, const char *suffix) {
++#if defined(WITH_FUZZING)
++  snprintf(NULL, 0, FORMAT, level_name(level), file, line, func, msg, suffix);
++#elif defined(PAM_U2F_TESTING)
++  fprintf(stderr, FORMAT, level_name(level), file, line, func, msg, suffix);
++  fputc('\n', stderr);
++#else
++  syslog(LOG_AUTHPRIV | level, FORMAT, level_name(level), file, line, func,
++         msg, suffix);
++#endif
++}
++
++ATTRIBUTE_FORMAT(printf, 5, 0)
++static void log_vprintf(int level, const char *file, int line, const char *func,
++                        const char *fmt, va_list args) {
++  const char *bn;
++  char msg[MSGLEN];
++  int r;
++
++  if ((bn = strrchr(file, '/')) != NULL)
++    file = bn + 1;
++
++  if ((r = vsnprintf(msg, sizeof(msg), fmt, args)) < 0)
++    do_log(level, file, line, func, __func__, "");
++  else
++    do_log(level, file, line, func, msg,
++           (size_t) r < sizeof(msg) ? "" : "[truncated]");
++}
++
++void log_printf(int level, const char *file, int line, const char *func,
++                const char *fmt, ...) {
++  va_list ap;
++
++  if (level > g_min_level)
++    return;
++
++  va_start(ap, fmt);
++  log_vprintf(level, file, line, func, fmt, ap);
++  va_end(ap);
++}
++
++void log_set_level(int level) { g_min_level = level; }
+diff --git a/logging.h b/logging.h
+new file mode 100644
+index 0000000..8b3b68a
+--- /dev/null
++++ b/logging.h
+@@ -0,0 +1,29 @@
++/*
++ * Copyright (C) 2021-2025 Yubico AB - See COPYING
++ */
++
++#ifndef LOGGING_H
++#define LOGGING_H
++
++#include <syslog.h>
++
++#if defined(DEBUG_PAM)
++#define LOG(level, ...)                                                        \
++  log_printf(level, __FILE__, __LINE__, __func__, __VA_ARGS__);
++#else /* DEBUG_PAM */
++#define LOG(level, ...) ((void) level)
++#endif /* DEBUG_PAM */
++
++#ifdef __GNUC__
++#define ATTRIBUTE_FORMAT(f, s, a) __attribute__((format(f, s, a)))
++#else
++#define ATTRIBUTE_FORMAT(f, s, a)
++#endif
++
++void log_printf(int level, const char *, int, const char *, const char *, ...)
++  ATTRIBUTE_FORMAT(printf, 5, 6);
++
++/* Messages less severe (numerically greater) than level are discarded. */
++void log_set_level(int level);
++
++#endif /* LOGGING_H */
+diff --git a/man/pam_u2f.8.txt b/man/pam_u2f.8.txt
+index 12d44f7..422d996 100644
+--- a/man/pam_u2f.8.txt
++++ b/man/pam_u2f.8.txt
+@@ -16,15 +16,14 @@ compliant authenticators.
+ 
+ == OPTIONS
+ *debug*::
+-Enables debug output
++Enables debug output to syslog(3). Equivalent to *loglevel*=_debug_ unless
++*loglevel* is also set, in which case *loglevel* takes precedence. See
++*LOGGING* below.
+ 
+-*debug_file*::
+-Filename to write debugging messages to. **If this file is missing,
+-nothing will be logged**. This regular file **has to be created by the
+-user** or **must exist and be a regular file** for anything getting
+-logged to it. It is not created by pam-u2f on purpose (for security
+-considerations). This filename may be alternatively set to "stderr"
+-(default), "stdout", or "syslog".
++*loglevel*=_level_::
++Set the minimum severity of messages sent to syslog(3): one of "debug",
++"info" (the default), "notice", "warning", "err", "crit", "alert", or
++"emerg". An unrecognized value is logged and ignored. See *LOGGING* below.
+ 
+ *origin*=_origin_::
+ Set the relying party ID for the FIDO authentication procedure. If no
+@@ -190,6 +189,30 @@ A configuration file can be used to set the default module arguments.
+ - The options specified on the module command line override the values from the
+   configuration file.
+ 
++== LOGGING
++
++pam_u2f always logs to syslog(3), via the LOG_AUTHPRIV facility,
++regardless of the *debug*/*loglevel* settings:
++
++- A successful FIDO authentication logs the public key of the credential
++  used and its index in the authorization mapping file, at "info" level.
++
++- A failed FIDO authentication logs the public key of the credential that
++  came closest to succeeding (if any) and the reason for the failure, at
++  "notice" level.
++
++- A configuration file that is rejected (wrong owner, unsafe permissions,
++  not a regular file, or unreadable) logs the reason, at "warning" level.
++
++Set *loglevel*=_warning_ (or higher) to suppress the per-authentication
++audit records above while still receiving configuration warnings and
++errors. The public key logged on each attempt is not secret, but is
++identifying information; restrict access to the AUTHPRIV logs (typically
++/var/log/auth.log or /var/log/secure) accordingly.
++
++*debug* (or *loglevel*=_debug_) additionally enables verbose diagnostic
++messages at "debug" level, useful for troubleshooting.
++
+ == NOTES
+ 
+ *Nodetect*
+diff --git a/pam-u2f.c b/pam-u2f.c
+index 86faed0..03d0947 100644
+--- a/pam-u2f.c
++++ b/pam-u2f.c
+@@ -15,13 +15,12 @@
+ #include <unistd.h>
+ #include <stdint.h>
+ #include <stdlib.h>
+-#include <syslog.h>
+ #include <pwd.h>
+ #include <string.h>
+ #include <errno.h>
+ 
+-#include "debug.h"
+ #include "drop_privs.h"
++#include "logging.h"
+ #include "util.h"
+ 
+ #define free_const(a) free((void *) (uintptr_t) (a))
+@@ -54,19 +53,19 @@ static char *resolve_authfile_path(const cfg_t *cfg, const struct passwd *user,
+ 
+   if (cfg->auth_file == NULL) {
+     if ((dir = secure_getenv(DEFAULT_AUTHFILE_DIR_VAR)) == NULL) {
+-      debug_dbg(cfg, "Variable %s is not set, using default",
+-                DEFAULT_AUTHFILE_DIR_VAR);
++      LOG(LOG_DEBUG, "Variable %s is not set, using default",
++          DEFAULT_AUTHFILE_DIR_VAR);
+       dir = user->pw_dir;
+       path = cfg->sshformat ? DEFAULT_AUTHFILE_DIR_SSH "/" DEFAULT_AUTHFILE_SSH
+                             : DEFAULT_AUTHFILE_DIR "/" DEFAULT_AUTHFILE;
+     } else {
+-      debug_dbg(cfg, "Variable %s set to %s", DEFAULT_AUTHFILE_DIR_VAR, dir);
++      LOG(LOG_DEBUG, "Variable %s set to %s", DEFAULT_AUTHFILE_DIR_VAR, dir);
+       *openasuser = 0; /* documented exception, require explicit openasuser */
+       path = cfg->sshformat ? DEFAULT_AUTHFILE_SSH : DEFAULT_AUTHFILE;
+       if (!cfg->openasuser) {
+-        debug_dbg(cfg, "WARNING: not dropping privileges when reading the "
+-                       "authentication file, please consider setting "
+-                       "openasuser=1 in the module configuration");
++        LOG(LOG_WARNING, "not dropping privileges when reading the "
++                         "authentication file, please consider setting "
++                         "openasuser=1 in the module configuration");
+       }
+     }
+   } else {
+@@ -74,9 +73,13 @@ static char *resolve_authfile_path(const cfg_t *cfg, const struct passwd *user,
+     path = cfg->auth_file;
+   }
+ 
+-  if (dir == NULL || *dir != '/' || path == NULL ||
+-      asprintf(&authfile, "%s/%s", dir, path) == -1)
+-    authfile = NULL;
++  if (dir == NULL || *dir != '/' || path == NULL)
++    return NULL;
++
++  if (asprintf(&authfile, "%s/%s", dir, path) == -1) {
++    LOG(LOG_CRIT, "Unable to allocate memory (errno=%d)", errno);
++    return NULL;
++  }
+ 
+   return authfile;
+ }
+@@ -112,17 +115,17 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+       strcpy(buffer, DEFAULT_ORIGIN_PREFIX);
+       if (gethostname(buffer + strlen(DEFAULT_ORIGIN_PREFIX),
+                       BUFSIZE - strlen(DEFAULT_ORIGIN_PREFIX)) == -1) {
+-        debug_dbg(cfg, "Unable to get host name");
++        LOG(LOG_ERR, "Unable to get host name (errno=%d)", errno);
+         retval = PAM_SYSTEM_ERR;
+         goto done;
+       }
+     } else {
+       strcpy(buffer, SSH_ORIGIN);
+     }
+-    debug_dbg(cfg, "Origin not specified, using \"%s\"", buffer);
++    LOG(LOG_DEBUG, "Origin not specified, using \"%s\"", buffer);
+     cfg->origin = strdup(buffer);
+     if (!cfg->origin) {
+-      debug_dbg(cfg, "Unable to allocate memory");
++      LOG(LOG_CRIT, "Unable to allocate memory (errno=%d)", errno);
+       retval = PAM_BUF_ERR;
+       goto done;
+     } else {
+@@ -131,11 +134,11 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+   }
+ 
+   if (!cfg->appid) {
+-    debug_dbg(cfg, "Appid not specified, using the value of origin (%s)",
+-              cfg->origin);
++    LOG(LOG_DEBUG, "Appid not specified, using the value of origin (%s)",
++        cfg->origin);
+     cfg->appid = strdup(cfg->origin);
+     if (!cfg->appid) {
+-      debug_dbg(cfg, "Unable to allocate memory");
++      LOG(LOG_CRIT, "Unable to allocate memory (errno=%d)", errno);
+       retval = PAM_BUF_ERR;
+       goto done;
+     } else {
+@@ -144,8 +147,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+   }
+ 
+   if (cfg->max_devs == 0) {
+-    debug_dbg(cfg, "Maximum number of devices not set. Using default (%d)",
+-              MAX_DEVS);
++    LOG(LOG_DEBUG, "Maximum number of devices not set. Using default (%u)",
++        MAX_DEVS);
+     cfg->max_devs = MAX_DEVS;
+   }
+ #if WITH_FUZZING
+@@ -155,36 +158,36 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+ 
+   devices = calloc(cfg->max_devs, sizeof(device_t));
+   if (!devices) {
+-    debug_dbg(cfg, "Unable to allocate memory");
++    LOG(LOG_CRIT, "Unable to allocate memory (errno=%d)", errno);
+     retval = PAM_BUF_ERR;
+     goto done;
+   }
+ 
+   pgu_ret = pam_get_user(pamh, &user, NULL);
+   if (pgu_ret != PAM_SUCCESS || user == NULL) {
+-    debug_dbg(cfg, "Unable to get username from PAM");
++    LOG(LOG_ERR, "Unable to get username from PAM");
+     retval = PAM_CONV_ERR;
+     goto done;
+   }
+ 
+-  debug_dbg(cfg, "Requesting authentication for user %s", user);
++  LOG(LOG_INFO, "Requesting authentication for user %s", user);
+ 
+   gpn_ret = getpwnam_r(user, &pw_s, buffer, sizeof(buffer), &pw);
+   if (gpn_ret != 0 || pw == NULL || pw->pw_dir == NULL ||
+       pw->pw_dir[0] != '/') {
+-    debug_dbg(cfg, "Unable to retrieve credentials for user %s, (%s)", user,
+-              strerror(errno));
++    LOG(LOG_ERR, "Unable to retrieve credentials for user %s (errno=%d)", user,
++        errno);
+     retval = PAM_SYSTEM_ERR;
+     goto done;
+   }
+ 
+-  debug_dbg(cfg, "Found user %s", user);
+-  debug_dbg(cfg, "Home directory for %s is %s", user, pw->pw_dir);
++  LOG(LOG_DEBUG, "Found user %s", user);
++  LOG(LOG_DEBUG, "Home directory for %s is %s", user, pw->pw_dir);
+ 
+   // Perform variable expansion.
+   if (cfg->expand && cfg->auth_file) {
+     if ((cfg->auth_file = expand_variables(cfg->auth_file, user)) == NULL) {
+-      debug_dbg(cfg, "Failed to perform variable expansion");
++      LOG(LOG_ERR, "Failed to perform variable expansion");
+       retval = PAM_BUF_ERR;
+       goto done;
+     }
+@@ -194,7 +197,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+   if (!cfg->auth_file || cfg->auth_file[0] != '/') {
+     char *tmp = resolve_authfile_path(cfg, pw, &openasuser);
+     if (tmp == NULL) {
+-      debug_dbg(cfg, "Could not resolve authfile path");
++      LOG(LOG_ERR, "Could not resolve authfile path");
+       retval = PAM_BUF_ERR;
+       goto done;
+     }
+@@ -205,29 +208,29 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+     should_free_auth_file = 1;
+   }
+ 
+-  debug_dbg(cfg, "Using authentication file %s", cfg->auth_file);
++  LOG(LOG_DEBUG, "Using authentication file %s", cfg->auth_file);
+ 
+   if (!openasuser) {
+     openasuser = geteuid() == 0 && cfg->openasuser;
+   }
+   if (openasuser) {
+-    debug_dbg(cfg, "Dropping privileges");
++    LOG(LOG_DEBUG, "Dropping privileges");
+     if (pam_modutil_drop_priv(pamh, &privs, pw)) {
+-      debug_dbg(cfg, "Unable to switch user to uid %i", pw->pw_uid);
++      LOG(LOG_ERR, "Unable to switch user to uid %ji", (intmax_t) pw->pw_uid);
+       retval = PAM_SYSTEM_ERR;
+       goto done;
+     }
+-    debug_dbg(cfg, "Switched to uid %i", pw->pw_uid);
++    LOG(LOG_DEBUG, "Switched to uid %ji", (intmax_t) pw->pw_uid);
+   }
+   retval = get_devices_from_authfile(cfg, user, devices, &n_devices);
+ 
+   if (openasuser) {
+     if (pam_modutil_regain_priv(pamh, &privs)) {
+-      debug_dbg(cfg, "could not restore privileges");
++      LOG(LOG_ERR, "could not restore privileges");
+       retval = PAM_SYSTEM_ERR;
+       goto done;
+     }
+-    debug_dbg(cfg, "Restored privileges");
++    LOG(LOG_DEBUG, "Restored privileges");
+   }
+ 
+   if (retval != PAM_SUCCESS) {
+@@ -243,14 +246,14 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+       cfg->authpending_file = strdup(buffer);
+     }
+     if (!cfg->authpending_file) {
+-      debug_dbg(cfg, "Unable to allocate memory for the authpending_file, "
+-                     "touch request notifications will not be emitted");
++      LOG(LOG_ERR, "Unable to allocate memory for the authpending_file, "
++                   "touch request notifications will not be emitted");
+     } else {
+       should_free_authpending_file = 1;
+     }
+   } else {
+     if (strlen(cfg->authpending_file) == 0) {
+-      debug_dbg(cfg, "authpending_file is set to an empty value, touch request "
++      LOG(LOG_DEBUG, "authpending_file is set to an empty value, touch request "
+                      "notifications will be disabled");
+       cfg->authpending_file = NULL;
+     }
+@@ -258,8 +261,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+ 
+   int authpending_file_descriptor = -1;
+   if (cfg->authpending_file) {
+-    debug_dbg(cfg, "Touch request notifications will be emitted via '%s'",
+-              cfg->authpending_file);
++    LOG(LOG_DEBUG, "Touch request notifications will be emitted via '%s'",
++        cfg->authpending_file);
+ 
+     // Open (or create) the authpending_file to indicate that we start waiting
+     // for a touch
+@@ -267,8 +270,9 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+       open(cfg->authpending_file,
+            O_RDONLY | O_CREAT | O_CLOEXEC | O_NOFOLLOW | O_NOCTTY, 0664);
+     if (authpending_file_descriptor < 0) {
+-      debug_dbg(cfg, "Unable to emit 'authentication started' notification: %s",
+-                strerror(errno));
++      LOG(LOG_ERR,
++          "Unable to emit 'authentication started' notification (errno=%d)",
++          errno);
+     }
+   }
+ 
+@@ -284,8 +288,9 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
+   // Close the authpending_file to indicate that we stop waiting for a touch
+   if (authpending_file_descriptor >= 0) {
+     if (close(authpending_file_descriptor) < 0) {
+-      debug_dbg(cfg, "Unable to emit 'authentication stopped' notification: %s",
+-                strerror(errno));
++      LOG(LOG_ERR,
++          "Unable to emit 'authentication stopped' notification (errno=%d)",
++          errno);
+     }
+   }
+ 
+@@ -313,10 +318,10 @@ done:
+   }
+ 
+   if (cfg->alwaysok && retval != PAM_SUCCESS) {
+-    debug_dbg(cfg, "alwaysok needed (otherwise return with %d)", retval);
++    LOG(LOG_DEBUG, "alwaysok needed (otherwise return with %d)", retval);
+     retval = PAM_SUCCESS;
+   }
+-  debug_dbg(cfg, "done. [%s]", pam_strerror(pamh, retval));
++  LOG(LOG_DEBUG, "done. [%s]", pam_strerror(pamh, retval));
+ 
+   cfg_free(cfg);
+   return retval;
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+index aa09e69..91b5fda 100644
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -92,3 +92,17 @@ target_link_libraries(cfg PRIVATE
+ 	pam_u2f_testing
+ )
+ add_test(NAME cfg COMMAND cfg)
++
++add_executable(util util.c)
++target_link_libraries(util PRIVATE
++	common
++	pam_u2f_testing
++)
++add_test(NAME util COMMAND util)
++
++add_executable(logging logging.c)
++target_link_libraries(logging PRIVATE
++	common
++	pam_u2f_testing
++)
++add_test(NAME logging COMMAND logging)
+diff --git a/tests/Makefile.am b/tests/Makefile.am
+index c6ef296..de6dfdd 100644
+--- a/tests/Makefile.am
++++ b/tests/Makefile.am
+@@ -12,16 +12,26 @@ dlsym_check_LDFLAGS = -ldl $(AM_LDFLAGS)
+ 
+ # XXX move openbsd-compat
+ check_PROGRAMS += get_devices
+-get_devices_SOURCES = get_devices.c
++get_devices_SOURCES = get_devices.c mock_syslog.c
+ get_devices_LDADD = $(top_builddir)/libmodule.la
+ 
+ check_PROGRAMS += expand
++expand_SOURCES = expand.c mock_syslog.c
+ expand_LDADD = $(top_builddir)/libmodule.la
+ 
+ check_PROGRAMS += cfg
+-cfg_SOURCES = ./cfg.c ../cfg.c ../debug.c
++cfg_SOURCES = ./cfg.c ../cfg.c ../logging.c
+ cfg_CFLAGS = -DPAM_U2F_TESTING -DSCONFDIR='"@SCONFDIR@"' $(AM_CFLAGS)
+ 
++check_PROGRAMS += util
++util_SOURCES = util.c
++util_CPPFLAGS = $(LIBFIDO2_CFLAGS) $(AM_CPPFLAGS)
++util_LDADD = $(top_builddir)/libmodule.la
++
++check_PROGRAMS += logging
++logging_SOURCES = logging.c ../logging.c
++logging_CFLAGS = -DPAM_U2F_TESTING -DDEBUG_PAM -DPAM_DEBUG $(AM_CFLAGS)
++
+ TESTS = $(check_PROGRAMS)
+ 
+ EXTRA_DIST = CMakeLists.txt
+diff --git a/tests/cfg.c b/tests/cfg.c
+index d62c3b6..36eb90e 100644
+--- a/tests/cfg.c
++++ b/tests/cfg.c
+@@ -5,12 +5,15 @@
+ #include <limits.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <sys/stat.h>
+ #include <unistd.h>
+ 
+ #ifndef PATH_MAX
+ #define PATH_MAX 4096
+ #endif
+ 
++#include <syslog.h>
++
+ #include <security/pam_appl.h>
+ 
+ #include "cfg.h"
+@@ -106,6 +109,7 @@ static void config_flip_all(const struct conf_file *cf, const cfg_t *cfg) {
+   config_different_bool(conf_out, "alwaysok", cfg->alwaysok);
+   config_different_bool(conf_out, "cue", cfg->cue);
+   config_different_bool(conf_out, "debug", cfg->debug);
++  fprintf(conf_out, "loglevel=debug\n");
+   config_different_bool(conf_out, "expand", cfg->expand);
+   config_different_bool(conf_out, "interactive", cfg->interactive);
+   config_different_bool(conf_out, "manual", cfg->manual);
+@@ -128,11 +132,6 @@ static void config_flip_all(const struct conf_file *cf, const cfg_t *cfg) {
+ 
+   fprintf(conf_out, "max_devices=%d\n", cfg->max_devs + 1);
+ 
+-  if (cfg->debug_file)
+-    fprintf(conf_out, "debug_file=syslog\n");
+-  else
+-    fprintf(conf_out, "debug_file=stderr\n");
+-
+   fflush(conf_out);
+ }
+ 
+@@ -187,6 +186,7 @@ static void test_regular(void) {
+   assert(cfg.pinverification != cfg_defaults.pinverification);
+   assert(cfg.sshformat != cfg_defaults.sshformat);
+   assert(cfg.expand != cfg_defaults.expand);
++  assert(cfg.loglevel != cfg_defaults.loglevel);
+ 
+   assert(str_opt_cmp(cfg.auth_file, cfg_defaults.auth_file));
+   assert(str_opt_cmp(cfg.authpending_file, cfg_defaults.authpending_file));
+@@ -195,8 +195,6 @@ static void test_regular(void) {
+   assert(str_opt_cmp(cfg.prompt, cfg_defaults.prompt));
+   assert(str_opt_cmp(cfg.cue_prompt, cfg_defaults.cue_prompt));
+ 
+-  assert(cfg.debug_file != cfg_defaults.debug_file);
+-
+   cfg_free(&cfg_defaults);
+   cfg_free(&cfg);
+ }
+@@ -386,6 +384,91 @@ static void test_file_parser(void) {
+   conf_file_clear(&cf);
+ }
+ 
++static void test_config_rejections(void) {
++  // open_safely() rejects configuration files that are not a regular
++  // file, or whose permissions are too open. Both cases are logged at
++  // LOG_WARNING and reported as PAM_SERVICE_ERR.
++
++  const char *argv[] = {NULL, "debug"};
++  struct conf_file cf;
++  char *dir_arg;
++  char *dir_path;
++  int r;
++  cfg_t cfg;
++
++  // 1. Not a regular file (a directory).
++  dir_arg = generate_template();
++  dir_path = dir_arg + strlen("conf=");
++  assert(mkdtemp(dir_path) != NULL);
++
++  argv[0] = dir_arg;
++  r = cfg_init(&cfg, 0, sizeof(argv) / sizeof(*argv), argv);
++  assert(r == PAM_SERVICE_ERR);
++
++  rmdir(dir_path);
++  free(dir_arg);
++
++  // 2. Permissions too open (group/world-writable).
++  conf_file_init(&cf, NULL);
++  fputs("alwaysok\n", cf.out);
++  r = fflush(cf.out);
++  assert(r == 0);
++  assert(chmod(cf.path, 0666) == 0);
++
++  argv[0] = cf.arg;
++  r = cfg_init(&cfg, 0, sizeof(argv) / sizeof(*argv), argv);
++  assert(r == PAM_SERVICE_ERR);
++
++  conf_file_clear(&cf);
++}
++
++static void test_loglevel(void) {
++  // loglevel= takes a syslog level name and overrides the legacy
++  // debug bool; unknown level names are ignored.
++
++  struct conf_file cf;
++  int r;
++  cfg_t cfg;
++  const char *argv_none[] = {NULL};
++  const char *argv_warning[] = {NULL, "loglevel=warning"};
++  const char *argv_bogus[] = {NULL, "loglevel=bogus"};
++  const char *argv_debug_and_warning[] = {NULL, "debug", "loglevel=warning"};
++
++  conf_file_init(&cf, NULL);
++
++  argv_none[0] = cf.arg;
++  r = cfg_init(&cfg, 0, sizeof(argv_none) / sizeof(*argv_none), argv_none);
++  assert(r == PAM_SUCCESS);
++  assert(cfg.loglevel == -1);
++  cfg_free(&cfg);
++
++  argv_warning[0] = cf.arg;
++  r = cfg_init(&cfg, 0, sizeof(argv_warning) / sizeof(*argv_warning),
++               argv_warning);
++  assert(r == PAM_SUCCESS);
++  assert(cfg.loglevel == LOG_WARNING);
++  cfg_free(&cfg);
++
++  // Unknown level names are ignored, leaving loglevel unset.
++  argv_bogus[0] = cf.arg;
++  r = cfg_init(&cfg, 0, sizeof(argv_bogus) / sizeof(*argv_bogus), argv_bogus);
++  assert(r == PAM_SUCCESS);
++  assert(cfg.loglevel == -1);
++  cfg_free(&cfg);
++
++  // An explicit loglevel= takes precedence over the legacy debug bool.
++  argv_debug_and_warning[0] = cf.arg;
++  r = cfg_init(&cfg, 0,
++               sizeof(argv_debug_and_warning) / sizeof(*argv_debug_and_warning),
++               argv_debug_and_warning);
++  assert(r == PAM_SUCCESS);
++  assert(cfg.debug);
++  assert(cfg.loglevel == LOG_WARNING);
++  cfg_free(&cfg);
++
++  conf_file_clear(&cf);
++}
++
+ int main(int argc, char **argv) {
+   (void) argc, (void) argv;
+ 
+@@ -394,4 +477,6 @@ int main(int argc, char **argv) {
+   test_last_config_wins();
+   test_file_corner_cases();
+   test_file_parser();
++  test_config_rejections();
++  test_loglevel();
+ }
+diff --git a/tests/get_devices.c b/tests/get_devices.c
+index 0de4bd5..2859cfe 100644
+--- a/tests/get_devices.c
++++ b/tests/get_devices.c
+@@ -11,6 +11,8 @@
+ #include <unistd.h>
+ 
+ #include <string.h>
++
++#include "../logging.h"
+ #include "../util.h"
+ 
+ static void test_nouserok(const char *username) {
+@@ -22,7 +24,6 @@ static void test_nouserok(const char *username) {
+   memset(&cfg, 0, sizeof(cfg_t));
+   cfg.auth_file = "credentials/this_file_does_not_exist.cred";
+   cfg.debug = 1;
+-  cfg.debug_file = stderr;
+   cfg.max_devs = 1;
+   cfg.nouserok = 1;
+ 
+@@ -48,7 +49,6 @@ static void test_ssh_credential(const char *username) {
+   memset(&cfg, 0, sizeof(cfg_t));
+   cfg.auth_file = "credentials/ssh_credential.cred";
+   cfg.debug = 1;
+-  cfg.debug_file = stderr;
+   cfg.max_devs = 1;
+   cfg.sshformat = 1;
+ 
+@@ -80,7 +80,6 @@ static void test_old_credential(const char *username) {
+   cfg.auth_file = "credentials/old_credential.cred";
+   cfg.sshformat = 0;
+   cfg.debug = 1;
+-  cfg.debug_file = stderr;
+   cfg.max_devs = 1;
+   cfg.sshformat = 0;
+ 
+@@ -110,7 +109,6 @@ static void test_limited_count(const char *username) {
+ 
+   memset(&cfg, 0, sizeof(cfg_t));
+   cfg.debug = 1;
+-  cfg.debug_file = stderr;
+ 
+   /* authfile contains three credentials (eddsa, es256, eddsa) */
+   cfg.auth_file = "credentials/new_limited_count.cred";
+@@ -169,7 +167,6 @@ static void test_new_credentials(const char *username) {
+ 
+   memset(&cfg, 0, sizeof(cfg_t));
+   cfg.debug = 1;
+-  cfg.debug_file = stderr;
+   cfg.max_devs = 24;
+ 
+   /* clang-format off */
+@@ -750,6 +747,8 @@ int main(void) {
+   const struct passwd *pwd;
+   char *username;
+ 
++  log_set_level(LOG_DEBUG);
++
+   assert((pwd = getpwuid(geteuid())) != NULL);
+   assert((username = strdup(pwd->pw_name)) != NULL);
+ 
+diff --git a/tests/logging.c b/tests/logging.c
+new file mode 100644
+index 0000000..8ede72a
+--- /dev/null
++++ b/tests/logging.c
+@@ -0,0 +1,127 @@
++/*
++ *  Copyright (C) 2026 Yubico AB - See COPYING
++ */
++
++#undef NDEBUG
++
++#include <assert.h>
++#include <stdio.h>
++#include <string.h>
++#include <syslog.h>
++#include <unistd.h>
++
++#include "logging.h"
++
++/* Redirects stderr to a temporary file for the duration of fn(),
++ * and returns whatever was written to it (NUL-terminated). */
++static char *capture_stderr(void (*fn)(void)) {
++  static char buf[4096];
++  FILE *tmp;
++  int saved;
++  size_t n;
++
++  tmp = tmpfile();
++  assert(tmp != NULL);
++
++  fflush(stderr);
++  saved = dup(STDERR_FILENO);
++  assert(saved != -1);
++  assert(dup2(fileno(tmp), STDERR_FILENO) != -1);
++
++  fn();
++
++  fflush(stderr);
++  assert(dup2(saved, STDERR_FILENO) != -1);
++  close(saved);
++
++  rewind(tmp);
++  n = fread(buf, 1, sizeof(buf) - 1, tmp);
++  buf[n] = '\0';
++  fclose(tmp);
++
++  return buf;
++}
++
++static void emit_debug(void) { LOG(LOG_DEBUG, "debug message"); }
++
++static void emit_info(void) { LOG(LOG_INFO, "info message"); }
++
++static void emit_notice(void) { LOG(LOG_NOTICE, "notice message"); }
++
++static void emit_warning(void) { LOG(LOG_WARNING, "warning message"); }
++
++static void emit_long_warning(void) {
++  char big[3000];
++
++  memset(big, 'A', sizeof(big) - 1);
++  big[sizeof(big) - 1] = '\0';
++  LOG(LOG_WARNING, "%s", big);
++}
++
++static void test_default_level(void) {
++  // The default level (LOG_INFO) hides "debug" but shows "info" and
++  // higher, matching the pre-loglevel behavior of the legacy debug
++  // bool.
++
++  log_set_level(LOG_INFO);
++
++  assert(strlen(capture_stderr(emit_debug)) == 0);
++
++  assert(strstr(capture_stderr(emit_info), "info message") != NULL);
++  assert(strstr(capture_stderr(emit_notice), "notice message") != NULL);
++  assert(strstr(capture_stderr(emit_warning), "warning message") != NULL);
++}
++
++static void test_debug_level(void) {
++  // loglevel=debug (and the legacy "debug" flag) show everything,
++  // including "debug" level messages.
++
++  log_set_level(LOG_DEBUG);
++
++  assert(strstr(capture_stderr(emit_debug), "debug message") != NULL);
++  assert(strstr(capture_stderr(emit_info), "info message") != NULL);
++}
++
++static void test_warning_level(void) {
++  // loglevel=warning hides the per-authentication "info"/"notice"
++  // audit records while still showing "warning" and above.
++
++  log_set_level(LOG_WARNING);
++
++  assert(strlen(capture_stderr(emit_info)) == 0);
++  assert(strlen(capture_stderr(emit_notice)) == 0);
++  assert(strstr(capture_stderr(emit_warning), "warning message") != NULL);
++}
++
++static void test_level_name(void) {
++  char *out;
++
++  log_set_level(LOG_DEBUG);
++
++  out = capture_stderr(emit_debug);
++  assert(strstr(out, "debug(pam_u2f)") != NULL);
++
++  out = capture_stderr(emit_warning);
++  assert(strstr(out, "warning(pam_u2f)") != NULL);
++}
++
++static void test_truncation(void) {
++  char *out;
++
++  log_set_level(LOG_DEBUG);
++
++  out = capture_stderr(emit_long_warning);
++  assert(strstr(out, "[truncated]") != NULL);
++}
++
++int main(int argc, char **argv) {
++  (void) argc, (void) argv;
++
++  test_default_level();
++  test_debug_level();
++  test_warning_level();
++  test_level_name();
++  test_truncation();
++
++  return 0;
++}
+diff --git a/tests/mock_syslog.c b/tests/mock_syslog.c
+new file mode 100644
+index 0000000..d8b0982
+--- /dev/null
++++ b/tests/mock_syslog.c
+@@ -0,0 +1,19 @@
++/*
++ *  Copyright (C) 2014-2025 Yubico AB - See COPYING
++ */
++
++#include <stdarg.h>
++#include <stdio.h>
++#include <syslog.h>
++
++/* XXX: force all debug output to stderr */
++void syslog(int priority, const char *message, ...) {
++  va_list ap;
++
++  (void) priority;
++
++  va_start(ap, message);
++  vfprintf(stderr, message, ap);
++  va_end(ap);
++  fputc('\n', stderr);
++}
+diff --git a/tests/util.c b/tests/util.c
+new file mode 100644
+index 0000000..6c833d1
+--- /dev/null
++++ b/tests/util.c
+@@ -0,0 +1,42 @@
++/*
++ *  Copyright (C) 2026 Yubico AB - See COPYING
++ */
++
++#undef NDEBUG
++#include <assert.h>
++#include <string.h>
++
++#include <fido.h>
++
++#include "util.h"
++
++#define ASSERT_REASON_EQ(err, expected)                                       \
++  do {                                                                        \
++    const char *r = fido_failure_reason(err);                                \
++    assert(r != NULL);                                                       \
++    assert(!strcmp(r, expected));                                            \
++  } while (0)
++
++#define ASSERT_NO_REASON(err) assert(fido_failure_reason(err) == NULL)
++
++int main(void) {
++  ASSERT_REASON_EQ(FIDO_ERR_PIN_INVALID, "invalid PIN");
++  ASSERT_REASON_EQ(FIDO_ERR_PIN_BLOCKED, "PIN blocked");
++  ASSERT_REASON_EQ(FIDO_ERR_PIN_AUTH_BLOCKED, "PIN authentication blocked");
++  ASSERT_REASON_EQ(FIDO_ERR_ACTION_TIMEOUT, "touch/action timeout");
++  ASSERT_REASON_EQ(FIDO_ERR_UNSUPPORTED_OPTION, "unsupported option");
++  ASSERT_REASON_EQ(FIDO_ERR_OPERATION_DENIED, "operation denied");
++
++#ifdef FIDO_ERR_UV_INVALID
++  ASSERT_REASON_EQ(FIDO_ERR_UV_INVALID, "user verification failed");
++#endif
++#ifdef FIDO_ERR_UV_BLOCKED
++  ASSERT_REASON_EQ(FIDO_ERR_UV_BLOCKED, "user verification blocked");
++#endif
++
++  ASSERT_NO_REASON(FIDO_OK);
++  ASSERT_NO_REASON(FIDO_ERR_INTERNAL);
++  ASSERT_NO_REASON(FIDO_ERR_NOTFOUND);
++
++  return 0;
++}
+diff --git a/util.c b/util.c
+index 826059c..a0361eb 100644
+--- a/util.c
++++ b/util.c
+@@ -22,10 +22,20 @@
+ #include <string.h>
+ #include <arpa/inet.h>
+ 
++#ifdef HAVE_SECURITY_PAM_EXT_H
++#include <security/pam_ext.h>
++#endif
++
+ #include "b64.h"
+-#include "debug.h"
++#include "logging.h"
+ #include "util.h"
+ 
++#ifdef HAVE_PAM_SYSLOG
++#define AUDIT_LOG(pamh, prio, ...) pam_syslog((pamh), (prio), __VA_ARGS__)
++#else
++#define AUDIT_LOG(pamh, prio, ...) LOG((prio), __VA_ARGS__)
++#endif
++
+ #define SSH_MAX_SIZE 8192
+ #define SSH_HEADER "-----BEGIN OPENSSH PRIVATE KEY-----\n"
+ #define SSH_HEADER_LEN (sizeof(SSH_HEADER) - 1)
+@@ -167,7 +177,7 @@ static void reset_device(device_t *device) {
+   memset(device, 0, sizeof(*device));
+ }
+ 
+-static int parse_native_credential(const cfg_t *cfg, char *s, device_t *cred) {
++static int parse_native_credential(char *s, device_t *cred) {
+   const char *delim = ",";
+   const char *kh, *pk, *type, *attr;
+   char *saveptr = NULL;
+@@ -175,22 +185,22 @@ static int parse_native_credential(const cfg_t *cfg, char *s, device_t *cred) {
+   memset(cred, 0, sizeof(*cred));
+ 
+   if ((kh = strtok_r(s, delim, &saveptr)) == NULL) {
+-    debug_dbg(cfg, "Missing key handle");
++    LOG(LOG_DEBUG, "Missing key handle");
+     goto fail;
+   }
+ 
+   if ((pk = strtok_r(NULL, delim, &saveptr)) == NULL) {
+-    debug_dbg(cfg, "Missing public key");
++    LOG(LOG_DEBUG, "Missing public key");
+     goto fail;
+   }
+ 
+   if ((type = strtok_r(NULL, delim, &saveptr)) == NULL) {
+-    debug_dbg(cfg, "Old format, assume es256 and +presence");
++    LOG(LOG_DEBUG, "Old format, assume es256 and +presence");
+     cred->old_format = 1;
+     type = "es256";
+     attr = "+presence";
+   } else if ((attr = strtok_r(NULL, delim, &saveptr)) == NULL) {
+-    debug_dbg(cfg, "Empty attributes");
++    LOG(LOG_DEBUG, "Empty attributes");
+     attr = "";
+   }
+ 
+@@ -198,7 +208,7 @@ static int parse_native_credential(const cfg_t *cfg, char *s, device_t *cred) {
+   if (cred->keyHandle == NULL || (cred->publicKey = strdup(pk)) == NULL ||
+       (cred->coseType = strdup(type)) == NULL ||
+       (cred->attributes = strdup(attr)) == NULL) {
+-    debug_dbg(cfg, "Unable to allocate memory for credential components");
++    LOG(LOG_DEBUG, "Unable to allocate memory for credential components");
+     goto fail;
+   }
+ 
+@@ -225,11 +235,11 @@ static int parse_native_format(const cfg_t *cfg, const char *username,
+     if (len > 0 && buf[len - 1] == '\n')
+       buf[len - 1] = '\0';
+ 
+-    debug_dbg(cfg, "Read %zu bytes", len);
++    LOG(LOG_DEBUG, "Read %zu bytes", len);
+ 
+     s_user = strtok_r(buf, ":", &saveptr);
+     if (s_user && strcmp(username, s_user) == 0) {
+-      debug_dbg(cfg, "Matched user: %s", s_user);
++      LOG(LOG_DEBUG, "Matched user: %s", s_user);
+ 
+       // only keep last line for this user
+       for (i = 0; i < *n_devs; i++) {
+@@ -241,32 +251,32 @@ static int parse_native_format(const cfg_t *cfg, const char *username,
+       while ((s_credential = strtok_r(NULL, ":", &saveptr))) {
+         if ((*n_devs)++ > cfg->max_devs - 1) {
+           *n_devs = cfg->max_devs;
+-          debug_dbg(cfg,
+-                    "Found more than %d devices, ignoring the remaining ones",
+-                    cfg->max_devs);
++          LOG(LOG_WARNING,
++              "Found more than %d devices, ignoring the remaining ones",
++              cfg->max_devs);
+           break;
+         }
+ 
+-        if (!parse_native_credential(cfg, s_credential, &devices[i])) {
+-          debug_dbg(cfg, "Failed to parse credential");
++        if (!parse_native_credential(s_credential, &devices[i])) {
++          LOG(LOG_DEBUG, "Failed to parse credential");
+           goto fail;
+         }
+ 
+-        debug_dbg(cfg, "KeyHandle for device number %u: %s", i + 1,
+-                  devices[i].keyHandle);
+-        debug_dbg(cfg, "publicKey for device number %u: %s", i + 1,
+-                  devices[i].publicKey);
+-        debug_dbg(cfg, "COSE type for device number %u: %s", i + 1,
+-                  devices[i].coseType);
+-        debug_dbg(cfg, "Attributes for device number %u: %s", i + 1,
+-                  devices[i].attributes);
++        LOG(LOG_DEBUG, "KeyHandle for device number %u: %s", i + 1,
++            devices[i].keyHandle);
++        LOG(LOG_DEBUG, "publicKey for device number %u: %s", i + 1,
++            devices[i].publicKey);
++        LOG(LOG_DEBUG, "COSE type for device number %u: %s", i + 1,
++            devices[i].coseType);
++        LOG(LOG_DEBUG, "Attributes for device number %u: %s", i + 1,
++            devices[i].attributes);
+         i++;
+       }
+     }
+   }
+ 
+   if (!feof(opwfile)) {
+-    debug_dbg(cfg, "authfile parsing ended before eof (%d)", errno);
++    LOG(LOG_DEBUG, "authfile parsing ended before eof (%d)", errno);
+     goto fail;
+   }
+ 
+@@ -276,8 +286,7 @@ fail:
+   return r;
+ }
+ 
+-static int load_ssh_key(const cfg_t *cfg, char **out, FILE *opwfile,
+-                        size_t opwfile_size) {
++static int load_ssh_key(char **out, FILE *opwfile, size_t opwfile_size) {
+   size_t buf_size;
+   char *buf = NULL;
+   char *cp = NULL;
+@@ -287,13 +296,13 @@ static int load_ssh_key(const cfg_t *cfg, char **out, FILE *opwfile,
+   *out = NULL;
+ 
+   if (opwfile_size < SSH_HEADER_LEN + SSH_TRAILER_LEN) {
+-    debug_dbg(cfg, "Malformed SSH key (length)");
++    LOG(LOG_DEBUG, "Malformed SSH key (length)");
+     goto fail;
+   }
+ 
+   buf_size = opwfile_size > SSH_MAX_SIZE ? SSH_MAX_SIZE : opwfile_size;
+   if ((cp = buf = calloc(1, buf_size)) == NULL) {
+-    debug_dbg(cfg, "Failed to allocate buffer for SSH key");
++    LOG(LOG_ERR, "Failed to allocate buffer for SSH key: %s", strerror(errno));
+     goto fail;
+   }
+ 
+@@ -301,14 +310,14 @@ static int load_ssh_key(const cfg_t *cfg, char **out, FILE *opwfile,
+   if (fgets(buf, SSH_HEADER_LEN + 1, opwfile) == NULL ||
+       strlen(buf) != SSH_HEADER_LEN ||
+       strncmp(buf, SSH_HEADER, SSH_HEADER_LEN) != 0) {
+-    debug_dbg(cfg, "Malformed SSH key (header)");
++    LOG(LOG_DEBUG, "Malformed SSH key (header)");
+     goto fail;
+   }
+ 
+   while (opwfile_size > 0 && buf_size > 1) {
+     ch = fgetc(opwfile);
+     if (ch == EOF) {
+-      debug_dbg(cfg, "Unexpected authfile termination");
++      LOG(LOG_DEBUG, "Unexpected authfile termination");
+       goto fail;
+     }
+ 
+@@ -323,7 +332,7 @@ static int load_ssh_key(const cfg_t *cfg, char **out, FILE *opwfile,
+             fgets(cp + 1, SSH_TRAILER_LEN, opwfile) == NULL ||
+             strlen(cp) != SSH_TRAILER_LEN ||
+             strncmp(cp, SSH_TRAILER, SSH_TRAILER_LEN) != 0) {
+-          debug_dbg(cfg, "Malformed SSH key (trailer)");
++          LOG(LOG_DEBUG, "Malformed SSH key (trailer)");
+           goto fail;
+         }
+ 
+@@ -402,54 +411,54 @@ static int ssh_get_cstring(const unsigned char **buf, size_t *size, char **str,
+   return 1;
+ }
+ 
+-static int ssh_log_cstring(const cfg_t *cfg, const unsigned char **buf,
+-                           size_t *size, const char *name) {
++static int ssh_log_cstring(const unsigned char **buf, size_t *size,
++                           const char *name) {
+   char *str = NULL;
+   size_t len;
+ 
+   (void) name; // silence compiler warnings if PAM_DEBUG disabled
+ 
+   if (!ssh_get_cstring(buf, size, &str, &len)) {
+-    debug_dbg(cfg, "Malformed SSH key (%s)", name);
++    LOG(LOG_DEBUG, "Malformed SSH key (%s)", name);
+     return 0;
+   }
+-  debug_dbg(cfg, "%s (%zu) \"%s\"", name, len, str);
++  LOG(LOG_DEBUG, "%s (%zu) \"%s\"", name, len, str);
+ 
+   free(str);
+   return 1;
+ }
+ 
+-static int ssh_get_attrs(const cfg_t *cfg, const unsigned char **buf,
+-                         size_t *size, char **attrs) {
++static int ssh_get_attrs(const unsigned char **buf, size_t *size,
++                         char **attrs) {
+   char tmp[32] = {0};
+   uint8_t flags;
+   int r;
+ 
+   // flags
+   if (!ssh_get_u8(buf, size, &flags)) {
+-    debug_dbg(cfg, "Malformed SSH key (flags)");
++    LOG(LOG_DEBUG, "Malformed SSH key (flags)");
+     return 0;
+   }
+-  debug_dbg(cfg, "flags: %02x", flags);
++  LOG(LOG_DEBUG, "flags: %02hhx", flags);
+ 
+   r = snprintf(tmp, sizeof(tmp), "%s%s",
+                flags & SSH_SK_USER_PRESENCE_REQD ? "+presence" : "",
+                flags & SSH_SK_USER_VERIFICATION_REQD ? "+verification" : "");
+   if (r < 0 || (size_t) r >= sizeof(tmp)) {
+-    debug_dbg(cfg, "Unable to prepare flags");
++    LOG(LOG_DEBUG, "Unable to prepare flags");
+     return 0;
+   }
+ 
+   if ((*attrs = strdup(tmp)) == NULL) {
+-    debug_dbg(cfg, "Unable to allocate attributes");
++    LOG(LOG_ERR, "Unable to allocate attributes: %s", strerror(errno));
+     return 0;
+   }
+ 
+   return 1;
+ }
+ 
+-static int ssh_get_pubkey(const cfg_t *cfg, const unsigned char **buf,
+-                          size_t *size, char **type_p, char **pubkey_p) {
++static int ssh_get_pubkey(const unsigned char **buf, size_t *size,
++                          char **type_p, char **pubkey_p) {
+   char *ssh_type = NULL;
+   char *ssh_curve = NULL;
+   const unsigned char *blob;
+@@ -463,7 +472,7 @@ static int ssh_get_pubkey(const cfg_t *cfg, const unsigned char **buf,
+ 
+   // key type
+   if (!ssh_get_cstring(buf, size, &ssh_type, &len)) {
+-    debug_dbg(cfg, "Malformed SSH key (keytype)");
++    LOG(LOG_DEBUG, "Malformed SSH key (keytype)");
+     goto err;
+   }
+ 
+@@ -475,44 +484,44 @@ static int ssh_get_pubkey(const cfg_t *cfg, const unsigned char **buf,
+     type = COSE_EDDSA;
+     point_len = SSH_EDDSA_POINT_LEN;
+   } else {
+-    debug_dbg(cfg, "Unknown key type %s", ssh_type);
++    LOG(LOG_DEBUG, "Unknown key type %s", ssh_type);
+     goto err;
+   }
+ 
+-  debug_dbg(cfg, "keytype (%zu) \"%s\"", len, ssh_type);
++  LOG(LOG_DEBUG, "keytype (%zu) \"%s\"", len, ssh_type);
+ 
+   if (type == COSE_ES256) {
+     // curve name
+     if (!ssh_get_cstring(buf, size, &ssh_curve, &len)) {
+-      debug_dbg(cfg, "Malformed SSH key (curvename)");
++      LOG(LOG_DEBUG, "Malformed SSH key (curvename)");
+       goto err;
+     }
+ 
+     if (len == SSH_P256_NAME_LEN &&
+         memcmp(ssh_curve, SSH_P256_NAME, SSH_P256_NAME_LEN) == 0) {
+-      debug_dbg(cfg, "curvename (%zu) \"%s\"", len, ssh_curve);
++      LOG(LOG_DEBUG, "curvename (%zu) \"%s\"", len, ssh_curve);
+     } else {
+-      debug_dbg(cfg, "Unknown curve %s", ssh_curve);
++      LOG(LOG_DEBUG, "Unknown curve %s", ssh_curve);
+       goto err;
+     }
+   }
+ 
+   // point
+   if (!ssh_get_string_ref(buf, size, &blob, &len)) {
+-    debug_dbg(cfg, "Malformed SSH key (point)");
++    LOG(LOG_DEBUG, "Malformed SSH key (point)");
+     goto err;
+   }
+ 
+   if (len != point_len) {
+-    debug_dbg(cfg, "Invalid point length, should be %zu, found %zu", point_len,
+-              len);
++    LOG(LOG_DEBUG, "Invalid point length, should be %zu, found %zu", point_len,
++        len);
+     goto err;
+   }
+ 
+   if (type == COSE_ES256) {
+     // Skip the initial '04'
+     if (len < 1) {
+-      debug_dbg(cfg, "Failed to skip initial '04'");
++      LOG(LOG_DEBUG, "Failed to skip initial '04'");
+       goto err;
+     }
+     blob++;
+@@ -520,12 +529,12 @@ static int ssh_get_pubkey(const cfg_t *cfg, const unsigned char **buf,
+   }
+ 
+   if (!b64_encode(blob, len, pubkey_p)) {
+-    debug_dbg(cfg, "Unable to allocate public key");
++    LOG(LOG_DEBUG, "Unable to allocate public key");
+     goto err;
+   }
+ 
+   if ((*type_p = strdup(cose_string(type))) == NULL) {
+-    debug_dbg(cfg, "Unable to allocate COSE type");
++    LOG(LOG_DEBUG, "Unable to allocate COSE type");
+     goto err;
+   }
+ 
+@@ -543,9 +552,8 @@ err:
+   return ok;
+ }
+ 
+-static int parse_ssh_format(const cfg_t *cfg, FILE *opwfile,
+-                            size_t opwfile_size, device_t *devices,
+-                            unsigned *n_devs) {
++static int parse_ssh_format(FILE *opwfile, size_t opwfile_size,
++                            device_t *devices, unsigned *n_devs) {
+   char *b64 = NULL;
+   const unsigned char *decoded;
+   unsigned char *decoded_initial = NULL;
+@@ -560,9 +568,9 @@ static int parse_ssh_format(const cfg_t *cfg, FILE *opwfile,
+   reset_device(&devices[0]);
+   *n_devs = 0;
+ 
+-  if (!load_ssh_key(cfg, &b64, opwfile, opwfile_size) ||
++  if (!load_ssh_key(&b64, opwfile, opwfile_size) ||
+       !b64_decode(b64, (void **) &decoded_initial, &decoded_len)) {
+-    debug_dbg(cfg, "Unable to decode credential");
++    LOG(LOG_DEBUG, "Unable to decode credential");
+     goto out;
+   }
+ 
+@@ -571,93 +579,93 @@ static int parse_ssh_format(const cfg_t *cfg, FILE *opwfile,
+   // magic
+   if (decoded_len < SSH_AUTH_MAGIC_LEN ||
+       memcmp(decoded, SSH_AUTH_MAGIC, SSH_AUTH_MAGIC_LEN) != 0) {
+-    debug_dbg(cfg, "Malformed SSH key (magic)");
++    LOG(LOG_DEBUG, "Malformed SSH key (magic)");
+     goto out;
+   }
+ 
+   decoded += SSH_AUTH_MAGIC_LEN;
+   decoded_len -= SSH_AUTH_MAGIC_LEN;
+ 
+-  if (!ssh_log_cstring(cfg, &decoded, &decoded_len, "ciphername") ||
+-      !ssh_log_cstring(cfg, &decoded, &decoded_len, "kdfname") ||
+-      !ssh_log_cstring(cfg, &decoded, &decoded_len, "kdfoptions"))
++  if (!ssh_log_cstring(&decoded, &decoded_len, "ciphername") ||
++      !ssh_log_cstring(&decoded, &decoded_len, "kdfname") ||
++      !ssh_log_cstring(&decoded, &decoded_len, "kdfoptions"))
+     goto out;
+ 
+   if (!ssh_get_u32(&decoded, &decoded_len, &tmp)) {
+-    debug_dbg(cfg, "Malformed SSH key (nkeys)");
++    LOG(LOG_DEBUG, "Malformed SSH key (nkeys)");
+     goto out;
+   }
+-  debug_dbg(cfg, "nkeys: %" PRIu32, tmp);
++  LOG(LOG_DEBUG, "nkeys: %" PRIu32, tmp);
+   if (tmp != 1) {
+-    debug_dbg(cfg, "Multiple keys not supported");
++    LOG(LOG_DEBUG, "Multiple keys not supported");
+     goto out;
+   }
+ 
+   // public_key (skip)
+   if (!ssh_get_string_ref(&decoded, &decoded_len, NULL, NULL)) {
+-    debug_dbg(cfg, "Malformed SSH key (pubkey)");
++    LOG(LOG_DEBUG, "Malformed SSH key (pubkey)");
+     goto out;
+   }
+ 
+   // private key (consume length)
+   if (!ssh_get_u32(&decoded, &decoded_len, &tmp) || decoded_len < tmp) {
+-    debug_dbg(cfg, "Malformed SSH key (pvtkey length)");
++    LOG(LOG_DEBUG, "Malformed SSH key (pvtkey length)");
+     goto out;
+   }
+ 
+   // check1, check2
+   if (!ssh_get_u32(&decoded, &decoded_len, &check1) ||
+       !ssh_get_u32(&decoded, &decoded_len, &check2)) {
+-    debug_dbg(cfg, "Malformed SSH key (check1, check2)");
++    LOG(LOG_DEBUG, "Malformed SSH key (check1, check2)");
+     goto out;
+   }
+ 
+-  debug_dbg(cfg, "check1: %" PRIu32, check1);
+-  debug_dbg(cfg, "check2: %" PRIu32, check2);
++  LOG(LOG_DEBUG, "check1: %" PRIu32, check1);
++  LOG(LOG_DEBUG, "check2: %" PRIu32, check2);
+ 
+   if (check1 != check2) {
+-    debug_dbg(cfg, "Mismatched check values");
++    LOG(LOG_DEBUG, "Mismatched check values");
+     goto out;
+   }
+ 
+-  if (!ssh_get_pubkey(cfg, &decoded, &decoded_len, &devices[0].coseType,
++  if (!ssh_get_pubkey(&decoded, &decoded_len, &devices[0].coseType,
+                       &devices[0].publicKey) ||
+-      !ssh_log_cstring(cfg, &decoded, &decoded_len, "application") ||
+-      !ssh_get_attrs(cfg, &decoded, &decoded_len, &devices[0].attributes))
++      !ssh_log_cstring(&decoded, &decoded_len, "application") ||
++      !ssh_get_attrs(&decoded, &decoded_len, &devices[0].attributes))
+     goto out;
+ 
+   // keyhandle
+   if (!ssh_get_string_ref(&decoded, &decoded_len, &blob, &len) ||
+       !b64_encode(blob, len, &devices[0].keyHandle)) {
+-    debug_dbg(cfg, "Malformed SSH key (keyhandle)");
++    LOG(LOG_DEBUG, "Malformed SSH key (keyhandle)");
+     goto out;
+   }
+ 
+-  debug_dbg(cfg, "KeyHandle for device number %u: %s", 1, devices[0].keyHandle);
+-  debug_dbg(cfg, "publicKey for device number %u: %s", 1, devices[0].publicKey);
+-  debug_dbg(cfg, "COSE type for device number %u: %s", 1, devices[0].coseType);
+-  debug_dbg(cfg, "Attributes for device number %u: %s", 1,
+-            devices[0].attributes);
++  LOG(LOG_DEBUG, "KeyHandle for device number %u: %s", 1, devices[0].keyHandle);
++  LOG(LOG_DEBUG, "publicKey for device number %u: %s", 1, devices[0].publicKey);
++  LOG(LOG_DEBUG, "COSE type for device number %u: %s", 1, devices[0].coseType);
++  LOG(LOG_DEBUG, "Attributes for device number %u: %s", 1,
++      devices[0].attributes);
+ 
+   // reserved (skip)
+   if (!ssh_get_string_ref(&decoded, &decoded_len, NULL, NULL)) {
+-    debug_dbg(cfg, "Malformed SSH key (reserved)");
++    LOG(LOG_DEBUG, "Malformed SSH key (reserved)");
+     goto out;
+   }
+ 
+   // comment
+-  if (!ssh_log_cstring(cfg, &decoded, &decoded_len, "comment"))
++  if (!ssh_log_cstring(&decoded, &decoded_len, "comment"))
+     goto out;
+ 
+   // padding
+   if (decoded_len >= 255) {
+-    debug_dbg(cfg, "Malformed SSH key (padding length)");
++    LOG(LOG_DEBUG, "Malformed SSH key (padding length)");
+     goto out;
+   }
+ 
+   for (int i = 1; (unsigned) i <= decoded_len; i++) {
+     if (decoded[i - 1] != i) {
+-      debug_dbg(cfg, "Malformed SSH key (padding)");
++      LOG(LOG_DEBUG, "Malformed SSH key (padding)");
+       goto out;
+     }
+   }
+@@ -697,68 +705,65 @@ int get_devices_from_authfile(const cfg_t *cfg, const char *username,
+   if (fd < 0) {
+     if (errno == ENOENT && cfg->nouserok) {
+       r = PAM_IGNORE;
+-    }
+-    debug_dbg(cfg, "Cannot open authentication file: %s", strerror(errno));
++      LOG(LOG_DEBUG, "Cannot open authentication file: %s", strerror(errno));
++    } else
++      LOG(LOG_ERR, "Cannot open authentication file: %s", strerror(errno));
+     goto err;
+   }
+ 
+   if (fstat(fd, &st) < 0) {
+-    debug_dbg(cfg, "Cannot stat authentication file: %s", strerror(errno));
++    LOG(LOG_ERR, "Cannot stat authentication file: %s", strerror(errno));
+     goto err;
+   }
+ 
+   if (!S_ISREG(st.st_mode)) {
+-    debug_dbg(cfg, "Authentication file is not a regular file");
++    LOG(LOG_ERR, "Authentication file is not a regular file");
+     goto err;
+   }
+ 
+   if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
+-    /* XXX: attempt to prevent two messages to syslog */
+-    if (cfg->debug_file) {
+-      debug_dbg(cfg,
+-                "Permissions %04o for '%s' are too open. Please change the "
+-                "file mode bits to 0644 or more restrictive. This may become "
+-                "an error in the future!",
+-                (unsigned int) st.st_mode & 0777, cfg->auth_file);
+-    }
++    /* FIXME: make this a hard error (goto err).
++     *
++     * Currently not the case, since treating this as error has proven to
++     * break existing installations.
++     */
+ #ifndef WITH_FUZZING
+-    /* XXX: force a message to syslog, regardless of the debug level */
+-    syslog(LOG_AUTHPRIV | LOG_WARNING,
+-           "warning(pam_u2f): Permissions %04o for '%s' are too open. Please "
+-           "change the file mode bits to 0644 or more restrictive. This may "
+-           "become an error in the future!",
+-           (unsigned int) st.st_mode & 0777, cfg->auth_file);
++    LOG(LOG_WARNING,
++        "Permissions %04o for '%s' are too open. Please change the file "
++        "mode bits to 0644 or more restrictive. This may become an "
++        "error in the future!",
++        (unsigned int) st.st_mode & 0777, cfg->auth_file);
+ #endif
+   }
+ 
+   if (st.st_size < 0) {
+-    debug_dbg(cfg, "Invalid stat size for %s: %jd", cfg->auth_file,
+-              (intmax_t) st.st_size);
++    LOG(LOG_ERR, "Invalid stat size for %s: %jd", cfg->auth_file,
++        (intmax_t) st.st_size);
+     goto err;
+   }
+   opwfile_size = (size_t) st.st_size;
+ 
+   gpu_ret = getpwuid_r(st.st_uid, &pw_s, buffer, sizeof(buffer), &pw);
+   if (gpu_ret != 0 || pw == NULL) {
+-    debug_dbg(cfg, "Unable to retrieve credentials for uid %u, (%s)", st.st_uid,
+-              strerror(errno));
++    LOG(LOG_ERR, "Unable to retrieve credentials for uid %ji, (%s)",
++        (intmax_t) st.st_uid, strerror(errno));
+     goto err;
+   }
+ 
+   if (strcmp(pw->pw_name, username) != 0 && strcmp(pw->pw_name, "root") != 0) {
+     if (strcmp(username, "root") != 0) {
+-      debug_dbg(cfg,
+-                "The owner of the authentication file is neither %s nor root",
+-                username);
++      LOG(LOG_ERR,
++          "The owner of the authentication file is neither %s nor root",
++          username);
+     } else {
+-      debug_dbg(cfg, "The owner of the authentication file is not root");
++      LOG(LOG_ERR, "The owner of the authentication file is not root");
+     }
+     goto err;
+   }
+ 
+   opwfile = fdopen(fd, "r");
+   if (opwfile == NULL) {
+-    debug_dbg(cfg, "fdopen: %s", strerror(errno));
++    LOG(LOG_ERR, "fdopen %s: %s", cfg->auth_file, strerror(errno));
+     goto err;
+   } else {
+     fd = -1; /* fd belongs to opwfile */
+@@ -766,15 +771,17 @@ int get_devices_from_authfile(const cfg_t *cfg, const char *username,
+ 
+   if (cfg->sshformat == 0) {
+     if (parse_native_format(cfg, username, opwfile, devices, n_devs) != 1) {
++      LOG(LOG_ERR, "Could not parse %s", cfg->auth_file);
+       goto err;
+     }
+   } else {
+-    if (parse_ssh_format(cfg, opwfile, opwfile_size, devices, n_devs) != 1) {
++    if (parse_ssh_format(opwfile, opwfile_size, devices, n_devs) != 1) {
++      LOG(LOG_ERR, "Could not parse %s", cfg->auth_file);
+       goto err;
+     }
+   }
+ 
+-  debug_dbg(cfg, "Found %d device(s) for user %s", *n_devs, username);
++  LOG(LOG_DEBUG, "Found %d device(s) for user %s", *n_devs, username);
+   r = PAM_SUCCESS;
+ 
+ err:
+@@ -818,29 +825,29 @@ static int get_authenticators(const cfg_t *cfg, const fido_dev_info_t *devlist,
+   size_t i;
+   size_t j;
+ 
+-  debug_dbg(cfg, "Working with %zu authenticator(s)", devlist_len);
++  LOG(LOG_DEBUG, "Working with %zu authenticator(s)", devlist_len);
+ 
+   for (i = 0, j = 0; i < devlist_len; i++) {
+-    debug_dbg(cfg, "Checking whether key exists in authenticator %zu", i);
++    LOG(LOG_DEBUG, "Checking whether key exists in authenticator %zu", i);
+ 
+     di = fido_dev_info_ptr(devlist, i);
+     if (!di) {
+-      debug_dbg(cfg, "Unable to get device pointer");
++      LOG(LOG_DEBUG, "Unable to get device pointer");
+       continue;
+     }
+ 
+-    debug_dbg(cfg, "Authenticator path: %s", fido_dev_info_path(di));
++    LOG(LOG_DEBUG, "Authenticator path: %s", fido_dev_info_path(di));
+ 
+     dev = fido_dev_new();
+     if (!dev) {
+-      debug_dbg(cfg, "Unable to allocate device type");
++      LOG(LOG_DEBUG, "Unable to allocate device type");
+       continue;
+     }
+ 
+     r = fido_dev_open(dev, fido_dev_info_path(di));
+     if (r != FIDO_OK) {
+-      debug_dbg(cfg, "Failed to open authenticator: %s (%d)", fido_strerr(r),
+-                r);
++      LOG(LOG_DEBUG, "Failed to open authenticator: %s (%d)", fido_strerr(r),
++          r);
+       fido_dev_free(&dev);
+       continue;
+     }
+@@ -853,10 +860,10 @@ static int get_authenticators(const cfg_t *cfg, const fido_dev_info_t *devlist,
+       if ((!fido_dev_is_fido2(dev) && r == FIDO_ERR_USER_PRESENCE_REQUIRED) ||
+           (fido_dev_is_fido2(dev) && r == FIDO_OK)) {
+         authlist[j++] = dev;
+-        debug_dbg(cfg, "Found key in authenticator %zu", i);
++        LOG(LOG_DEBUG, "Found key in authenticator %zu", i);
+         return (1);
+       }
+-      debug_dbg(cfg, "Key not found in authenticator %zu", i);
++      LOG(LOG_DEBUG, "Key not found in authenticator %zu", i);
+ 
+       fido_dev_close(dev);
+       fido_dev_free(&dev);
+@@ -866,7 +873,7 @@ static int get_authenticators(const cfg_t *cfg, const fido_dev_info_t *devlist,
+   if (j != 0)
+     return (1);
+   else {
+-    debug_dbg(cfg, "Key not found");
++    LOG(LOG_DEBUG, "Key not found");
+     return (0);
+   }
+ }
+@@ -955,32 +962,31 @@ static int match_device_opts(fido_dev_t *dev, struct opts *opts) {
+   return 1;
+ }
+ 
+-static int set_opts(const cfg_t *cfg, const struct opts *opts,
+-                    fido_assert_t *assert) {
++static int set_opts(const struct opts *opts, fido_assert_t *assert) {
+   if (fido_assert_set_up(assert, opts->up) != FIDO_OK) {
+-    debug_dbg(cfg, "Failed to set UP");
++    LOG(LOG_DEBUG, "Failed to set UP");
+     return 0;
+   }
+   if (fido_assert_set_uv(assert, opts->uv) != FIDO_OK) {
+-    debug_dbg(cfg, "Failed to set UV");
++    LOG(LOG_DEBUG, "Failed to set UV");
+     return 0;
+   }
+ 
+   return 1;
+ }
+ 
+-static int set_cdh(const cfg_t *cfg, fido_assert_t *assert) {
++static int set_cdh(fido_assert_t *assert) {
+   unsigned char cdh[32];
+   int r;
+ 
+   if (!random_bytes(cdh, sizeof(cdh))) {
+-    debug_dbg(cfg, "Failed to generate challenge");
++    LOG(LOG_DEBUG, "Failed to generate challenge");
+     return 0;
+   }
+ 
+   r = fido_assert_set_clientdata_hash(assert, cdh, sizeof(cdh));
+   if (r != FIDO_OK) {
+-    debug_dbg(cfg, "Unable to set challenge: %s (%d)", fido_strerr(r), r);
++    LOG(LOG_DEBUG, "Unable to set challenge: %s (%d)", fido_strerr(r), r);
+     return 0;
+   }
+ 
+@@ -996,7 +1002,7 @@ static fido_assert_t *prepare_assert(const cfg_t *cfg, const device_t *device,
+   int r;
+ 
+   if ((assert = fido_assert_new()) == NULL) {
+-    debug_dbg(cfg, "Unable to allocate assertion");
++    LOG(LOG_ERR, "Unable to allocate assertion");
+     goto err;
+   }
+ 
+@@ -1006,33 +1012,33 @@ static fido_assert_t *prepare_assert(const cfg_t *cfg, const device_t *device,
+     r = fido_assert_set_rp(assert, cfg->origin);
+ 
+   if (r != FIDO_OK) {
+-    debug_dbg(cfg, "Unable to set origin: %s (%d)", fido_strerr(r), r);
++    LOG(LOG_DEBUG, "Unable to set origin: %s (%d)", fido_strerr(r), r);
+     goto err;
+   }
+ 
+   if (is_resident(device->keyHandle)) {
+-    debug_dbg(cfg, "Credential is resident");
++    LOG(LOG_DEBUG, "Credential is resident");
+   } else {
+-    debug_dbg(cfg, "Key handle: %s", device->keyHandle);
++    LOG(LOG_DEBUG, "Key handle: %s", device->keyHandle);
+     if (!b64_decode(device->keyHandle, (void **) &buf, &buf_len)) {
+-      debug_dbg(cfg, "Failed to decode key handle");
++      LOG(LOG_DEBUG, "Failed to decode key handle");
+       goto err;
+     }
+ 
+     r = fido_assert_allow_cred(assert, buf, buf_len);
+     if (r != FIDO_OK) {
+-      debug_dbg(cfg, "Unable to set keyHandle: %s (%d)", fido_strerr(r), r);
++      LOG(LOG_DEBUG, "Unable to set keyHandle: %s (%d)", fido_strerr(r), r);
+       goto err;
+     }
+   }
+ 
+-  if (!set_opts(cfg, opts, assert)) {
+-    debug_dbg(cfg, "Failed to set assert options");
++  if (!set_opts(opts, assert)) {
++    LOG(LOG_DEBUG, "Failed to set assert options");
+     goto err;
+   }
+ 
+-  if (!set_cdh(cfg, assert)) {
+-    debug_dbg(cfg, "Failed to set client data hash");
++  if (!set_cdh(assert)) {
++    LOG(LOG_DEBUG, "Failed to set client data hash");
+     goto err;
+   }
+ 
+@@ -1086,8 +1092,7 @@ const char *cose_string(int type) {
+   }
+ }
+ 
+-static int parse_pk(const cfg_t *cfg, int old, const char *type, const char *pk,
+-                    struct pk *out) {
++static int parse_pk(int old, const char *type, const char *pk, struct pk *out) {
+   unsigned char *buf = NULL;
+   size_t buf_len;
+   int ok = 0;
+@@ -1097,18 +1102,18 @@ static int parse_pk(const cfg_t *cfg, int old, const char *type, const char *pk,
+ 
+   if (old) {
+     if (!hex_decode(pk, &buf, &buf_len)) {
+-      debug_dbg(cfg, "Failed to decode public key");
++      LOG(LOG_DEBUG, "Failed to decode public key");
+       goto err;
+     }
+   } else {
+     if (!b64_decode(pk, (void **) &buf, &buf_len)) {
+-      debug_dbg(cfg, "Failed to decode public key");
++      LOG(LOG_DEBUG, "Failed to decode public key");
+       goto err;
+     }
+   }
+ 
+   if (!cose_type(type, &out->type)) {
+-    debug_dbg(cfg, "Unknown COSE type '%s'", type);
++    LOG(LOG_DEBUG, "Unknown COSE type '%s'", type);
+     goto err;
+   }
+ 
+@@ -1116,7 +1121,7 @@ static int parse_pk(const cfg_t *cfg, int old, const char *type, const char *pk,
+   // returned as an error.  Instead, it is handled by fido_verify_assert().
+   if (out->type == COSE_ES256) {
+     if ((out->ptr = es256_pk_new()) == NULL) {
+-      debug_dbg(cfg, "Failed to allocate ES256 public key");
++      LOG(LOG_ERR, "Failed to allocate ES256 public key");
+       goto err;
+     }
+     if (old) {
+@@ -1125,28 +1130,28 @@ static int parse_pk(const cfg_t *cfg, int old, const char *type, const char *pk,
+       r = es256_pk_from_ptr(out->ptr, buf, buf_len);
+     }
+     if (r != FIDO_OK) {
+-      debug_dbg(cfg, "Failed to convert ES256 public key");
++      LOG(LOG_DEBUG, "Failed to convert ES256 public key");
+     }
+   } else if (out->type == COSE_RS256) {
+     if ((out->ptr = rs256_pk_new()) == NULL) {
+-      debug_dbg(cfg, "Failed to allocate RS256 public key");
++      LOG(LOG_ERR, "Failed to allocate RS256 public key");
+       goto err;
+     }
+     r = rs256_pk_from_ptr(out->ptr, buf, buf_len);
+     if (r != FIDO_OK) {
+-      debug_dbg(cfg, "Failed to convert RS256 public key");
++      LOG(LOG_DEBUG, "Failed to convert RS256 public key");
+     }
+   } else if (out->type == COSE_EDDSA) {
+     if ((out->ptr = eddsa_pk_new()) == NULL) {
+-      debug_dbg(cfg, "Failed to allocate EDDSA public key");
++      LOG(LOG_ERR, "Failed to allocate EDDSA public key");
+       goto err;
+     }
+     r = eddsa_pk_from_ptr(out->ptr, buf, buf_len);
+     if (r != FIDO_OK) {
+-      debug_dbg(cfg, "Failed to convert EDDSA public key");
++      LOG(LOG_DEBUG, "Failed to convert EDDSA public key");
+     }
+   } else {
+-    debug_dbg(cfg, "COSE type '%s' not handled", type);
++    LOG(LOG_DEBUG, "COSE type '%s' not handled", type);
+     goto err;
+   }
+ 
+@@ -1157,6 +1162,36 @@ err:
+   return ok;
+ }
+ 
++/* Map a "notable" libfido2 error code to a short, user-facing reason for
++ * audit logging. Returns NULL for errors that don't warrant a dedicated
++ * reason (e.g. a device simply not matching the requested credential). */
++const char *fido_failure_reason(int r) {
++  switch (r) {
++    case FIDO_ERR_PIN_INVALID:
++      return "invalid PIN";
++    case FIDO_ERR_PIN_BLOCKED:
++      return "PIN blocked";
++    case FIDO_ERR_PIN_AUTH_BLOCKED:
++      return "PIN authentication blocked";
++    case FIDO_ERR_ACTION_TIMEOUT:
++      return "touch/action timeout";
++    case FIDO_ERR_UNSUPPORTED_OPTION:
++      return "unsupported option";
++    case FIDO_ERR_OPERATION_DENIED:
++      return "operation denied";
++#ifdef FIDO_ERR_UV_INVALID
++    case FIDO_ERR_UV_INVALID:
++      return "user verification failed";
++#endif
++#ifdef FIDO_ERR_UV_BLOCKED
++    case FIDO_ERR_UV_BLOCKED:
++      return "user verification blocked";
++#endif
++    default:
++      return NULL;
++  }
++}
++
+ int do_authentication(const cfg_t *cfg, const device_t *devices,
+                       const unsigned n_devs, pam_handle_t *pamh) {
+   fido_assert_t *assert = NULL;
+@@ -1165,9 +1200,11 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+   int cued = 0;
+   int r;
+   int retval = PAM_AUTH_ERR;
++  int last_err = FIDO_OK;
+   size_t ndevs = 0;
+   size_t ndevs_prev = 0;
+   unsigned i = 0;
++  unsigned last_idx = 0;
+   struct opts opts;
+   struct pk pk;
+   char *pin = NULL;
+@@ -1182,44 +1219,44 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+ 
+   devlist = fido_dev_info_new(DEVLIST_LEN);
+   if (!devlist) {
+-    debug_dbg(cfg, "Unable to allocate devlist");
++    LOG(LOG_ERR, "Unable to allocate devlist");
+     goto out;
+   }
+ 
+   r = fido_dev_info_manifest(devlist, DEVLIST_LEN, &ndevs);
+   if (r != FIDO_OK) {
+-    debug_dbg(cfg, "Unable to discover device(s), %s (%d)", fido_strerr(r), r);
++    LOG(LOG_DEBUG, "Unable to discover device(s), %s (%d)", fido_strerr(r), r);
+     goto out;
+   }
+ 
+   ndevs_prev = ndevs;
+ 
+-  debug_dbg(cfg, "Device max index is %zu", ndevs);
++  LOG(LOG_DEBUG, "Device max index is %zu", ndevs);
+ 
+   authlist = calloc(DEVLIST_LEN + 1, sizeof(fido_dev_t *));
+   if (!authlist) {
+-    debug_dbg(cfg, "Unable to allocate authenticator list");
++    LOG(LOG_DEBUG, "Unable to allocate authenticator list");
+     goto out;
+   }
+ 
+   if (cfg->nodetect)
+-    debug_dbg(cfg, "nodetect option specified, suitable key detection will be "
++    LOG(LOG_DEBUG, "nodetect option specified, suitable key detection will be "
+                    "skipped");
+ 
+   i = 0;
+   while (i < n_devs) {
+-    debug_dbg(cfg, "Attempting authentication with device number %d", i + 1);
++    LOG(LOG_DEBUG, "Attempting authentication with device number %u", i + 1);
+ 
+     init_opts(&opts); /* used during authenticator discovery */
+     assert = prepare_assert(cfg, &devices[i], &opts);
+     if (assert == NULL) {
+-      debug_dbg(cfg, "Failed to prepare assert");
++      LOG(LOG_DEBUG, "Failed to prepare assert");
+       goto out;
+     }
+ 
+-    if (!parse_pk(cfg, devices[i].old_format, devices[i].coseType,
++    if (!parse_pk(devices[i].old_format, devices[i].coseType,
+                   devices[i].publicKey, &pk)) {
+-      debug_dbg(cfg, "Failed to parse public key");
++      LOG(LOG_DEBUG, "Failed to parse public key");
+       goto out;
+     }
+ 
+@@ -1231,26 +1268,26 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+ 
+         r = match_device_opts(authlist[j], &opts);
+         if (r != 1) {
+-          debug_dbg(cfg, "%s, skipping authenticator",
+-                    r < 0 ? "Failed to query supported options"
+-                          : "Unsupported options");
++          LOG(LOG_DEBUG, "%s, skipping authenticator",
++              r < 0 ? "Failed to query supported options"
++                    : "Unsupported options");
+           continue;
+         }
+ 
+-        if (!set_opts(cfg, &opts, assert)) {
+-          debug_dbg(cfg, "Failed to set assert options");
++        if (!set_opts(&opts, assert)) {
++          LOG(LOG_DEBUG, "Failed to set assert options");
+           goto out;
+         }
+ 
+-        if (!set_cdh(cfg, assert)) {
+-          debug_dbg(cfg, "Failed to reset client data hash");
++        if (!set_cdh(assert)) {
++          LOG(LOG_DEBUG, "Failed to reset client data hash");
+           goto out;
+         }
+ 
+         if (opts.pin == FIDO_OPT_TRUE) {
+           pin = converse(pamh, PAM_PROMPT_ECHO_OFF, "Please enter the PIN: ");
+           if (pin == NULL) {
+-            debug_dbg(cfg, "converse() returned NULL");
++            LOG(LOG_DEBUG, "converse() returned NULL");
+             goto out;
+           }
+         }
+@@ -1271,19 +1308,27 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+           if (opts.pin == FIDO_OPT_TRUE || opts.uv == FIDO_OPT_TRUE) {
+             r = fido_assert_set_uv(assert, FIDO_OPT_TRUE);
+             if (r != FIDO_OK) {
+-              debug_dbg(cfg, "Failed to set UV");
++              LOG(LOG_DEBUG, "Failed to set UV");
+               goto out;
+             }
+           }
+           r = fido_assert_verify(assert, 0, pk.type, pk.ptr);
+           if (r == FIDO_OK) {
+             retval = PAM_SUCCESS;
++            AUDIT_LOG(pamh, LOG_INFO,
++                      "Successful FIDO authentication with publicKey %s "
++                      "(idx %u)",
++                      devices[i].publicKey, i);
+             goto out;
+           }
+         }
++        if (r != FIDO_OK && fido_failure_reason(r) != NULL) {
++          last_err = r;
++          last_idx = i;
++        }
+       }
+     } else {
+-      debug_dbg(cfg, "Device for this keyhandle is not present");
++      LOG(LOG_DEBUG, "Device for this keyhandle is not present");
+     }
+ 
+     i++;
+@@ -1292,21 +1337,21 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+ 
+     devlist = fido_dev_info_new(DEVLIST_LEN);
+     if (!devlist) {
+-      debug_dbg(cfg, "Unable to allocate devlist");
++      LOG(LOG_ERR, "Unable to allocate devlist");
+       goto out;
+     }
+ 
+     r = fido_dev_info_manifest(devlist, DEVLIST_LEN, &ndevs);
+     if (r != FIDO_OK) {
+-      debug_dbg(cfg, "Unable to discover device(s), %s (%d)", fido_strerr(r),
+-                r);
++      LOG(LOG_DEBUG, "Unable to discover device(s), %s (%d)", fido_strerr(r),
++          r);
+       goto out;
+     }
+ 
+     if (ndevs > ndevs_prev) {
+-      debug_dbg(cfg,
+-                "Devices max_index has changed: %zu (was %zu). Starting over",
+-                ndevs, ndevs_prev);
++      LOG(LOG_WARNING,
++          "Devices max_index has changed: %zu (was %zu). Starting over", ndevs,
++          ndevs_prev);
+       ndevs_prev = ndevs;
+       i = 0;
+     }
+@@ -1320,6 +1365,18 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+   }
+ 
+ out:
++  if (retval != PAM_SUCCESS) {
++    if (last_err != FIDO_OK) {
++      AUDIT_LOG(pamh, LOG_NOTICE,
++                "Failed FIDO authentication with publicKey %s (idx %u): %s",
++                devices[last_idx].publicKey, last_idx,
++                fido_failure_reason(last_err));
++    } else {
++      AUDIT_LOG(pamh, LOG_NOTICE,
++                "Failed FIDO authentication: no suitable authenticator found");
++    }
++  }
++
+   reset_pk(&pk);
+   fido_assert_free(&assert);
+   fido_dev_info_free(&devlist, ndevs);
+@@ -1337,8 +1394,8 @@ out:
+ 
+ #define MAX_PROMPT_LEN (1024)
+ 
+-static int manual_get_assert(const cfg_t *cfg, const char *prompt,
+-                             pam_handle_t *pamh, fido_assert_t *assert) {
++static int manual_get_assert(const char *prompt, pam_handle_t *pamh,
++                             fido_assert_t *assert) {
+   char *b64_cdh = NULL;
+   char *b64_rpid = NULL;
+   char *b64_authdata = NULL;
+@@ -1356,30 +1413,30 @@ static int manual_get_assert(const cfg_t *cfg, const char *prompt,
+   b64_sig = converse(pamh, PAM_PROMPT_ECHO_ON, prompt);
+ 
+   if (!b64_decode(b64_authdata, (void **) &authdata, &authdata_len)) {
+-    debug_dbg(cfg, "Failed to decode authenticator data");
++    LOG(LOG_DEBUG, "Failed to decode authenticator data");
+     goto err;
+   }
+ 
+   if (!b64_decode(b64_sig, (void **) &sig, &sig_len)) {
+-    debug_dbg(cfg, "Failed to decode signature");
++    LOG(LOG_DEBUG, "Failed to decode signature");
+     goto err;
+   }
+ 
+   r = fido_assert_set_count(assert, 1);
+   if (r != FIDO_OK) {
+-    debug_dbg(cfg, "Failed to set signature count of assertion");
++    LOG(LOG_DEBUG, "Failed to set signature count of assertion");
+     goto err;
+   }
+ 
+   r = fido_assert_set_authdata(assert, 0, authdata, authdata_len);
+   if (r != FIDO_OK) {
+-    debug_dbg(cfg, "Failed to set authdata of assertion");
++    LOG(LOG_DEBUG, "Failed to set authdata of assertion");
+     goto err;
+   }
+ 
+   r = fido_assert_set_sig(assert, 0, sig, sig_len);
+   if (r != FIDO_OK) {
+-    debug_dbg(cfg, "Failed to set signature of assertion");
++    LOG(LOG_DEBUG, "Failed to set signature of assertion");
+     goto err;
+   }
+ 
+@@ -1405,7 +1462,9 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+   int retval = PAM_AUTH_ERR;
+   int n;
+   int r;
++  int last_err = FIDO_OK;
+   unsigned i = 0;
++  unsigned last_idx = 0;
+   struct opts opts;
+ 
+   init_opts(&opts);
+@@ -1423,30 +1482,30 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+     parse_opts(cfg, devices[i].attributes, &opts);
+     assert[i] = prepare_assert(cfg, &devices[i], &opts);
+     if (assert[i] == NULL) {
+-      debug_dbg(cfg, "Failed to prepare assert");
++      LOG(LOG_DEBUG, "Failed to prepare assert");
+       goto out;
+     }
+ 
+-    debug_dbg(cfg, "Attempting authentication with device number %d", i + 1);
++    LOG(LOG_DEBUG, "Attempting authentication with device number %u", i + 1);
+ 
+-    if (!parse_pk(cfg, devices[i].old_format, devices[i].coseType,
++    if (!parse_pk(devices[i].old_format, devices[i].coseType,
+                   devices[i].publicKey, &pk[i])) {
+-      debug_dbg(cfg, "Unable to parse public key %u", i);
++      LOG(LOG_DEBUG, "Unable to parse public key %u", i);
+       goto out;
+     }
+ 
+     if (!b64_encode(fido_assert_clientdata_hash_ptr(assert[i]),
+                     fido_assert_clientdata_hash_len(assert[i]),
+                     &b64_challenge)) {
+-      debug_dbg(cfg, "Failed to encode challenge");
++      LOG(LOG_DEBUG, "Failed to encode challenge");
+       goto out;
+     }
+ 
+-    debug_dbg(cfg, "Challenge: %s", b64_challenge);
++    LOG(LOG_DEBUG, "Challenge: %s", b64_challenge);
+ 
+     n = snprintf(prompt, sizeof(prompt), "Challenge #%u:", i + 1);
+     if (n <= 0 || (size_t) n >= sizeof(prompt)) {
+-      debug_dbg(cfg, "Failed to print challenge prompt");
++      LOG(LOG_DEBUG, "Failed to print challenge prompt");
+       goto out;
+     }
+ 
+@@ -1455,7 +1514,7 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+     n = snprintf(buf, sizeof(buf), "%s\n%s\n%s", b64_challenge, cfg->origin,
+                  devices[i].keyHandle);
+     if (n <= 0 || (size_t) n >= sizeof(buf)) {
+-      debug_dbg(cfg, "Failed to print fido2-assert input string");
++      LOG(LOG_DEBUG, "Failed to print fido2-assert input string");
+       goto out;
+     }
+ 
+@@ -1472,23 +1531,42 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+   for (i = 0; i < n_devs; ++i) {
+     n = snprintf(prompt, sizeof(prompt), "Response #%u: ", i + 1);
+     if (n <= 0 || (size_t) n >= sizeof(prompt)) {
+-      debug_dbg(cfg, "Failed to print response prompt");
++      LOG(LOG_DEBUG, "Failed to print response prompt");
+       goto out;
+     }
+ 
+-    if (!manual_get_assert(cfg, prompt, pamh, assert[i])) {
+-      debug_dbg(cfg, "Failed to get assert %u", i);
++    if (!manual_get_assert(prompt, pamh, assert[i])) {
++      LOG(LOG_DEBUG, "Failed to get assert %u", i);
+       goto out;
+     }
+ 
+     r = fido_assert_verify(assert[i], 0, pk[i].type, pk[i].ptr);
+     if (r == FIDO_OK) {
+       retval = PAM_SUCCESS;
++      AUDIT_LOG(pamh, LOG_INFO,
++                "Successful FIDO authentication with publicKey %s (idx %u)",
++                devices[i].publicKey, i);
+       break;
+     }
++    if (fido_failure_reason(r) != NULL) {
++      last_err = r;
++      last_idx = i;
++    }
+   }
+ 
+ out:
++  if (retval != PAM_SUCCESS) {
++    if (last_err != FIDO_OK) {
++      AUDIT_LOG(pamh, LOG_NOTICE,
++                "Failed FIDO authentication with publicKey %s (idx %u): %s",
++                devices[last_idx].publicKey, last_idx,
++                fido_failure_reason(last_err));
++    } else {
++      AUDIT_LOG(pamh, LOG_NOTICE,
++                "Failed FIDO authentication: no suitable authenticator found");
++    }
++  }
++
+   for (i = 0; i < n_devs; i++) {
+     fido_assert_free(&assert[i]);
+     reset_pk(&pk[i]);
+diff --git a/util.h b/util.h
+index 859663f..1745352 100644
+--- a/util.h
++++ b/util.h
+@@ -11,7 +11,7 @@
+ #include "cfg.h"
+ 
+ #define BUFSIZE 1024
+-#define MAX_DEVS 24
++#define MAX_DEVS 24U
+ #define DEFAULT_AUTHFILE_DIR_VAR "XDG_CONFIG_HOME"
+ #define DEFAULT_AUTHFILE "Yubico/u2f_keys"
+ #define DEFAULT_AUTHFILE_SSH "id_ecdsa_sk"
+@@ -46,6 +46,7 @@ int random_bytes(void *, size_t);
+ int cose_type(const char *, int *);
+ const char *cose_string(int);
+ char *expand_variables(const char *, const char *);
++const char *fido_failure_reason(int);
+ 
+ #if !defined(HAVE_EXPLICIT_BZERO)
+ void explicit_bzero(void *, size_t);

@@ -1,0 +1,275 @@
+diff --git a/Makefile.am b/Makefile.am
+index 05e2ae9..71b7fb8 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -78,6 +78,7 @@ DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
+ EXTRA_DIST = export.sym
+ EXTRA_DIST += export.gnu export.llvm
+ EXTRA_DIST += CMakeLists.txt cmake/FindPAM.cmake
++EXTRA_DIST += SECURITY-CONSIDERATIONS.md
+ 
+ # Release
+ 
+diff --git a/README b/README
+index e549703..22058dc 100644
+--- a/README
++++ b/README
+@@ -574,3 +574,10 @@ series, can be used only in conjunction with compatible features. Enabling
+ incompatible features, such as setting the `+pin` or the `+verification` flags
+ in the `authfile` or the corresponding options in the PAM service configuration
+ causes the authenticator to be ignored.
++
++== Untrusted authenticators and libcbor
++
++pam-u2f applies defense-in-depth measures against malicious or
++malfunctioning FIDO authenticators, including CBOR messages crafted to
++trigger oversized memory allocations in `libcbor`/`libfido2`. See
++link:SECURITY-CONSIDERATIONS.md[] for details.
+diff --git a/SECURITY-CONSIDERATIONS.md b/SECURITY-CONSIDERATIONS.md
+new file mode 100644
+index 0000000..6057be9
+--- /dev/null
++++ b/SECURITY-CONSIDERATIONS.md
+@@ -0,0 +1,43 @@
++# Security considerations
++
++## Untrusted authenticators and libcbor
++
++pam-u2f, via `libfido2`, parses CTAP2/CBOR messages received from any FIDO
++authenticator presented to it, before any cryptographic verification takes
++place. `libcbor` (the CBOR library used by `libfido2`) allocates memory for
++array and map elements based on a count taken directly from the CBOR
++header, without bounding it against the amount of input data actually
++available. A handful of bytes can therefore declare an array or map with
++hundreds of millions of elements and cause `cbor_load()` to attempt a
++multi-gigabyte allocation.
++
++This is documented, working-as-intended `libcbor` behavior: it was reported
++as [PJK/libcbor#418](https://github.com/PJK/libcbor/issues/418) and closed
++as "invalid". The maintainer's response,
++[PJK/libcbor#422](https://github.com/PJK/libcbor/pull/422), confirms the
++design and recommends that applications parsing untrusted CBOR install a
++capping allocator via `cbor_set_allocs()` (see `examples/capped_alloc.c`)
++or use the streaming decoder instead of `cbor_load()`.
++
++pam-u2f does not depend on `libcbor` directly -- it is a private, transitive
++dependency pulled in by `libfido2` -- so it cannot reliably call
++`cbor_set_allocs()` itself: doing so would add a build and runtime
++dependency on an otherwise-internal component of `libfido2`, with no
++guarantee that the allocator it configures is the same instance `libfido2`
++uses to decode CTAP2 responses.
++
++As defense in depth instead, pam-u2f temporarily lowers its own `RLIMIT_AS`
++while communicating with an authenticator, so that an oversized allocation
++-- whether from `libcbor` or anything else in that code path -- fails
++cleanly with `ENOMEM` (handled by `libcbor`/`libfido2` as an ordinary parse
++error) instead of growing the host process (which may be running as root,
++e.g. inside `sshd`, `sudo`, or `login`) without bound. This requires no
++dependency on `libcbor`'s internals and, per #422, is also necessary on
++Linux specifically: with memory overcommit enabled, `malloc` can appear to
++succeed for an allocation that cannot actually be backed.
++
++pam-u2f's own fuzzing CI separately patches `libcbor`'s
++`_cbor_alloc_multiple` to cap `item_count` at 1000 (see `libfido2`'s
++`fuzz/README`), so that fuzzing under sanitizers stays within reasonable
++memory bounds. That patch is fuzzing-specific and not suitable for
++production use.
+diff --git a/fuzz/Makefile.am b/fuzz/Makefile.am
+index 6c99b81..1836262 100644
+--- a/fuzz/Makefile.am
++++ b/fuzz/Makefile.am
+@@ -16,3 +16,4 @@ noinst_PROGRAMS = fuzz_format_parsers fuzz_auth
+ EXTRA_DIST = coverage.sh make_seed.py export.sym
+ EXTRA_DIST += export.gnu CMakeLists.txt
+ EXTRA_DIST += make_seed_auth.c seed/auth_pin_invalid
++EXTRA_DIST += seed/auth_cbor_array_oom
+diff --git a/fuzz/seed/auth_cbor_array_oom b/fuzz/seed/auth_cbor_array_oom
+new file mode 100644
+index 0000000000000000000000000000000000000000..78ded791b6253d0bf6c55a4dc3119f6d3fc1606a
+GIT binary patch
+literal 2230
+zcmb_eYmD1e7EUrVv>3WD63~J`Ocw!yFeJ8<$xPdka2zL-Wb7nPoH#*M@Z&nM<JcZQ
+z^02ll+wE?5rL9_C1u9-D4<Qh*Um#u*k4jLU0>raOASA>O1VU_<$1VapQ{GftX*oY`
+z?mg#x=X~e-+<UY5_Y0m1tjcMY)s}R#%h{U^S^KC5%*%|8d)l7ywS`!u(Zca~+a}bo
+zXOJaX;A~mfm<Uo9=v<vjmsLC*XTox45%S_}f@(OcB-<D2dM!)WYN_y&l~v+uUeKbp
+z)50-o2*(AoJ<QL8{Git-Fi(mQNtEzxDrsg5XfBdms3(?l0*7J=8}26NYQg~MSS1Id
+zR3_4}lmfYeU@|5qGp0gvs#LXI0z^%vCTX;pX_M(8J>+QT2jUB5x?7<oMw0Tl%Y*`f
+zkUr~6lE`GKnL?4E%H^e*BAu;b6=Eh&)W=qcN0TbAQ7(tWW`ph6qB16nB{Q)e-(`H_
+z1m9h78YO=^mZU#QeQ&^XE;oeLIs(ydy$rith8Ql_;)a0IeNthNQf8swsKs3&)^h5|
+zg6#wG%#U_|T`E-+3F&avM33d6I8imw7Dgd+bV5=rltUX*)+FQkNZ*x3Jy$L;)m8zf
+zYD8pyAS4tvMGDoDQgC|Ie5FWc8(b?UL7i%)lSKXK$tAC}l<v(^dLw3QVg@WX&~YuY
+zfLL~;Ms);)umz;uCS};+SSl){vM|+2_8=isbp({sm%CJtA7k1-I<&l)1VO~m1tX(^
+z1dPmyaJ@idDbeWwG?t(c8)1iew*r-W^JGlpa7Izn^^{$ywu=#xEyUoyyOd_Ku4%dw
+z;ktOHrWcmtX$Hnbe{(U~6_C~(<|igF2U>0+bjcXbvw42N8hT?TnZ*>A83<w2$R}3H
+z2F#^V0%_n1Smr(Yj8mSI>PlT|^op%=A%R)NDvd*(E@|=IFlFidARhMftO{%cw(2(6
+z9LBS%&ZATmD|yX|F_~n4aS<AK3qhrh-bvm`nt1kGPyQB|p8e+Ihnn~7pboBl84OKL
+zO->y-g#Yu$2kZ?t0uKatN(_>2R*`l(n<_MsW>h^gfty8|_+AT#{@M{tAQnyC27=x3
+z@qu=i6J{+Sn1rpWoY?|Nub?~_wtY{3u6AXuC~M0=YuW9I;+MBffBsL1JoWP9*8BM2
+z^w~EZ-ZptRZ+1q!V~j*Y<?Mfr!DOpzk7UlV+nR|>t&uFKGSF-<)<_v=8W-%Rutu79
+z%`iR8^R4I|ppA43*rb;?OReS|8C|XeaE}txqjZ~I5l4>T<0m|o7gXj{KV8uTJsI>z
+zQ>Rbff835xaLwAa8!kV7hoDJ<;8;Ag<AA`at@A{CXaL3V@skd(%ED|149BMPkC=YY
+zo^bkP;Kb3o$v>PC@IK8+8)i-pp0Z)X>ZkGXdjro0ZVevbWs$vP?H_jyOO=yv+;-)Q
+zvGq%z?4Nx6_TBG)^}@q<etP|5_dVTwa=ke_i(Yj2j>otypHAJn`vVUTuU!ol3|u)q
+zd($3p@7w!tf0(wDdmFzb5@OH2<xls`eEhY=2lh5!!e8FCeI7mZ8N213u+Jk{yJ6$j
+z^B%fU_v4*3!7fG9p^brO*41}jxBc9yOOB6yD4hA~ZJVP{ym{4u=XU23?-JLXW&Fi+
+zd6a>Cd}wgz<M%!?^~m|;e&(?B#))p|(yQeyhqg`qXY0)`e7H*TDC6e9>P8&;e>URx
+z+kl`)b9#bJM^mAh?AGYIH86JVN6=g6>`Cw6c_?%7_4k8Vf7jh#fXqKa`xef8;KG?#
+z-u3y1y$*cylV>jt%)j^V6Ye^EF!$eW`(EF4#h>RM+<xj&3jc{ZIOuYNrs#E_0IWqg
+z3UxWn;oxHs{}LF>G58*{iwcQ=cUq99I~FkY4x}4E<1BvxaR<Hk&KLFP;eHF_UlR}*
+z7@Q_TKG-mU1vCLHM#syaKL4J|+reLG{KGHFDp-t2x*p*<6SCwZe=H#1=CKlGjh67G
+jYF*6Me*F$_ibPah^$u-Y?~B9Ls+!}7mM!Xz4F$df_xS6s
+
+literal 0
+HcmV?d00001
+
+diff --git a/util.c b/util.c
+index a0361eb..97500f3 100644
+--- a/util.c
++++ b/util.c
+@@ -16,6 +16,7 @@
+ #include <stdlib.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
++#include <sys/resource.h>
+ #include <pwd.h>
+ #include <errno.h>
+ #include <unistd.h>
+@@ -66,6 +67,75 @@ struct pk {
+   int type;
+ };
+ 
++/* Headroom (in bytes) added on top of the process' current address space
++ * usage by limit_address_space(). */
++#define ADDRESS_SPACE_HEADROOM (64UL * 1024 * 1024) /* 64 MiB */
++
++/* CTAP2 responses are CBOR-encoded, and some CBOR libraries (including
++ * libcbor, used by libfido2) allocate memory for array/map elements based
++ * on a count taken directly from the input, without checking it against
++ * the amount of input data actually available. A malicious or
++ * malfunctioning authenticator can therefore make libfido2 attempt a
++ * multi-gigabyte allocation while parsing a single CBOR message.
++ *
++ * To stop such an allocation from growing the host process (e.g. sshd,
++ * sudo, login, possibly running as root) without bound, temporarily lower
++ * RLIMIT_AS to the process' current address space size plus a fixed
++ * headroom while talking to an authenticator. The oversized allocation
++ * then fails with ENOMEM, which libcbor and libfido2 already handle as an
++ * ordinary parse error.
++ *
++ * On success, *old is set to the previous limit (which the caller must
++ * restore with restore_address_space()) and 1 is returned. If the current
++ * usage cannot be determined, or the resulting limit would not be at least
++ * as strict as the existing one, the limit is left untouched and 0 is
++ * returned. */
++static int limit_address_space(struct rlimit *old) {
++  struct rlimit rl;
++  long page_size;
++  long pages;
++  rlim_t cur_bytes;
++  FILE *f;
++
++  if (getrlimit(RLIMIT_AS, old) != 0)
++    return 0;
++
++  if ((page_size = sysconf(_SC_PAGESIZE)) <= 0)
++    return 0;
++
++  if ((f = fopen("/proc/self/statm", "re")) == NULL)
++    return 0;
++
++  if (fscanf(f, "%ld", &pages) != 1) {
++    fclose(f);
++    return 0;
++  }
++  fclose(f);
++
++  if (pages <= 0)
++    return 0;
++
++  cur_bytes = (rlim_t) pages * (rlim_t) page_size;
++  if (cur_bytes > RLIM_INFINITY - ADDRESS_SPACE_HEADROOM)
++    return 0;
++
++  rl = *old;
++  rl.rlim_cur = cur_bytes + ADDRESS_SPACE_HEADROOM;
++
++  /* Never loosen an existing, already stricter limit. */
++  if (old->rlim_cur != RLIM_INFINITY && rl.rlim_cur >= old->rlim_cur)
++    return 0;
++
++  if (setrlimit(RLIMIT_AS, &rl) != 0)
++    return 0;
++
++  return 1;
++}
++
++static void restore_address_space(const struct rlimit *old) {
++  setrlimit(RLIMIT_AS, old);
++}
++
+ static int hex_decode(const char *ascii_hex, unsigned char **blob,
+                       size_t *blob_len) {
+   *blob = NULL;
+@@ -1208,6 +1278,8 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+   struct opts opts;
+   struct pk pk;
+   char *pin = NULL;
++  struct rlimit as_old;
++  int as_limited;
+ 
+   init_opts(&opts);
+ #ifndef WITH_FUZZING
+@@ -1217,6 +1289,11 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+ #endif
+   memset(&pk, 0, sizeof(pk));
+ 
++  /* Bound the address space for the duration of the authentication
++   * attempt, to contain oversized allocations triggered while parsing
++   * CBOR messages from a malicious or malfunctioning authenticator. */
++  as_limited = limit_address_space(&as_old);
++
+   devlist = fido_dev_info_new(DEVLIST_LEN);
+   if (!devlist) {
+     LOG(LOG_ERR, "Unable to allocate devlist");
+@@ -1365,6 +1442,9 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+   }
+ 
+ out:
++  if (as_limited)
++    restore_address_space(&as_old);
++
+   if (retval != PAM_SUCCESS) {
+     if (last_err != FIDO_OK) {
+       AUDIT_LOG(pamh, LOG_NOTICE,
+@@ -1466,6 +1546,8 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+   unsigned i = 0;
+   unsigned last_idx = 0;
+   struct opts opts;
++  struct rlimit as_old;
++  int as_limited;
+ 
+   init_opts(&opts);
+   memset(assert, 0, sizeof(assert));
+@@ -1477,6 +1559,12 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+   fido_init(0);
+ #endif
+ 
++  /* manual_get_assert() feeds attacker-influenceable authenticator data
++   * (pasted by the user) into fido_assert_set_authdata(), which parses a
++   * CBOR extensions blob; bound the address space for the same reason as
++   * in do_authentication(). */
++  as_limited = limit_address_space(&as_old);
++
+   for (i = 0; i < n_devs; ++i) {
+     /* options used during authentication */
+     parse_opts(cfg, devices[i].attributes, &opts);
+@@ -1555,6 +1643,9 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+   }
+ 
+ out:
++  if (as_limited)
++    restore_address_space(&as_old);
++
+   if (retval != PAM_SUCCESS) {
+     if (last_err != FIDO_OK) {
+       AUDIT_LOG(pamh, LOG_NOTICE,
