@@ -9,6 +9,8 @@ DESCRIPTION="PAM module for FIDO2 and U2F keys"
 HOMEPAGE="https://github.com/Yubico/pam-u2f"
 SRC_URI="https://github.com/nabbi/${PN/_/-}/archive/refs/tags/v${PV}.tar.gz"
 
+S="${WORKDIR}/${PN/_/-}-${PV}"
+
 LICENSE="BSD ISC"
 SLOT="0"
 KEYWORDS="amd64 ~arm64 x86"
