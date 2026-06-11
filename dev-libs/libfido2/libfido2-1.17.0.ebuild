@@ -54,7 +54,7 @@ src_configure() {
 	if use fuzz; then
 		# enable fuzzer for testing yubico/pam-u2f
 		mycmakeargs+=(
-			-DFUZZ=1 -DFUZZ_LDFLAGS="-fsanitize=fuzzer"
+			-DFUZZ=1
 		)
 	fi
 
