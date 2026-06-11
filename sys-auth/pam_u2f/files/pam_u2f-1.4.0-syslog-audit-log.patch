@@ -1,0 +1,97 @@
+From 796ab0a136d6cc26cb060124a40d0bb67d8d0d06 Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Wed, 10 Jun 2026 22:43:10 -0500
+Subject: [PATCH] audit: log public key on successful FIDO authentication via
+ syslog
+
+Implements the audit-logging approach proposed in upstream PR
+Yubico/pam-u2f#306 (open, unmerged) for issue #302, extended to also
+cover the standard (non-manual) authentication path in
+do_authentication(). Logs the publicKey and device index used for a
+successful authentication via pam_syslog(), aiding auditing/forensics
+on hosts with multiple registered authenticators per user.
+---
+ CMakeLists.txt |  4 ++++
+ configure.ac   |  4 ++--
+ util.c         | 15 +++++++++++++++
+ 3 files changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0bf2614..3ca3a6c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -113,9 +113,13 @@ cmake_push_check_state(RESET)
+ 	set(CMAKE_REQUIRED_LIBRARIES PAM::PAM)
+ 	check_symbol_exists(openpam_borrow_cred security/pam_modules.h HAVE_OPENPAM_BORROW_CRED)
+ 	check_symbol_exists(pam_modutil_drop_priv security/pam_modutil.h HAVE_PAM_MODUTIL_DROP_PRIV)
++	check_symbol_exists(pam_syslog security/pam_ext.h HAVE_PAM_SYSLOG)
++	check_include_file(security/pam_ext.h HAVE_SECURITY_PAM_EXT_H)
+ 	foreach (v
+ 		HAVE_OPENPAM_BORROW_CRED
+ 		HAVE_PAM_MODUTIL_DROP_PRIV
++		HAVE_PAM_SYSLOG
++		HAVE_SECURITY_PAM_EXT_H
+ 	)
+ 		if (${v})
+ 			target_compile_definitions(common INTERFACE ${v})
+diff --git a/configure.ac b/configure.ac
+index ecdf4f5..d630df7 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -45,11 +45,11 @@ AM_CONDITIONAL([ENABLE_FUZZING], [test "$enable_fuzzing" = "yes"])
+ 
+ AC_CHECK_HEADERS([security/pam_appl.h], [],
+   [AC_MSG_ERROR([[PAM header files not found, install libpam-dev.]])])
+-AC_CHECK_HEADERS([security/pam_modules.h security/pam_modutil.h security/openpam.h], [], [],
++AC_CHECK_HEADERS([security/pam_modules.h security/pam_modutil.h security/pam_ext.h security/openpam.h], [], [],
+   [#include <sys/types.h>
+ #include <security/pam_appl.h>])
+ AC_CHECK_LIB([pam], [pam_start])
+-AC_CHECK_FUNCS([pam_modutil_drop_priv openpam_borrow_cred])
++AC_CHECK_FUNCS([pam_modutil_drop_priv openpam_borrow_cred pam_syslog])
+ 
+ case "$host" in
+      *darwin*)  PAMDIR="/usr/lib/pam";;
+diff --git a/util.c b/util.c
+index 826059c..b0d7849 100644
+--- a/util.c
++++ b/util.c
+@@ -22,6 +22,10 @@
+ #include <string.h>
+ #include <arpa/inet.h>
+ 
++#ifdef HAVE_SECURITY_PAM_EXT_H
++#include <security/pam_ext.h>
++#endif
++
+ #include "b64.h"
+ #include "debug.h"
+ #include "util.h"
+@@ -1277,6 +1281,12 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
+           }
+           r = fido_assert_verify(assert, 0, pk.type, pk.ptr);
+           if (r == FIDO_OK) {
++#ifdef HAVE_PAM_SYSLOG
++            pam_syslog(pamh, LOG_INFO,
++                       "Successful FIDO authentication with publicKey %s "
++                       "(idx %u)",
++                       devices[i].publicKey, i);
++#endif
+             retval = PAM_SUCCESS;
+             goto out;
+           }
+@@ -1483,6 +1493,11 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
+ 
+     r = fido_assert_verify(assert[i], 0, pk[i].type, pk[i].ptr);
+     if (r == FIDO_OK) {
++#ifdef HAVE_PAM_SYSLOG
++      pam_syslog(pamh, LOG_INFO,
++                 "Successful FIDO authentication with publicKey %s (idx %u)",
++                 devices[i].publicKey, i);
++#endif
+       retval = PAM_SUCCESS;
+       break;
+     }
+-- 
+2.53.0
+

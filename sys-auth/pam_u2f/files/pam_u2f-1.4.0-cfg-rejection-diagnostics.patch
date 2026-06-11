@@ -1,0 +1,122 @@
+From 767722ca5d39faf00f780d9a59505919eb380c0d Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Wed, 10 Jun 2026 23:00:36 -0500
+Subject: [PATCH] cfg: log reason when configuration file is rejected
+
+Addresses upstream issue Yubico/pam-u2f#383: pam-u2f silently fails
+when /etc/security/pam_u2f.conf (or a conf= file) is misformatted or
+has unsafe permissions/ownership, with no indication why. Maintainers
+confirmed the strict fail-closed checks in open_safely() are
+intentional hardening and should not change, but agreed the lack of
+diagnostics is a gap.
+
+This adds syslog(LOG_AUTHPRIV|LOG_WARNING, ...) messages, mirroring
+the existing auth-file permission warning in util.c, when a
+configured file is rejected for: a non-absolute conf= path, wrong
+ownership, not being a regular file, group/world-writable
+permissions, or being unreadable/oversized. The default config path
+being absent (the common case) remains silent, and all return codes
+are unchanged.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+---
+ cfg.c | 50 ++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 44 insertions(+), 6 deletions(-)
+
+diff --git a/cfg.c b/cfg.c
+index 00cf82d..8915fb9 100644
+--- a/cfg.c
++++ b/cfg.c
+@@ -8,6 +8,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/stat.h>
++#include <syslog.h>
+ #include <unistd.h>
+ 
+ #include <security/pam_modules.h>
+@@ -111,8 +112,15 @@ static int open_safely(int *outfd, size_t *outsize, const char *path) {
+   int fd, r = -EINVAL;
+   struct stat st;
+ 
+-  if (*path != '/')
++  if (*path != '/') {
++#ifndef WITH_FUZZING
++    syslog(LOG_AUTHPRIV | LOG_WARNING,
++           "warning(pam_u2f): configuration file path '%s' is not absolute, "
++           "ignoring",
++           path);
++#endif
+     return r;
++  }
+ 
+   fd = open(path, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW, 0);
+   if (fd == -1)
+@@ -122,11 +130,35 @@ static int open_safely(int *outfd, size_t *outsize, const char *path) {
+     goto fail;
+ 
+ #ifndef PAM_U2F_TESTING
+-  if (st.st_uid != 0)
+-    goto fail;
++  if (st.st_uid != 0) {
++#ifndef WITH_FUZZING
++    syslog(LOG_AUTHPRIV | LOG_WARNING,
++           "warning(pam_u2f): configuration file '%s' is not owned by root, "
++           "ignoring",
++           path);
+ #endif
+-  if (!S_ISREG(st.st_mode) || st.st_mode & (S_IWGRP | S_IWOTH))
+     goto fail;
++  }
++#endif
++  if (!S_ISREG(st.st_mode)) {
++#ifndef WITH_FUZZING
++    syslog(LOG_AUTHPRIV | LOG_WARNING,
++           "warning(pam_u2f): configuration file '%s' is not a regular file, "
++           "ignoring",
++           path);
++#endif
++    goto fail;
++  }
++  if (st.st_mode & (S_IWGRP | S_IWOTH)) {
++#ifndef WITH_FUZZING
++    syslog(LOG_AUTHPRIV | LOG_WARNING,
++           "warning(pam_u2f): permissions %04o for configuration file '%s' "
++           "are too open. Please change the file mode bits to 0644 or more "
++           "restrictive",
++           (unsigned int) st.st_mode & 0777, path);
++#endif
++    goto fail;
++  }
+   if (st.st_size < 0)
+     goto fail;
+ 
+@@ -212,8 +244,9 @@ static int cfg_load_defaults(cfg_t *cfg, const char *config_path) {
+   int fd = -1, r;
+   size_t fsize = 0;
+   char *buffer = NULL;
++  const char *path = config_path ? config_path : CFG_DEFAULT_PATH;
+ 
+-  r = open_safely(&fd, &fsize, config_path ? config_path : CFG_DEFAULT_PATH);
++  r = open_safely(&fd, &fsize, path);
+ 
+   /* Only the default config file is allowed to be missing. */
+   if (r == -ENOENT && config_path == NULL)
+@@ -223,8 +256,13 @@ static int cfg_load_defaults(cfg_t *cfg, const char *config_path) {
+     return PAM_SERVICE_ERR;
+ 
+   r = slurp(fd, fsize, &buffer);
+-  if (r)
++  if (r) {
++#ifndef WITH_FUZZING
++    syslog(LOG_AUTHPRIV | LOG_WARNING,
++           "warning(pam_u2f): unable to read configuration file '%s'", path);
++#endif
+     goto exit;
++  }
+ 
+   cfg_load_buffer(cfg, buffer);
+   cfg->defaults_buffer = buffer;
+-- 
+2.53.0
+
