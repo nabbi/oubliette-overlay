@@ -1,0 +1,34 @@
+From a86fe92ecc5df5d390dc349540d21d48939c71a7 Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Mon, 15 Jun 2026 11:59:10 -0500
+Subject: [PATCH] fuzz: export fido_dev_is_winhello()
+
+fido_dev_is_winhello() was added to src/export.gnu (and the llvm/msvc
+export lists) in fdaf5f3 ("introduce fido_dev_is_winhello()") but was
+never added to fuzz/export.gnu, even though that file has otherwise
+been kept in sync with src/export.gnu for newer API additions.
+
+As a result, libfido2 built with -DFUZZ=1 does not export
+fido_dev_is_winhello, so callers relying on its presence (e.g.
+OpenSSH's sk-usbhid.c, which provides its own static fallback when
+HAVE_FIDO_DEV_IS_WINHELLO is undefined) fail to build against it: the
+static fallback collides with the public declaration in fido.h.
+---
+ fuzz/export.gnu | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/fuzz/export.gnu b/fuzz/export.gnu
+index 0b63bdf..a4b33d8 100644
+--- a/fuzz/export.gnu
++++ b/fuzz/export.gnu
+@@ -255,6 +255,7 @@
+ 		fido_dev_info_set;
+ 		fido_dev_info_vendor;
+ 		fido_dev_is_fido2;
++		fido_dev_is_winhello;
+ 		fido_dev_major;
+ 		fido_dev_make_cred;
+ 		fido_dev_minor;
+-- 
+2.53.0
+

@@ -36,6 +36,7 @@ BDEPEND="
 PATCHES=(
 	"${FILESDIR}"/${PN}-1.12.0-cmakelists.patch
 	"${FILESDIR}"/${PN}-1.17.0-cbor-alloc-cap.patch
+	"${FILESDIR}"/${PN}-1.17.0-fuzz-export-fido_dev_is_winhello.patch
 )
 
 pkg_pretend() {
