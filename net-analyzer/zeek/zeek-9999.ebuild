@@ -72,8 +72,17 @@ src_prepare() {
 	if use python; then
 		sed -i 's:.*/3rdparty/pybind11/.*:if(DISABLE_PYTHON_BINDINGS):' \
 			auxil/broker/CMakeLists.txt || die
-		sed -i 's:.*/3rdparty/pybind11/.*::' \
-			auxil/broker/bindings/python/CMakeLists.txt || die
+		# The above pybind11-submodule-availability check is a single line in
+		# auxil/broker/CMakeLists.txt, but the same substring also appears as
+		# part of a two-line target_include_directories() call in
+		# bindings/python/CMakeLists.txt (an -I flag for the vendored
+		# submodule, which Gentoo doesn't check out). A line-based sed there
+		# would delete only the first physical line, leaving the second
+		# line's arguments orphaned outside any command -- a cmake parse
+		# error. Splice the two lines together instead, dropping just the
+		# vendored include path and keeping ${Python_INCLUDE_DIRS}.
+		perl -0777 -pe 's#\$\{CMAKE_CURRENT_SOURCE_DIR\}/3rdparty/pybind11/include/\s*\n\s*##' \
+			-i auxil/broker/bindings/python/CMakeLists.txt || die
 	fi
 
 	if ! use static-libs; then
