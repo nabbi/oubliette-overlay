@@ -273,3 +273,50 @@ from failing to a clean `exit=0`.
   snapshot can surface unrelated breakage that was simply never observed
   while the schedule was dormant (see the libjwt case study above, found
   exactly this way).
+
+## 7. Editing a previously-published ebuild: bump the revision
+
+**Mistake made and caught in this session:** editing `DEPEND` (or any
+behavior-affecting content) in an ebuild that's already been committed —
+e.g. `zoneminder-1.37.74.ebuild` — without renaming it to `-r1` (or the
+next `-rN`). Portage identifies an installed package by version+revision
+string only; it never diffs ebuild *content*. A user who already has
+`1.37.74` installed and just re-syncs the tree gets the edited DEPEND
+silently — no prompt to rebuild, no signal anything changed. Renaming the
+file to `-r1` is what makes the change visible to Portage (and to
+`world`/`@world` updates) at all. This applies to any published version,
+not just ones already pushed to GitHub — if it's a distinct
+version+revision string someone could have already emerged, treat it as
+published.
+
+Rule: **new content needs a new filename.** If the exact version+revision
+already exists in a state someone could have installed, don't edit it in
+place — copy to the next revision and edit that. Only a version+revision
+that's never been "released" from this overlay's perspective (a bump you
+are introducing in the same commit, like `zoneminder-1.38.4.ebuild` in the
+case study above) can be added fresh without an `-rN` suffix.
+
+**Live (`-9999`) ebuilds are the exception, but don't assume the suffix is
+meaningful — check.** `-9999` ebuilds are inherently unpinned (`emerge`
+always pulls current VCS HEAD), so editing one in place is normal practice
+and doesn't need a revision bump the way a numbered release does. But an
+existing `-9999-rN` filename isn't automatically evidence that a genuine
+per-change bump history exists — it can be leftover from an old bulk
+import that suffixed everything touched in that batch, independent of
+whether each individual file had a real prior `-r(N-1)` to revise. Check
+before trusting the suffix:
+```sh
+git log --oneline --follow -- path/to/pkg-9999-r1.ebuild   # full history
+git log --oneline --diff-filter=A -- path/to/pkg-9999.ebuild   # did a
+                                                                # non-'-rN'
+                                                                # version
+                                                                # ever exist?
+```
+In this repo, `zoneminder-9999-r1.ebuild` was added with `-r1` already in
+the filename in a single "refreshed with nginx support" bulk-import commit
+(2023-07-02), alongside `zoneminder-1.36.33-r1.ebuild` and
+`zoneminder-1.36.9999-r1.ebuild` getting the same blanket `-r1` in the same
+commit — not a deliberate second revision of a previously-published
+`zoneminder-9999.ebuild` (no such file existed at that point; it had been
+pruned earlier). Confirmed legacy naming, not a meaningful revision
+marker, and renamed back to `zoneminder-9999.ebuild`.
