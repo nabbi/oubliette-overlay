@@ -12,7 +12,7 @@ SRC_URI="https://github.com/Yubico/${PN}/archive/${PV}.tar.gz -> ${P}.tar.gz"
 LICENSE="BSD-2"
 SLOT="0/1"
 KEYWORDS="~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
-IUSE="hidapi nfc smartcard static-libs test -fuzz"
+IUSE="hidapi nfc smartcard static-libs test fuzz"
 REQUIRED_USE="fuzz? ( nfc )"
 RESTRICT="!test? ( test )"
 
