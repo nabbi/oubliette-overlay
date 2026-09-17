@@ -110,11 +110,23 @@ masters entry`. Known constraints to work around, not to try to bypass:
   `pmaint regen` step and isn't part of what ships to GitHub.
 - If you need to actually execute pkgcheck locally against the fix, mirror
   the workflow's own container rather than the unsynced local portage
-  config:
+  config. The image's entrypoint isn't a shell, mount the repo at
+  `/github/workspace` (matching where the real action puts it — some
+  pkgcheck code paths care about this), and `pmaint regen` needs
+  `--dir ~/.cache/pkgcheck/repos` or it'll try to write into the mounted
+  repo itself:
   ```sh
-  docker run --rm -v "$PWD":/repo -w /repo ghcr.io/pkgcore/pkgcheck:latest \
-    -c "pmaint sync gentoo && pmaint regen . && pkgcheck --color y ci --checks=-RedundantVersionCheck --keywords=-PotentialStable"
+  docker run --rm --entrypoint /usr/bin/bash \
+    --workdir /github/workspace -v "$PWD":/github/workspace \
+    ghcr.io/pkgcore/pkgcheck:latest -c "
+      pmaint sync gentoo &&
+      pmaint regen --dir ~/.cache/pkgcheck/repos . &&
+      pkgcheck --color n ci --exit GentooCI \
+        --checks=-RedundantVersionCheck --keywords=-PotentialStable"
   ```
+  This is much faster to iterate on than pushing empty commits, and it's
+  how the pkgcore-internals dig in §5's case study was actually done —
+  each guess took one local run instead of a round-trip through CI.
 - At minimum, always do the cheap checks that don't need the master repo:
   `git diff` the ebuild change, and re-read the fatal log line to confirm
   the exact atom you changed is the one that was unresolvable (not a
@@ -151,6 +163,41 @@ failure. Distinguish the two:
    run (see §6) and confirm the specific `NonsolvableDeps`/`dependency.bad`
    lines for that package are gone from the new log, not just that the mask
    file now has an entry.
+4. **Check both workflows separately — `package.unmask` at the repo root
+   fixes `repoman` but does *not* fix `pkgcheck`.** This isn't a typo or a
+   sync-timing fluke; it's a real, verified gap in pkgcore (traced into its
+   source, not guessed): `pkgcheck`'s `ProfileAddon` builds the masked-atom
+   set for its `NonsolvableDeps*` checks as
+   `target_repo.pkg_masks | repo.pkg_masks | masks` — explicitly folding in
+   *every* repo's repo-root `package.mask` across the masters chain — but
+   the corresponding unmask set is just bare `profile_obj.unmasks`, the
+   walked profile-*directory* chain only (`ProfileStack.stack`, built from
+   each profile dir's `parent` file). `pkgcore.ebuild.repo_objs.RepoConfig`
+   has a `pkg_masks` property for the repo-root `package.mask`; it has
+   **no `pkg_unmasks` counterpart at all** — so a repo-root
+   `profiles/package.unmask` (the standard override mechanism, and what
+   this file already used for the smokeping accounts) is structurally
+   invisible to this specific check, even though real dependency
+   resolution (`repoman`, `emerge`) honors it correctly. Confirmed by
+   direct introspection in the pkgcheck container:
+   ```python
+   from pkgcore.ebuild.repo_objs import RepoConfig
+   oubliette = RepoConfig('/github/workspace')
+   oubliette.base_profile.unmasks  # correctly contains the atom
+   oubliette.pkg_masks             # separate property; no pkg_unmasks exists
+   ```
+   The only way to make a profile-directory-level unmask visible to
+   pkgcheck would be duplicating `::gentoo`'s profile directory tree
+   locally just to drop a `package.unmask` inside each one — a maintenance
+   trap, not a fix; this overlay doesn't carry its own profile tree at all
+   (`profiles/default/` doesn't exist here) and shouldn't start for this.
+   Given `::gentoo` masks are usually a prelude to actual removal, and the
+   mask *entry itself* normally gets deleted along with the ebuilds once
+   removal completes (there's no reason to keep masking something that no
+   longer exists), this class of pkgcheck false-positive is generally
+   **self-resolving on the mask's own removal date** — treat "wait it out"
+   as a legitimate option alongside "unmask + accept pkgcheck stays red
+   until then", not a failure to find the real fix.
 
 **Case study (2026-09-17):** `www-misc/zoneminder` (1.36.x–1.38.x) depends
 on `dev-libs/libjwt[gnutls]`. `dev-libs/libjwt` is *also* forked into this
@@ -174,7 +221,10 @@ here is `package.unmask`, but it's a stopgap on a package upstream has
 decided isn't worth maintaining, not a real resolution. Revisit if
 `zoneminder` upstream drops its libjwt dependency (check their build docs)
 or a lighter JWT library becomes viable, rather than treating the unmask
-as permanent.
+as permanent. Outcome after unmasking: `repoman` went green immediately;
+`pkgcheck` stayed red for the exact reason in step 4 above, and is
+expected to self-clear around 2026-10-16 when `::gentoo` actually removes
+the package (and, presumably, the now-pointless mask entry with it).
 
 ## 6. After pushing
 
