@@ -271,7 +271,9 @@ src_install() {
 		# Move any existing content from include/ to targets/.../include/
 		if [[ -n "$(ls -A "${ED}/${CUDA_PATH}/include" 2>/dev/null)" ]]; then
 			einfo "Moving existing include content to target directory"
-			cp -a "${ED}/${CUDA_PATH}/include"/* "${ED}/${CUDA_PATH}/targets/${narch}-linux/include/" || die "failed to merge include content"
+			cp -a "${ED}/${CUDA_PATH}/include"/* \
+				"${ED}/${CUDA_PATH}/targets/${narch}-linux/include/" ||
+				die "failed to merge include content"
 		fi
 
 		# Now remove the directory
@@ -287,7 +289,9 @@ src_install() {
 		# Move any existing content from lib/ to targets/.../lib/
 		if [[ -n "$(ls -A "${ED}/${CUDA_PATH}/$(get_libdir)" 2>/dev/null)" ]]; then
 			einfo "Moving existing lib content to target directory"
-			cp -a "${ED}/${CUDA_PATH}/$(get_libdir)"/* "${ED}/${CUDA_PATH}/targets/${narch}-linux/lib/" || die "failed to merge lib content"
+			cp -a "${ED}/${CUDA_PATH}/$(get_libdir)"/* \
+				"${ED}/${CUDA_PATH}/targets/${narch}-linux/lib/" ||
+				die "failed to merge lib content"
 		fi
 
 		# Now remove the directory

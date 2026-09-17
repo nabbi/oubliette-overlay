@@ -7,7 +7,7 @@ DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{11..14} )
 inherit distutils-r1
 
-DESCRIPTION="BTest is a powerful framework for writing system tests."
+DESCRIPTION="BTest is a powerful framework for writing system tests"
 HOMEPAGE="https://github.com/zeek/btest"
 SRC_URI="https://github.com/zeek/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.gh.tar.gz"
 
