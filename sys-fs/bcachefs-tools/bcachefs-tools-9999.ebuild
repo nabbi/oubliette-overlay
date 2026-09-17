@@ -149,7 +149,7 @@ LLVM_COMPAT=( {17..21} )
 MODULES_INITRAMFS_IUSE=+initramfs
 MODULES_KERNEL_MIN=6.16
 MODULES_OPTIONAL_IUSE=+modules
-PYTHON_COMPAT=( python3_{11..14} )
+PYTHON_COMPAT=( python3_{11..15} )
 RUST_MIN_VER="1.85.0"
 VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/kentoverstreet.asc
 

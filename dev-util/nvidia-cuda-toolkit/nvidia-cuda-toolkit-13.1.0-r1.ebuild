@@ -5,7 +5,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..14} )
+PYTHON_COMPAT=( python3_{11..15} )
 inherit check-reqs edo toolchain-funcs
 inherit python-r1
 

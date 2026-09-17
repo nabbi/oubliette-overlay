@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..14} )
+PYTHON_COMPAT=( python3_{11..15} )
 
 if [[ ${PV} == *9999* ]]; then
 	EGIT_REPO_URI="https://github.com/PJK/libcbor.git"
