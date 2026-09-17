@@ -15,6 +15,7 @@
         <flag name="tools">Auxiliary tools for Bro: adtrace, zeek-cut, rst</flag>
         <flag name="zeekctl">Enable ZeekControl, a tool for operating Zeek installations</flag>
         <flag name="nodejs">JavaScript runtime, optional for nodejs zeek scripts</flag>
+        <flag name="zeromq">Enable the ZeroMQ cluster backend</flag>
     </use>
     <upstream>
         <remote-id type="github">zeek/zeek</remote-id>

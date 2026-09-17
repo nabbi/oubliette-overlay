@@ -1,0 +1,27 @@
+diff --git a/auxil/broker/bindings/python/CMakeLists.txt b/auxil/broker/bindings/python/CMakeLists.txt
+index 608734a..70faa99 100644
+--- a/auxil/broker/bindings/python/CMakeLists.txt
++++ b/auxil/broker/bindings/python/CMakeLists.txt
+@@ -46,14 +46,14 @@ if (APPLE)
+ endif ()
+ 
+ # Strip unnecessary sections of the binary on Linux/Mac OS.
+-if (CMAKE_STRIP)
+-    if (APPLE)
+-        add_custom_command(TARGET _broker POST_BUILD COMMAND ${CMAKE_STRIP} -u -r
+-                                                             $<TARGET_FILE:_broker>)
+-    else ()
+-        add_custom_command(TARGET _broker POST_BUILD COMMAND ${CMAKE_STRIP} $<TARGET_FILE:_broker>)
+-    endif ()
+-endif ()
++#if (CMAKE_STRIP)
++#    if (APPLE)
++#        add_custom_command(TARGET _broker POST_BUILD COMMAND ${CMAKE_STRIP} -u -r
++#                                                             $<TARGET_FILE:_broker>)
++#    else ()
++#        add_custom_command(TARGET _broker POST_BUILD COMMAND ${CMAKE_STRIP} $<TARGET_FILE:_broker>)
++#    endif ()
++#endif ()
+ 
+ if (NOT PY_MOD_INSTALL_DIR)
+     # Figure out Python module install directory.

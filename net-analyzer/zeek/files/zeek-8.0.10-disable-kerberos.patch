@@ -1,0 +1,23 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e4b9e38..39d529d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1218,12 +1218,12 @@ if (LIBMMDB_FOUND)
+ endif ()
+ 
+ set(USE_KRB5 false)
+-find_package(LibKrb5)
+-if (LIBKRB5_FOUND)
+-    set(USE_KRB5 true)
+-    include_directories(BEFORE SYSTEM ${LibKrb5_INCLUDE_DIR})
+-    list(APPEND OPTLIBS ${LibKrb5_LIBRARY})
+-endif ()
++#find_package(LibKrb5)
++#if (LIBKRB5_FOUND)
++#    set(USE_KRB5 true)
++#    include_directories(BEFORE SYSTEM ${LibKrb5_INCLUDE_DIR})
++#    list(APPEND OPTLIBS ${LibKrb5_LIBRARY})
++#endif ()
+ 
+ set(HAVE_PERFTOOLS false)
+ set(USE_PERFTOOLS_DEBUG false)
