@@ -31,9 +31,8 @@ else
 		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> \
 			CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
 		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz
-		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.zip -> CxxUrl-${MY_CXXURL_V}.zip"
+		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.tar.gz -> CxxUrl-${MY_CXXURL_V}.tar.gz"
 
-	BDEPEND="app-arch/unzip"
 	KEYWORDS="~amd64"
 fi
 

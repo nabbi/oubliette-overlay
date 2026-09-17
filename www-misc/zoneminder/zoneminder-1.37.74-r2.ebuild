@@ -6,7 +6,7 @@ EAPI=8
 inherit perl-functions readme.gentoo-r1 cmake flag-o-matic systemd optfeature
 
 DESCRIPTION="full-featured, open source, state-of-the-art video surveillance software system"
-HOMEPAGE="https://www.zoneminder.com/"
+HOMEPAGE="http://www.zoneminder.com/"
 
 MY_PV_MM=$(ver_cut 1-2)
 MY_PV_P=$(ver_cut 3-)
@@ -22,7 +22,7 @@ else
 	# so we re-pin here to avoid breaking our gentoo builds
 	MY_CRUD_V="14292374ccf1328f2d5db20897bd06f99ba4d938"
 	MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
-	MY_RTSP_V="a071599575f60a6f1f424e1f9b408dad7da734a8"
+	MY_RTSP_V="055d81fe1293429e496b19104a9ed3360755a440"
 	MY_CXXURL_V="eaf46c0207df24853a238d4499e7f4426d9d234c"
 
 	SRC_URI="
@@ -31,9 +31,8 @@ else
 		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> \
 			CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
 		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz
-		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.zip -> CxxUrl-${MY_CXXURL_V}.zip"
+		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.tar.gz -> CxxUrl-${MY_CXXURL_V}.tar.gz"
 
-	BDEPEND="app-arch/unzip"
 	KEYWORDS="~amd64"
 fi
 
@@ -41,7 +40,7 @@ LICENSE="GPL-2"
 SLOT="0"
 # first webserver in the list is the default, users will need to disable to select others
 IUSE_WEB_SERVER="apache2 nginx"
-IUSE="curl gcrypt +mmap mqtt vlc +${IUSE_WEB_SERVER}"
+IUSE="curl gcrypt +mmap vlc +${IUSE_WEB_SERVER}"
 REQUIRED_USE="
 	^^ ( ${IUSE_WEB_SERVER} )
 "
@@ -61,7 +60,7 @@ app-eselect/eselect-php
 dev-cpp/nlohmann_json
 dev-lang/perl:=
 dev-lang/php:*[curl,gd,inifile,intl,pdo,mysql,mysqli,sockets,sysvipc]
-dev-libs/libpcre2
+dev-libs/libpcre
 dev-perl/Archive-Zip
 dev-perl/Class-Std-Fast
 dev-perl/Data-Dump
@@ -99,7 +98,6 @@ curl? ( net-misc/curl )
 gcrypt? ( dev-libs/libgcrypt:0= )
 dev-libs/openssl:=
 mmap? ( dev-perl/Sys-Mmap )
-mqtt? ( app-misc/mosquitto )
 vlc? ( media-video/vlc[live] )
 ${DEPEND_WEB_SERVER}
 "
@@ -108,6 +106,10 @@ ${DEPEND_WEB_SERVER}
 RDEPEND="${DEPEND}"
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
+
+PATCHES=(
+	# "${FILESDIR}/${PN}-1.34.17_dont_gz_man.patch"
+)
 
 pkg_setup() {
 	if use nginx ; then
@@ -155,7 +157,7 @@ src_configure() {
 	export TZ=UTC # bug 630470
 
 	if ! use gcrypt; then
-		sed -i '/find_library(GCRYPT_LIBRARIES/d' CMakeLists.txt || die
+		sed -i '/find_library(GCRYPT_LIBRARIES/d' CMakeLists.txt
 	fi
 
 	mycmakeargs=(
@@ -175,7 +177,6 @@ src_configure() {
 		-DZM_NO_X10=OFF
 		-DZM_NO_CURL="$(usex curl OFF ON)"
 		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
-		-DZM_NO_MQTT="$(usex mqtt OFF ON)"
 		-DZM_JWT_BACKEND=jwt_cpp
 		-DZM_CRYPTO_BACKEND=openssl
 		-DZM_NO_RTSPSERVER=OFF
@@ -185,14 +186,18 @@ src_configure() {
 
 }
 
+src_compile() {
+	cmake_src_compile
+}
+
 src_install() {
 	cmake_src_install
 
-	rm -rf "${ED}/usr/cmake"
+	rm -rf "${D}/usr/cmake"
 
 	# decompress manpages installed by upstream
-	if [[ -d "${ED}/usr/share/man" ]]; then
-		find "${ED}/usr/share/man" -type f -name "*.gz" -exec gunzip {} \;
+	if [[ -d "${D}/usr/share/man" ]]; then
+		find "${D}/usr/share/man" -type f -name "*.gz" -exec gunzip {} \;
 	fi
 
 	# the log directory, can contain passwords - limit access
@@ -257,24 +262,24 @@ pkg_postinst() {
 	readme.gentoo_print_elog
 
 	if [[ -z "${REPLACING_VERSIONS}" ]]; then
-		elog "Fresh installs of zoneminder require a few additional steps. Please read the README.gentoo"
-		elog ""
-		elog "This package requires access to a Mysql compatible database server"
-		elog "ZoneMinder can connect to a remote database if desired"
-		optfeature_header "Mysql compatible database server"
-		optfeature "Install if you don't already have one" virtual/mysql
-		elog ""
-		elog "There are optional features/enhancements that can be added"
-		optfeature_header "Onvif Access"
-		optfeature "Verbose responses from camera" dev-perl/XML-LibXML
-		optfeature "Event monitoring" dev-perl/SOAP-Lite
-		optfeature_header "Email"
-		optfeature "Older email package (if new one isn't working)" dev-perl/MIME-tools
-		optfeature_header "Event creation enhancements"
-		optfeature "Retrieves image size" dev-perl/Image-Info
-		optfeature_header "Storage"
-		optfeature "Archive to SFTP server" dev-perl/Net-SFTP-Foreign
-		optfeature "Copy to Amazon S3 bucket" dev-perl/Net-Amazon-S3 dev-perl/File-Slurp
+			elog "Fresh installs of zoneminder require a few additional steps. Please read the README.gentoo"
+			elog ""
+			elog "This package requires access to a Mysql compatible database server"
+			elog "ZoneMinder can connect to a remote database if desired"
+			optfeature_header "Mysql compatible database server"
+			optfeature "Install if you don't already have one" virtual/mysql
+			elog ""
+			elog "There are optional features/enhancements that can be added"
+			optfeature_header "Onvif Access"
+			optfeature "Verbose responses from camera" dev-perl/XML-LibXML
+			optfeature "Event monitoring" dev-perl/SOAP-Lite
+			optfeature_header "Email"
+			optfeature "Older email package (if new one isn't working)" dev-perl/MIME-tools
+			optfeature_header "Event creation enhancements"
+			optfeature "Retrieves image size" dev-perl/Image-Info
+			optfeature_header "Storage"
+			optfeature "Archive to SFTP server" dev-perl/Net-SFTP-Foreign
+			optfeature "Copy to Amazon S3 bucket" dev-perl/Net-Amazon-S3 dev-perl/File-Slurp
 	else
 		local v
 		for v in ${REPLACING_VERSIONS}; do
@@ -294,7 +299,7 @@ pkg_postinst() {
 			ewarn "Example apache configs have been placed under /usr/share/doc/${PF}"
 			ewarn ""
 			ewarn "Your old configuration should be reviewed"
-			ewarn "To suppress this message, name your local configuration file something else"
+			ewarn "To suppresee this message, name your local configuraiton file something else"
 			ewarn ""
 		fi
 	fi
@@ -321,7 +326,7 @@ pkg_postinst() {
 		ewarn "    Then remove those old files to complete the migration."
 		ewarn ""
 		elog ""
-		elog "Remember to set appropriate permissions on user created files (i.e. /etc/zm/conf.d/*.conf):"
+		elog "Remember to set appropriate permisions on user created files (i.e. /etc/zm/conf.d/*.conf):"
 		elog "    chmod 640 local.conf"
 		elog "    chown root:${MY_WEB_GROUP} local.conf"
 		elog ""
