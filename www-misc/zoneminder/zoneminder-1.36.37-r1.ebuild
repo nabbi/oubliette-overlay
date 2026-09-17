@@ -37,7 +37,7 @@ LICENSE="GPL-2"
 SLOT="0"
 # first webserver in the list is the default, users will need to disable to select others
 IUSE_WEB_SERVER="apache2 nginx"
-IUSE="curl gcrypt gnutls +mmap vlc +${IUSE_WEB_SERVER}"
+IUSE="curl gcrypt +mmap vlc +${IUSE_WEB_SERVER}"
 REQUIRED_USE="
 	^^ ( ${IUSE_WEB_SERVER} )
 "
@@ -92,13 +92,7 @@ virtual/perl-Sys-Syslog
 virtual/perl-Time-HiRes
 curl? ( net-misc/curl )
 gcrypt? ( dev-libs/libgcrypt:0= )
-gnutls? (
-	net-libs/gnutls
-	dev-libs/libjwt[gnutls]
-)
-!gnutls? (
-	dev-libs/openssl:=
-)
+dev-libs/openssl:=
 mmap? ( dev-perl/Sys-Mmap )
 vlc? ( media-video/vlc[live] )
 ${DEPEND_WEB_SERVER}
@@ -158,9 +152,6 @@ src_configure() {
 	if ! use gcrypt; then
 		sed -i '/find_library(GCRYPT_LIBRARIES/d' CMakeLists.txt
 	fi
-	if ! use gnutls; then
-		sed -i '/find_library(GNUTLS_LIBRARIES/d' CMakeLists.txt
-	fi
 
 	mycmakeargs=(
 		-DZM_TMPDIR=/var/tmp/zm
@@ -179,7 +170,6 @@ src_configure() {
 		-DZM_NO_X10=OFF
 		-DZM_NO_CURL="$(usex curl OFF ON)"
 		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
-		-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="$(usex gnutls ON OFF)"
 		-DZM_NO_RTSPSERVER=OFF
 	)
 

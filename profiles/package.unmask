@@ -1,13 +1,3 @@
 acct-group/smokeping
 acct-user/smokeping
 
-# Nic Boet <nic@boet.cc> (2026-09-17)
-# ::gentoo masked dev-libs/libjwt on 2026-09-16 for removal on 2026-10-16
-# (bugs #929073, #939530), on the basis of "no revdeps". This overlay's
-# www-misc/zoneminder is a real revdep the ::gentoo mask author couldn't
-# see (zoneminder itself was treecleaned from ::gentoo previously and now
-# only lives here) - see .claude/skills/ci-triage for how this was found.
-# Keep unmasked as long as we carry zoneminder's JWT-auth versions; drop
-# both together if zoneminder moves off libjwt or this overlay drops it.
-dev-libs/libjwt
-

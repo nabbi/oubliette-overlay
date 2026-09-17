@@ -199,32 +199,54 @@ failure. Distinguish the two:
    as a legitimate option alongside "unmask + accept pkgcheck stays red
    until then", not a failure to find the real fix.
 
-**Case study (2026-09-17):** `www-misc/zoneminder` (1.36.x–1.38.x) depends
-on `dev-libs/libjwt[gnutls]`. `dev-libs/libjwt` is *also* forked into this
-overlay (`dev-libs/libjwt/`, with its own `*_multi_ssl_atools.patch` per
-version) because `zoneminder` itself was treecleaned from `::gentoo` and
-now only lives here — so this overlay depends on a package it has to keep
-patching just to keep one revdep alive. On 2026-09-16, `::gentoo` masked
-`dev-libs/libjwt` outright (removal 2026-10-16, bugs #929073 and #939530:
-`slibtool`/musl link failures — `cannot find -ljwt`), with the mask comment
-reasoning "No revdeps [...] unable to properly SLOT." The mask author is
-right about `::gentoo` (no revdeps *there*) and wrong about this overlay
-(one real revdep here, invisible to them). That's structural, not a
-one-off: **any package this overlay forks *specifically because* a revdep
-of it was treecleaned is now permanently exposed to `::gentoo` masking it
-out from under us with zero warning**, since nothing here subscribes to
-upstream's package.mask changes. The multi-ssl patch itself — building
-`libjwt.so`, `libjwt-ossl.so`, and `libjwt-gnutls.so` as three separate
-libraries so both SSL backends can coexist — is very likely *why* it's
-being called unmaintainable upstream ("Three different APIs"); the fix
-here is `package.unmask`, but it's a stopgap on a package upstream has
-decided isn't worth maintaining, not a real resolution. Revisit if
-`zoneminder` upstream drops its libjwt dependency (check their build docs)
-or a lighter JWT library becomes viable, rather than treating the unmask
-as permanent. Outcome after unmasking: `repoman` went green immediately;
-`pkgcheck` stayed red for the exact reason in step 4 above, and is
-expected to self-clear around 2026-10-16 when `::gentoo` actually removes
-the package (and, presumably, the now-pointless mask entry with it).
+**Case study (2026-09-17), and how it actually got resolved:**
+`www-misc/zoneminder` (1.36.x–1.38.x) depended on `dev-libs/libjwt[gnutls]`.
+`dev-libs/libjwt` was *also* forked into this overlay (with its own
+`*_multi_ssl_atools.patch` per version) purely to keep that one revdep
+alive, since `zoneminder` itself was treecleaned from `::gentoo` and now
+only lives here. On 2026-09-16, `::gentoo` masked `dev-libs/libjwt`
+outright (removal 2026-10-16, bugs #929073 and #939530), reasoning
+"No revdeps [...] unable to properly SLOT" — true for `::gentoo`, false
+for this overlay, and invisible to the mask author either way. First
+response was `package.unmask` (§3) as a stopgap: fixed `repoman`
+immediately, left `pkgcheck` red for the reason in step 4 above.
+
+That stopgap turned out to be unnecessary. Checking what the dependency
+was actually *for* (don't stop at "it's declared, so it must be needed")
+found the real fix:
+
+- `zoneminder` upstream added a `ZM_JWT_BACKEND` cmake option
+  (`libjwt`|`jwt_cpp`) starting in **1.37.74**, defaulting to `jwt_cpp` — a
+  vendored, header-only library (`dep/jwt-cpp/`) needing only OpenSSL, no
+  external package. This overlay's 1.37.74+ ebuilds never wired
+  `ZM_JWT_BACKEND`/`ZM_CRYPTO_BACKEND` into `mycmakeargs` at all, so the
+  `+gnutls` USE flag's `libjwt` dependency was **already dead code** —
+  CMake silently built with the `jwt_cpp` default regardless of the flag.
+  Removing it was a pure cleanup, zero behavior change.
+- For **1.36.x**, upstream never backported that cmake option (checked the
+  live `release-1.36` branch tip directly, not just the last tag) — so a
+  version bump couldn't do the same trick there. But reading the actual
+  C++ (`src/zm_crypt.cpp`) showed 1.36.38 already had the *identical*
+  `#if HAVE_LIBJWT ... #else ... #endif` dual implementation of
+  `verifyToken()` as 1.37+, and `dep/jwt-cpp` is linked **unconditionally**
+  in `src/CMakeLists.txt` regardless of whether libjwt is found. In other
+  words: 1.36.x's build system *already* falls back to the vendored
+  jwt-cpp cleanly when libjwt is absent — nothing to backport. The `+gnutls`
+  branch could be deleted exactly like 1.37+'s, no functional loss.
+- With every consuming ebuild fixed, `dev-libs/libjwt` had zero consumers
+  left in this overlay. Deleted the whole forked package (and the now
+  pointless `package.unmask` entry) rather than leaving it as an orphaned
+  fork nobody needed.
+
+**Lesson:** don't stop at "unmask it, wait for upstream's removal date to
+make the tool noise go away." That's the right call when the dependency is
+*genuinely* needed. Here it wasn't — the `+gnutls` DEPEND branch was stale
+relative to what the consuming ebuild's own build system actually required,
+on both the version where that was obviously true (1.37+, dead cmake wiring)
+and the version where it looked load-bearing at first glance (1.36.x, until
+the C++ source was actually read). Verified locally (docker repro from §4)
+before pushing: `pkgcheck ci --exit GentooCI` across the whole repo went
+from failing to a clean `exit=0`.
 
 ## 6. After pushing
 
