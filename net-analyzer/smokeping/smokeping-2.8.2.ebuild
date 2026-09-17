@@ -42,7 +42,7 @@ DEPEND="
 		www-apache/mod_fcgid
 	)
 	curl? ( >=net-misc/curl-7.21.4 )
-	dig? ( net-dns/bind-tools )
+	dig? ( net-dns/bind )
 	echoping? ( >=net-analyzer/echoping-6.0.2 )
 	ipv6? ( >=dev-perl/Socket6-0.20 )
 	radius? ( dev-perl/Authen-Radius )
