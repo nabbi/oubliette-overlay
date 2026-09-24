@@ -23,17 +23,13 @@ RDEPEND="
 	app-portage/eix
 	app-portage/gentoolkit
 	sys-apps/portage
-	app-portage/portage-utils
 "
-DEPEND="${RDEPEND}"
 
 src_prepare() {
 	default
 
 	if [[ ${PV} == 9999 ]] ; then
-		local suffix
-		suffix="$(git rev-parse --short HEAD)-gentoo" || die
-		sed -i -e "s/^\(VERSION=\".*\)\"/\1-${suffix}\"/" genup || die
+		sed -i -e "s/^\(VERSION=\".*\)\"/\1-${EGIT_VERSION:0:7}-gentoo\"/" genup || die
 	fi
 }
 
