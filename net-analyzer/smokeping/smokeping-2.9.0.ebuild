@@ -1,7 +1,7 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit autotools systemd tmpfiles
 
@@ -14,14 +14,20 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="apache2 curl dig echoping ipv6 radius"
 
+# configure only probes for RRDs, src_install needs the acct-* for fowners;
+# everything else is runtime only
 DEPEND="
 	acct-group/smokeping
 	acct-user/smokeping
-	>=dev-lang/perl-5.8.8-r8
+	dev-lang/perl
+	>=net-analyzer/rrdtool-1.2[graph,perl]
+"
+RDEPEND="
+	${DEPEND}
 	>=dev-perl/SNMP_Session-1.13
 	>=net-analyzer/fping-4.1[suid]
-	>=net-analyzer/rrdtool-1.2[graph,perl]
 	dev-perl/CGI
+	dev-perl/CGI-Fast
 	dev-perl/CGI-Session
 	dev-perl/Config-Grammar
 	dev-perl/Digest-HMAC
@@ -32,10 +38,10 @@ DEPEND="
 	dev-perl/Net-OpenSSH
 	dev-perl/Net-SNMP
 	dev-perl/Net-Telnet
+	dev-perl/Path-Tiny
 	dev-perl/libwww-perl
 	dev-perl/perl-ldap
 	virtual/perl-libnet
-	dev-perl/CGI-Fast
 	!apache2? ( virtual/httpd-cgi )
 	apache2? (
 		>=www-apache/mod_perl-2.0.1
@@ -47,17 +53,17 @@ DEPEND="
 	ipv6? ( >=dev-perl/Socket6-0.20 )
 	radius? ( dev-perl/Authen-Radius )
 "
-RDEPEND="${DEPEND}"
+
+PATCHES=(
+	"${FILESDIR}"/${PN}-2.9.0-anothercurl-help.patch
+)
 
 src_prepare() {
-	eapply "${FILESDIR}/${PN}-2.7.3-curl-help.patch"
-	eapply_user
-
 	default
 
 	sed -i -e '/^SUBDIRS = / s|thirdparty||g' Makefile.am || die
 	sed -i -e '/^perllibdir = / s|= .*|= $(libdir)|g' lib/Makefile.am || die
-	# bundled(?) dev-perl/SNMP_Session
+	# bundled copy of dev-perl/SNMP_Session
 	rm -r lib/{BER.pm,SNMP_Session.pm,SNMP_util.pm} || die
 	echo ${PV} > VERSION || die
 

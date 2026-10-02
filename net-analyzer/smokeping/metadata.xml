@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-<maintainer type="project">
-<email>netmon@gentoo.org</email>
-<name>Gentoo network monitoring and analysis project</name>
-</maintainer>
-<longdescription>
-Oubliette - ebuild version bump from Gentoo repository with bug fixes
-Fixes Bug #651212
-Fixes Bug #651646
-Upsteam depends on fping >=3.16, bumped to 4.1
-</longdescription>
-<use>
-<flag name="dig">Install <pkg>net-dns/bind-tools</pkg> for dig functionality</flag>
-<flag name="echoping">Install <pkg>net-analyzer/echoping</pkg> for echoping functionality</flag>
-</use>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+	<longdescription lang="en">
+		Oubliette - ebuild carried over from the Gentoo repository with bug fixes.
+		Fixes Bug #651212
+		Fixes Bug #651646
+		Upstream depends on fping >=3.16, bumped to 4.1
+	</longdescription>
+	<use>
+		<flag name="dig">Install <pkg>net-dns/bind</pkg> for dig functionality</flag>
+		<flag name="echoping">Install <pkg>net-analyzer/echoping</pkg> for echoping functionality</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">oetiker/SmokePing</remote-id>
+	</upstream>
 </pkgmetadata>
