@@ -1,0 +1,60 @@
+From d4f57d0606eb86a97ded4949abf0181b398b3dbc Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Thu, 1 Oct 2026 22:20:57 -0500
+Subject: [PATCH] cmake: include ncursesw/ncurses.h when the wide library is
+ found
+
+FindCurses with CURSES_NEED_WIDE returns the directory containing
+ncursesw/ncurses.h, but cmatrix.c always included <ncurses.h>. Where
+the narrow and wide headers are installed separately (e.g. Gentoo),
+that header lacks the wide-character API and the build fails with an
+implicit declaration of addwstr().
+
+Check for ncursesw/ncurses.h and include it when available. Also use
+CURSES_INCLUDE_DIRS instead of the deprecated CURSES_INCLUDE_DIR.
+---
+ CMakeLists.txt | 13 ++++++++++++-
+ cmatrix.c      |  4 +++-
+ 2 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fba6fed..0078b8e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -54,9 +54,20 @@ endif	()
+ Set(CURSES_NEED_NCURSES TRUE)
+ Set(CURSES_NEED_WIDE TRUE)
+ find_package(Curses)
+-include_directories(${CURSES_INCLUDE_DIR})
++include_directories(${CURSES_INCLUDE_DIRS})
+ add_definitions(-DHAVE_NCURSES_H)
+ 
++# With CURSES_NEED_WIDE, FindCurses locates ncursesw/ncurses.h and returns
++# its parent directory, so the wide header has to be included by that name.
++# On distributions that ship separate narrow and wide headers (e.g. Gentoo),
++# plain <ncurses.h> lacks the wide-character API such as addwstr().
++set(CMAKE_REQUIRED_INCLUDES ${CURSES_INCLUDE_DIRS})
++check_include_files("ncursesw/ncurses.h" HAVE_NCURSESW_NCURSES_H)
++unset(CMAKE_REQUIRED_INCLUDES)
++if (HAVE_NCURSESW_NCURSES_H)
++    add_definitions(-DHAVE_NCURSESW_NCURSES_H)
++endif()
++
+ include(CheckSymbolExists)
+ list(APPEND CMAKE_REQUIRED_LIBRARIES ncurses)
+ check_symbol_exists(use_default_colors "ncurses.h" HAVE_USE_DEFAULT_COLORS)
+diff --git a/cmatrix.c b/cmatrix.c
+index 7d8ca39..d5a7426 100644
+--- a/cmatrix.c
++++ b/cmatrix.c
+@@ -47,7 +47,9 @@
+ #include <getopt.h>
+ #endif
+ 
+-#ifdef HAVE_NCURSES_H
++#if defined(HAVE_NCURSESW_NCURSES_H)
++#include <ncursesw/ncurses.h>
++#elif defined(HAVE_NCURSES_H)
+ #include <ncurses.h>
+ #else
+ #ifdef _WIN32
