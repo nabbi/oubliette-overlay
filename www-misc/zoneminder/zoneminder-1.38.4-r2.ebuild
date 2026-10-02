@@ -77,7 +77,6 @@ dev-perl/libwww-perl
 dev-perl/Number-Bytes-Human
 dev-perl/JSON-MaybeXS
 dev-perl/Crypt-Eksblowfish
-dev-perl/Data-Entropy
 dev-perl/HTTP-Lite
 dev-perl/MIME-Lite
 dev-perl/MIME-tools
@@ -107,6 +106,10 @@ ${DEPEND_WEB_SERVER}
 RDEPEND="${DEPEND}"
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
+
+PATCHES=(
+	"${FILESDIR}/${PN}-1.38.4-migrate-passwords-salt.patch"
+)
 
 pkg_setup() {
 	if use nginx ; then
