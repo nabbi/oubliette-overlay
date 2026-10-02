@@ -26,15 +26,19 @@ DEPEND="sys-libs/ncurses:=[unicode(+)]"
 RDEPEND="${DEPEND}"
 
 PATCHES=(
-	# Pending upstream; drop once merged.
+	# Pending upstream; drop each once its PR is merged.
+	# https://github.com/abishekvashok/cmatrix/pull/217 (issue #215)
 	"${FILESDIR}"/${PN}-9999-cmake-ncursesw-header.patch
+	# https://github.com/abishekvashok/cmatrix/pull/218 (issue #216)
 	"${FILESDIR}"/${PN}-9999-cmake-font-install.patch
+	# https://github.com/abishekvashok/cmatrix/pull/219 (issue #108)
 	"${FILESDIR}"/${PN}-9999-cmake-resize.patch
 	"${FILESDIR}"/${PN}-9999-tty-fd-leak.patch
 )
 
 src_prepare() {
-	# cmake_minimum_required(VERSION 2.8) is rejected by cmake 4 (upstream PR #201).
+	# cmake_minimum_required(VERSION 2.8) is rejected by cmake 4.
+	# https://github.com/abishekvashok/cmatrix/pull/201
 	sed -i 's/cmake_minimum_required(VERSION 2.8)/cmake_minimum_required(VERSION 3.10)/' \
 		CMakeLists.txt || die
 

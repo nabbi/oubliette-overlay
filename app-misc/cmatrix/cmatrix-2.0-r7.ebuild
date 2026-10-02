@@ -21,12 +21,15 @@ RDEPEND="${DEPEND}"
 
 PATCHES=(
 	"${FILESDIR}"/${P}-cmake4.patch
-	# Upstream #118 (post-2.0): stray blocks left behind when shrinking.
+	# Stray blocks left behind when shrinking; merged after 2.0.
+	# https://github.com/abishekvashok/cmatrix/pull/118
 	"${FILESDIR}"/${P}-resize-garbage.patch
-	# Pending upstream (#108): fd leak on resize, CMake build never resized,
-	# and font install that ran mkfontdir on the live system.
+	# fd leak on resize, and the CMake build never resized (issue #108).
+	# https://github.com/abishekvashok/cmatrix/pull/219
 	"${FILESDIR}"/${P}-tty-fd-leak.patch
 	"${FILESDIR}"/${P}-cmake-resize.patch
+	# Font install ran mkfontdir on the live system (issue #216).
+	# https://github.com/abishekvashok/cmatrix/pull/218
 	"${FILESDIR}"/${P}-cmake-font-install.patch
 )
 
