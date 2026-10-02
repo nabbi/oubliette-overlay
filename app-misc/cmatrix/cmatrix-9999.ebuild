@@ -40,6 +40,8 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-tty-fd-leak.patch
 	# https://github.com/abishekvashok/cmatrix/pull/220 (issue #174)
 	"${FILESDIR}"/${PN}-term-unset-segfault.patch
+	# https://github.com/abishekvashok/cmatrix/pull/221
+	"${FILESDIR}"/${PN}-init-and-small-term.patch
 
 	# Others', pending upstream.
 	# https://github.com/abishekvashok/cmatrix/pull/192

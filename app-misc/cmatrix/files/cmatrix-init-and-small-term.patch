@@ -1,0 +1,49 @@
+From 0cf9fb7e415e41f0f58fb1c7567d484ef6b42964 Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Thu, 1 Oct 2026 23:38:40 -0500
+Subject: [PATCH] Initialise is_head, and avoid division by zero in 3-line
+ terminals
+
+var_init() allocated the matrix with malloc() but never set is_head, so
+the draw loop read uninitialised memory for cells no stream had
+touched yet. In old-style scrolling (-o) is_head is never set at all,
+so after a resize reused freed memory, random characters were drawn as
+white heads. Initialise it along with val.
+
+length[] used rand() % (LINES - 3), which divides by zero when the
+terminal is exactly 3 lines tall at start-up (SIGFPE). Clamp the
+modulus to at least 1.
+---
+ cmatrix.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/cmatrix.c b/cmatrix.c
+index 7d8ca39..ed66de4 100644
+--- a/cmatrix.c
++++ b/cmatrix.c
+@@ -223,6 +223,7 @@ void var_init() {
+     for (i = 0; i <= LINES; i++) {
+         for (j = 0; j <= COLS - 1; j += 2) {
+             matrix[i][j].val = -1;
++            matrix[i][j].is_head = false;
+         }
+     }
+ 
+@@ -231,7 +232,7 @@ void var_init() {
+         spaces[j] = (int) rand() % LINES + 1;
+ 
+         /* And length of the stream */
+-        length[j] = (int) rand() % (LINES - 3) + 3;
++        length[j] = (int) rand() % (LINES > 3 ? LINES - 3 : 1) + 3;
+ 
+         /* Sentinel value for creation of new objects */
+         matrix[1][j].val = ' ';
+@@ -698,7 +699,7 @@ if (console) {
+                         spaces[j]--;
+                     } else if (matrix[0][j].val == -1
+                         && matrix[1][j].val == ' ') {
+-                        length[j] = (int) rand() % (LINES - 3) + 3;
++                        length[j] = (int) rand() % (LINES > 3 ? LINES - 3 : 1) + 3;
+                         matrix[0][j].val = (int) rand() % randnum + randmin;
+ 
+                         spaces[j] = (int) rand() % LINES + 1;
