@@ -1,0 +1,27 @@
+From 0d29e84f3a0a7b56f5703b771e1316461b66c91a Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Thu, 1 Oct 2026 23:09:17 -0500
+Subject: [PATCH] Fix segfault with -f when TERM is unset
+
+The -f handling passed getenv("TERM") straight to strcmp(), which
+crashes when TERM is not set. Treat an unset TERM like any other
+non-"linux" value and set it to "linux".
+
+Fixes #174.
+---
+ cmatrix.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmatrix.c b/cmatrix.c
+index 7d8ca39..4902495 100644
+--- a/cmatrix.c
++++ b/cmatrix.c
+@@ -436,7 +436,7 @@ int main(int argc, char *argv[]) {
+     _putenv_s("TERM", "");
+ #endif
+ 
+-    if (force && strcmp("linux", getenv("TERM"))) {
++    if (force && (getenv("TERM") == NULL || strcmp("linux", getenv("TERM")))) {
+ #ifdef _WIN32
+         SetEnvironmentVariableW(L"TERM", L"linux");
+ #else

@@ -34,6 +34,10 @@ PATCHES=(
 	# https://github.com/abishekvashok/cmatrix/pull/219 (issue #108)
 	"${FILESDIR}"/${PN}-9999-cmake-resize.patch
 	"${FILESDIR}"/${PN}-9999-tty-fd-leak.patch
+	# https://github.com/abishekvashok/cmatrix/pull/220 (issue #174)
+	"${FILESDIR}"/${PN}-9999-term-unset-segfault.patch
+	# https://github.com/abishekvashok/cmatrix/pull/192
+	"${FILESDIR}"/${PN}-9999-c_die-exit-status.patch
 )
 
 src_prepare() {

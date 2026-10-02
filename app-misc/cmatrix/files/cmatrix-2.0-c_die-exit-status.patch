@@ -1,0 +1,125 @@
+From 3fe2631ce34f7d23ddf4c9619bdab94c414e3615 Mon Sep 17 00:00:00 2001
+From: ChenPi11 <wushengwuxi-msctinoulk@outlook.com>
+Date: Thu, 1 Oct 2026 23:10:21 -0500
+Subject: [PATCH] Return EXIT_FAILURE when c_die is called
+
+c_die() duplicated finish()'s cleanup and then exited with status 0, so
+fatal errors looked like success to callers. Let finish() skip the exit
+when asked, call it from c_die(), and exit with EXIT_FAILURE. Also use
+EXIT_SUCCESS for the -h and -V exits.
+
+(Backport to 2.0 of upstream PR #192: 4c85105, bb3381f.)
+---
+ cmatrix.c | 36 +++++++++++++-----------------------
+ 1 file changed, 13 insertions(+), 23 deletions(-)
+
+diff --git a/cmatrix.c b/cmatrix.c
+index 51ccb44..babfa60 100644
+--- a/cmatrix.c
++++ b/cmatrix.c
+@@ -85,7 +85,7 @@ int va_system(char *str, ...) {
+ }
+ 
+ /* What we do when we're all set to exit */
+-void finish(void) {
++void finish(int can_exit) {
+     curs_set(1);
+     clear();
+     refresh();
+@@ -98,7 +98,8 @@ void finish(void) {
+         va_system("setfont");
+ #endif
+     }
+-    exit(0);
++    if (can_exit)
++        exit(EXIT_SUCCESS);
+ }
+ 
+ /* What we do when we're all set to exit */
+@@ -106,24 +107,13 @@ void c_die(char *msg, ...) {
+ 
+     va_list ap;
+ 
+-    curs_set(1);
+-    clear();
+-    refresh();
+-    resetty();
+-    endwin();
+-
+-    if (console) {
+-#ifdef HAVE_CONSOLECHARS
+-        va_system("consolechars -d");
+-#elif defined(HAVE_SETFONT)
+-        va_system("setfont");
+-#endif
+-    }
++    finish(0);
+ 
+     va_start(ap, msg);
+     vfprintf(stderr, msg, ap);
+     va_end(ap);
+-    exit(0);
++
++    exit(EXIT_FAILURE);
+ }
+ 
+ void usage(void) {
+@@ -351,7 +341,7 @@ int main(int argc, char *argv[]) {
+         case 'h':
+         case '?':
+             usage();
+-            exit(0);
++            exit(EXIT_SUCCESS);
+         case 'o':
+             oldstyle = 1;
+             break;
+@@ -363,7 +353,7 @@ int main(int argc, char *argv[]) {
+             break;
+         case 'V':
+             version();
+-            exit(0);
++            exit(EXIT_SUCCESS);
+         case 'r':
+              rainbow = 1;
+              break;
+@@ -455,7 +445,7 @@ if (console) {
+         /* Check for signals */
+         if (signal_status == SIGINT || signal_status == SIGQUIT) {
+             if(lock != 1)
+-                finish();
++                finish(1);
+             /* exits */
+         }
+         if (signal_status == SIGWINCH) {
+@@ -465,7 +455,7 @@ if (console) {
+ 
+         if(signal_status == SIGTSTP){
+             if(lock != 1)
+-                    finish();
++                    finish(1);
+         }
+ 
+         count++;
+@@ -487,12 +477,12 @@ if (console) {
+                     ioctl(STDIN_FILENO, TIOCSTI, (char*)(str + i));
+                 free(str);
+ #endif
+-                finish();
++                finish(1);
+             } else {
+                 switch (keypress) {
+                 case 'q':
+                     if(lock != 1)
+-                        finish();
++                        finish(1);
+                     break;
+                 case 'a':
+                     asynch = 1 - asynch;
+@@ -787,6 +777,6 @@ if (console) {
+ 
+         napms(update * 10);
+     }
+-    finish();
++    finish(1);
+ }
+ 

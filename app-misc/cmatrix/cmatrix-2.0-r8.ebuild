@@ -31,6 +31,12 @@ PATCHES=(
 	# Font install ran mkfontdir on the live system (issue #216).
 	# https://github.com/abishekvashok/cmatrix/pull/218
 	"${FILESDIR}"/${P}-cmake-font-install.patch
+	# Segfault with -f when TERM is unset (issue #174).
+	# https://github.com/abishekvashok/cmatrix/pull/220
+	"${FILESDIR}"/${P}-term-unset-segfault.patch
+	# Fatal errors exited with status 0.
+	# https://github.com/abishekvashok/cmatrix/pull/192
+	"${FILESDIR}"/${P}-c_die-exit-status.patch
 )
 
 src_configure() {
