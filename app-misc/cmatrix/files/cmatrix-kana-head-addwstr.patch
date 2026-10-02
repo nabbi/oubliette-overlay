@@ -1,0 +1,35 @@
+From c079b11a014ae991aae4213b5fe6904390777a00 Mon Sep 17 00:00:00 2001
+From: IdkIsThisAGooodName <daniel.awas278@gmail.com>
+Date: Sun, 9 Aug 2026 17:32:31 +0400
+Subject: [PATCH] Fix Japanese character mode with ncursesw
+
+---
+ cmatrix.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/cmatrix.c b/cmatrix.c
+index 7d8ca39..7d710de 100644
+--- a/cmatrix.c
++++ b/cmatrix.c
+@@ -34,6 +34,7 @@
+ #include <fcntl.h>
+ #include <signal.h>
+ #include <locale.h>
++#include <wchar.h>
+ #ifdef _WIN32
+ #define WIN32_LEAN_AND_MEAN
+ #include <windows.h>
+@@ -782,7 +783,12 @@ if (console) {
+                     } else if (matrix[i][j].val == -1) {
+                         addch(' ');
+                     } else {
+-                        addch(matrix[i][j].val);
++                        if (classic) {
++                            wchar_t wc[2] = {(wchar_t)matrix[i][j].val, L'\0'};
++                            addwstr(wc);
++                        } else {
++                            addch(matrix[i][j].val);
++                        }
+                     }
+ 
+                     attroff(COLOR_PAIR(COLOR_WHITE));

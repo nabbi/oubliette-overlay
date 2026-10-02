@@ -6,7 +6,6 @@
 		<name>Georgy Yakovlev</name>
 	</maintainer>
 	<upstream>
-		<remote-id type="sourceforge">cmatrix</remote-id>
 		<remote-id type="github">abishekvashok/cmatrix</remote-id>
 	</upstream>
 </pkgmetadata>
