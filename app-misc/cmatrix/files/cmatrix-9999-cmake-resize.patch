@@ -1,0 +1,40 @@
+From a9044c2dca881a38a8a73af4d8f4d049f97fcd19 Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Thu, 1 Oct 2026 22:39:36 -0500
+Subject: [PATCH] cmake: check for resizeterm and wresize
+
+resize_screen() only calls resizeterm()/wresize() when HAVE_RESIZETERM
+and HAVE_WRESIZE are defined. configure.ac checks for both, but the
+CMake build never did, so CMake builds caught SIGWINCH yet kept drawing
+at the start-up size when the terminal was enlarged.
+
+Add the same checks to CMakeLists.txt.
+
+Fixes #108. See also #98.
+---
+ CMakeLists.txt | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fba6fed..5723b2d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -64,6 +64,18 @@ if (HAVE_USE_DEFAULT_COLORS)
+     add_definitions(-DHAVE_USE_DEFAULT_COLORS)
+ endif()
+ 
++# resize_screen() only tells curses about the new terminal size when these
++# are defined; without them the matrix stays at its start-up size (#98, #108).
++# configure.ac has always checked for them, the CMake build did not.
++check_symbol_exists(resizeterm "ncurses.h" HAVE_RESIZETERM)
++if (HAVE_RESIZETERM)
++    add_definitions(-DHAVE_RESIZETERM)
++endif()
++check_symbol_exists(wresize "ncurses.h" HAVE_WRESIZE)
++if (HAVE_WRESIZE)
++    add_definitions(-DHAVE_WRESIZE)
++endif()
++
+ add_executable(cmatrix cmatrix.c)
+ 
+ target_link_libraries(cmatrix ${CURSES_LIBRARIES})

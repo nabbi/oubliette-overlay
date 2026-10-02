@@ -29,6 +29,8 @@ PATCHES=(
 	# Pending upstream; drop once merged.
 	"${FILESDIR}"/${PN}-9999-cmake-ncursesw-header.patch
 	"${FILESDIR}"/${PN}-9999-cmake-font-install.patch
+	"${FILESDIR}"/${PN}-9999-cmake-resize.patch
+	"${FILESDIR}"/${PN}-9999-tty-fd-leak.patch
 )
 
 src_prepare() {
