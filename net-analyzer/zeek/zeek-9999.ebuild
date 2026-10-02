@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python3_{11..15} )
 inherit cmake python-single-r1
 
 DESCRIPTION="The Zeek Network Security Monitor"
-HOMEPAGE="https://www.zeek.org"
+HOMEPAGE="https://zeek.org"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
@@ -22,7 +22,7 @@ fi
 LICENSE="BSD"
 SLOT="0"
 IUSE="curl debug geoip2 ipsumdump ipv6 jemalloc kerberos +python sendmail
-	static-libs tcmalloc +btest +tools +zeekctl caf nodejs +zeromq"
+	static-libs tcmalloc +btest +tools +zeekctl caf +zeromq"
 
 RDEPEND="
 	caf? ( >=dev-libs/caf-0.18.2:0= )
@@ -35,15 +35,17 @@ RDEPEND="
 	ipsumdump? ( net-analyzer/ipsumdump[ipv6?] )
 	jemalloc? ( dev-libs/jemalloc:0= )
 	kerberos? ( virtual/krb5 )
-	nodejs? ( net-libs/nodejs )
 	python? ( ${PYTHON_DEPS}
 		$(python_gen_cond_dep '>=dev-python/pybind11-2.6.1[${PYTHON_USEDEP}]')
 	)
 	sendmail? ( virtual/mta )
 	tcmalloc? ( dev-util/google-perftools )
 	tools? (
-		dev-python/semantic-version
-		dev-python/gitpython )
+		$(python_gen_cond_dep '
+			dev-python/gitpython[${PYTHON_USEDEP}]
+			dev-python/semantic-version[${PYTHON_USEDEP}]
+		')
+	)
 	zeromq? ( >=net-libs/zeromq-4.3.0 )"
 
 DEPEND="${RDEPEND}"
@@ -51,7 +53,8 @@ DEPEND="${RDEPEND}"
 BDEPEND=">=dev-lang/swig-3.0
 	>=sys-devel/bison-2.5"
 
-REQUIRED_USE="zeekctl? ( python )
+REQUIRED_USE="tools? ( python )
+	zeekctl? ( python )
 	python? ( ${PYTHON_REQUIRED_USE} )"
 
 PATCHES=(
@@ -87,9 +90,9 @@ src_prepare() {
 
 	if ! use static-libs; then
 		sed -i 's:add_library(paraglob STATIC:add_library(paraglob SHARED:' \
-			auxil/paraglob/src/CMakeLists.txt
+			auxil/paraglob/src/CMakeLists.txt || die
 		sed -i 's:DESTINATION lib:DESTINATION ${INSTALL_LIB_DIR}:' \
-			auxil/paraglob/src/CMakeLists.txt
+			auxil/paraglob/src/CMakeLists.txt || die
 	fi
 
 	if ! use kerberos; then
@@ -97,8 +100,7 @@ src_prepare() {
 	fi
 
 	if [[ ${PV} == 9999 ]]; then
-		suffix="$(git rev-parse --short HEAD)-gentoo"
-		sed -i "s/$/_$(git rev-parse --short HEAD)-gentoo/" VERSION	|| die "version sed failed"
+		sed -i "s/$/_$(git rev-parse --short HEAD)-gentoo/" VERSION || die
 	fi
 
 	cmake_src_prepare
@@ -116,7 +118,7 @@ src_configure() {
 		-DINSTALL_AUX_TOOLS=$(usex tools)
 		-DINSTALL_ZEEK_CLIENT=$(usex tools)
 		-DDISABLE_PYTHON_BINDINGS=$(usex python no yes)
-		-DDISABLE_JAVASCRIPT=$(usex nodejs no yes)
+		-DDISABLE_JAVASCRIPT=yes
 		-DENABLE_CLUSTER_BACKEND_ZEROMQ=$(usex zeromq)
 		-DPython_EXECUTABLE="${PYTHON}"
 		-DZEEK_ETC_INSTALL_DIR="/etc/${PN}"
@@ -124,7 +126,7 @@ src_configure() {
 		-DPY_MOD_INSTALL_DIR="$(python_get_sitedir)"
 		-DBINARY_PACKAGING_MODE=true
 		-DBUILD_SHARED_LIBS=ON
-		-DINSTALL_ZKG=ON
+		-DINSTALL_ZKG=$(usex tools)
 	)
 
 	use debug && use tcmalloc && mycmakeargs+=( -DENABLE_PERFTOOLS_DEBUG=yes )
@@ -132,9 +134,8 @@ src_configure() {
 		-DZEEK_LOG_DIR="/var/log/${PN}"
 		-DZEEK_SPOOL_DIR="/var/spool/${PN}"
 	)
-	use caf &&  mycmakeargs+=( -DCAF_ROOT="${EPREFIX}/usr/include/caf" )
+	use caf && mycmakeargs+=( -DCAF_ROOT="${EPREFIX}/usr/include/caf" )
 
-	# TODO: is >=dev-python/btest-1.1 needed ? btest bins are installed with zeek release
 	if ! use btest; then
 		mycmakeargs+=(
 			-DBROKER_DISABLE_TESTS=true
@@ -149,27 +150,26 @@ src_configure() {
 
 	# TODO: cmake target_compile_options appends priv_cflags without removing semicolon
 	# submodule impacted https://github.com/simonfxr/fiber
-	sed -iE 's:FLAGS\ =\(.*\);:FLAGS =\1 :' "${BUILD_DIR}/build.ninja" || die
+	sed -i 's:FLAGS\ =\(.*\);:FLAGS =\1 :' "${BUILD_DIR}/build.ninja" || die
 }
 
 src_install() {
 	cmake_src_install
 
-	use python && python_optimize \
-		"${D}"/usr/"$(get_libdir)"/zeek/python/ \
-		"${D}"/usr/"$(get_libdir)"/zeek/python/broker \
-		"${D}"/usr/"$(get_libdir)"/zeek/python/zeekctl/ZeekControl \
-		"${D}"/usr/"$(get_libdir)"/zeek/python/zeekctl/plugins
+	use python && python_optimize "${D}"/usr/$(get_libdir)/zeek/python
 
-	keepdir \
-		/var/log/"${PN}" \
-		/var/spool/"${PN}"/{tmp,brokerstore} \
-		/var/lib/zkg
+	keepdir /var/log/${PN} /var/spool/${PN}/{tmp,brokerstore}
+	use tools && keepdir /var/lib/zkg
 
 	# Make sure local config does not get overwritten on reinstalls
 	mv "${ED}"/usr/share/zeek/site "${ED}"/etc/zeek/ || die
 
 	# set config paths
-	sed -i "s:^SitePolicyScripts.*$:SitePolicyScripts = /etc/zeek/site/local.zeek:" "${ED}"/etc/zeek/zeekctl.cfg || die
-	sed -i "s:^state_dir.*$:state_dir = /var/lib/zkg:" "${ED}"/etc/zeek/zkg/config || die
+	if use zeekctl; then
+		sed -i "s:^SitePolicyScripts.*$:SitePolicyScripts = /etc/zeek/site/local.zeek:" \
+			"${ED}"/etc/zeek/zeekctl.cfg || die
+	fi
+	if use tools; then
+		sed -i "s:^state_dir.*$:state_dir = /var/lib/zkg:" "${ED}"/etc/zeek/zkg/config || die
+	fi
 }
