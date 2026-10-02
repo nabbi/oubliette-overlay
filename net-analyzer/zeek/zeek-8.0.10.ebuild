@@ -22,10 +22,9 @@ fi
 LICENSE="BSD"
 SLOT="0"
 IUSE="curl debug geoip2 ipsumdump ipv6 jemalloc kerberos +python sendmail
-	static-libs tcmalloc +btest +tools +zeekctl caf +zeromq"
+	static-libs tcmalloc +btest +tools +zeekctl +zeromq"
 
 RDEPEND="
-	caf? ( >=dev-libs/caf-0.18.2:0= )
 	debug? ( dev-debug/gdb )
 	dev-libs/openssl:0=
 	net-libs/libpcap
@@ -67,11 +66,6 @@ if [[ ! ${PV} == 9999 ]]; then
 fi
 
 src_prepare() {
-	if use caf; then
-		rm -rf auxil/broker/caf || die
-		rm -rf auxil/broker/caf-incubator || die
-	fi
-
 	if use python; then
 		sed -i 's:.*/3rdparty/pybind11/.*:if(DISABLE_PYTHON_BINDINGS):' \
 			auxil/broker/CMakeLists.txt || die
@@ -134,7 +128,6 @@ src_configure() {
 		-DZEEK_LOG_DIR="/var/log/${PN}"
 		-DZEEK_SPOOL_DIR="/var/spool/${PN}"
 	)
-	use caf && mycmakeargs+=( -DCAF_ROOT="${EPREFIX}/usr/include/caf" )
 
 	if ! use btest; then
 		mycmakeargs+=(

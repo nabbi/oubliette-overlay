@@ -6,7 +6,6 @@
     </maintainer>
     <use>
         <flag name="btest">Install the BTest framework and test data bundled with Zeek</flag>
-        <flag name="caf">Build against external C++ Actor Framework (for development only)</flag>
         <flag name="geoip2">Enable support for Maxmind's GeoIP library</flag>
         <flag name="ipsumdump">Enables ipsumdump support for trace-summary</flag>
         <flag name="python">Enable Python bindings for broker</flag>
