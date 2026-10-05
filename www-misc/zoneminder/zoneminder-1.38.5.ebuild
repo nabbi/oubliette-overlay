@@ -107,10 +107,6 @@ RDEPEND="${DEPEND}"
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
 
-PATCHES=(
-	"${FILESDIR}/${PN}-1.38.4-migrate-passwords-salt.patch"
-)
-
 pkg_setup() {
 	if use nginx ; then
 		MY_WEB_USER=nginx
