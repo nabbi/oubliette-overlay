@@ -77,7 +77,6 @@ dev-perl/libwww-perl
 dev-perl/Number-Bytes-Human
 dev-perl/JSON-MaybeXS
 dev-perl/Crypt-Eksblowfish
-dev-perl/Data-Entropy
 dev-perl/HTTP-Lite
 dev-perl/MIME-Lite
 dev-perl/MIME-tools
