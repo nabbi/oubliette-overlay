@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+
+	<longdescription>
+		Rust rewrite of route-summarization. Installs aggregate-cidr, which
+		collapses IPv4 and IPv6 prefixes into their minimal covering set,
+		with optional SPF ip4:/ip6: input and output and exact address
+		exclusion. Command-line compatible with aggregateCIDR.pl.
+	</longdescription>
+
+	<upstream>
+		<remote-id type="github">nabbi/route-summarization-rs</remote-id>
+	</upstream>
+</pkgmetadata>
