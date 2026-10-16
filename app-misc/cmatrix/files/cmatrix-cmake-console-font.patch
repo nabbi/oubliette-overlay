@@ -1,0 +1,44 @@
+From 93127e751cebd6a211beb972af7ef02453189aac Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Fri, 16 Oct 2026 18:04:55 -0500
+Subject: [PATCH] cmake: check for consolechars and setfont
+
+The -l option is only compiled in when HAVE_CONSOLECHARS or HAVE_SETFONT
+is defined; otherwise it always dies with "Unable to use both setfont
+and consolechars". configure.ac checks for both programs, but the CMake
+build never did, so -l could never work in CMake builds.
+
+Add the same checks to CMakeLists.txt, preferring consolechars as
+configure.ac does.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ CMakeLists.txt | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fba6fed..0632e54 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -64,6 +64,18 @@ if (HAVE_USE_DEFAULT_COLORS)
+     add_definitions(-DHAVE_USE_DEFAULT_COLORS)
+ endif()
+ 
++# -l switches the Linux console to the matrix font with consolechars or
++# setfont, and is only compiled in when one of them was found; otherwise it
++# always fails with "Unable to use both setfont and consolechars".
++# configure.ac has always checked for them, the CMake build did not.
++find_program(CONSOLECHARS consolechars)
++find_program(SETFONT setfont)
++if (CONSOLECHARS)
++    add_definitions(-DHAVE_CONSOLECHARS)
++elseif (SETFONT)
++    add_definitions(-DHAVE_SETFONT)
++endif()
++
+ add_executable(cmatrix cmatrix.c)
+ 
+ target_link_libraries(cmatrix ${CURSES_LIBRARIES})
+-- 
+2.55.0
+

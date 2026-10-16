@@ -42,6 +42,8 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-term-unset-segfault.patch
 	# https://github.com/abishekvashok/cmatrix/pull/221
 	"${FILESDIR}"/${PN}-init-and-small-term.patch
+	# -l: check for consolechars/setfont (not yet filed upstream)
+	"${FILESDIR}"/${PN}-cmake-console-font.patch
 
 	# Others', pending upstream.
 	# https://github.com/abishekvashok/cmatrix/pull/192
