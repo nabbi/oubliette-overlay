@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+
+	<longdescription>
+		Flattens SPF records to stay within the RFC 7208 limits of 10 DNS
+		lookups and 2 void lookups. Resolves the senders a domain lists,
+		replaces lookup terms with aggregated ip4:/ip6: ranges, packs them
+		into a chain of TXT records and verifies the result authorizes the
+		same senders. Also checks published records, imports them into a
+		config, detects drift and scores each source's drift risk.
+	</longdescription>
+
+	<upstream>
+		<remote-id type="github">nabbi/spf-flatten</remote-id>
+	</upstream>
+</pkgmetadata>
