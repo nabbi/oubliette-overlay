@@ -10,7 +10,6 @@ Related repositories:
 
 * [oubliette-patches](https://github.com/nabbi/oubliette-patches) — supplemental patches used by some ebuilds.
 * [oubliette-overlay-dev](https://github.com/nabbi/oubliette-overlay-dev) — experimental development sandbox.
-* [oubliette-ebuild-verbump](https://github.com/nabbi/oubliette-ebuild-verbump) — small helper scripts for automated version bumps.
 
 ## Install
 
