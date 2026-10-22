@@ -38,8 +38,11 @@ Alias /zm "%ZM_WEBDIR%"
     </IfModule>
 </Directory>
 
-# With mod_php, a fresh child per connection also limits PHP2Shell-type bugs
-# (server-wide, in the MPM config, costs a process start per connection):
+# With mod_php, also set a fresh child per connection: the multipart block
+# above leaves other request bodies that can put a PHP process in a bad state
+# (PHP2Shell). It is server-wide, so it goes in the prefork section of
+# /etc/apache2/modules.d/00_mpm.conf, not here; costs a process start per
+# connection:
 #   MaxConnectionsPerChild 1
 
 <Directory "/usr/libexec/zoneminder/cgi-bin">

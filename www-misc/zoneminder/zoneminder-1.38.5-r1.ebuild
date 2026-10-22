@@ -282,6 +282,15 @@ pkg_postinst() {
 		done
 	fi
 
+	# 2026-10-22 PHP2Shell: mod_php reuses a child after a request-startup
+	# out-of-memory error; php-fpm's example pool sets pm.max_requests = 1
+	if use apache2; then
+		elog ""
+		elog "With mod_php, set MaxConnectionsPerChild 1 in the prefork section of"
+		elog "/etc/apache2/modules.d/00_mpm.conf (see README.gentoo, step 4)"
+		elog ""
+	fi
+
 	# 2023-06-20 apache2 config no longer installed by default
 	# avoid breaking an existing install, advise user to migrate
 	if use apache2; then

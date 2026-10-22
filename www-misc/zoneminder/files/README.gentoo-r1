@@ -44,6 +44,12 @@ New Installation:
         for nginx or apache with php-fpm you will need to configure the php-fpm service see
         https://wiki.gentoo.org/wiki/Nginx#PHP_support
 
+        for apache with mod_php, set MaxConnectionsPerChild 1 in the prefork section of
+        /etc/apache2/modules.d/00_mpm.conf: each connection then gets a fresh child, so a
+        PHP process left in a bad state by one request (PHP2Shell, CVE-2026-109618/109619)
+        never serves the next one. It costs a process start per connection. php-fpm users
+        get the same from pm.max_requests = 1 in /usr/share/doc/zoneminder*/zoneminder.php-fpm.conf*
+
     5. Start the zoneminder daemon
 
        /etc/init.d/zoneminder start
