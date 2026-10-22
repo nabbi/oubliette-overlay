@@ -23,7 +23,24 @@ Alias /zm "%ZM_WEBDIR%"
     Options -Indexes +MultiViews +FollowSymLinks
     AllowOverride None
     Require all granted
+
+    # Refuse multipart bodies before they reach PHP: PHP parses them before
+    # any ZoneMinder code runs (PHP2Shell, CVE-2026-109618/109619). The only
+    # ZoneMinder feature that needs multipart is the monitor CSV import
+    # (Add Monitors); comment this out while you use it.
+    <If "%{HTTP:Content-Type} =~ m#^multipart/#i">
+        Require all denied
+    </If>
+
+    # ZoneMinder does not use upload progress
+    <IfModule php_module>
+        php_admin_flag session.upload_progress.enabled off
+    </IfModule>
 </Directory>
+
+# With mod_php, a fresh child per connection also limits PHP2Shell-type bugs
+# (server-wide, in the MPM config, costs a process start per connection):
+#   MaxConnectionsPerChild 1
 
 <Directory "/usr/libexec/zoneminder/cgi-bin">
     Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
