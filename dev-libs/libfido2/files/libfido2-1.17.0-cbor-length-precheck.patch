@@ -1,0 +1,299 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Sun, 25 Oct 2026 21:54:09 -0500
+Subject: [PATCH 2/2] cbor: reject impossible array/map sizes before
+ cbor_load()
+
+cbor_load() preallocates storage for definite-length arrays and maps
+from the element count in the header, before reading any element
+(PJK/libcbor#418). A 2KB reply can therefore make libfido2 request
+gigabytes of memory.
+
+Every CBOR item is at least one byte, and every element of a
+definite-length array or map is a separate item, so the elements
+claimed by all headers in a buffer can never exceed the buffer's
+length. fido_cbor_load() checks this with a cbor_stream_decode() pass
+and only then calls cbor_load(); all internal cbor_load() callers are
+switched to it. Allocations are now bounded by the input size.
+
+This is input validation local to each parse: it does not install a
+libcbor allocator or change any process-wide limit, so it has none of
+the global side effects raised in #985 or Yubico/pam-u2f#394, and
+applications remain free to call cbor_set_allocs() themselves.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ regress/cred.c  | 43 ++++++++++++++++++++++++++++++++++
+ src/assert.c    |  4 ++--
+ src/cbor.c      | 61 +++++++++++++++++++++++++++++++++++++++++++++----
+ src/cred.c      |  6 ++---
+ src/extern.h    |  2 ++
+ src/largeblob.c |  4 ++--
+ src/winhello.c  |  2 +-
+ 7 files changed, 110 insertions(+), 12 deletions(-)
+
+diff --git a/regress/cred.c b/regress/cred.c
+index 28b6773..823ecf5 100644
+--- a/regress/cred.c
++++ b/regress/cred.c
+@@ -3022,6 +3022,48 @@ entattest(void)
+ 	fido_dev_free(&dev);
+ }
+ 
++/* PJK/libcbor#418 */
++static void *
++guarded_malloc(size_t n)
++{
++	assert(n < 1024 * 1024);
++	return (malloc(n));
++}
++
++static void *
++guarded_realloc(void *p, size_t n)
++{
++	assert(n < 1024 * 1024);
++	return (realloc(p, n));
++}
++
++static void
++oversized_cbor(void)
++{
++	/* array claiming 0x10000000 elements */
++	const unsigned char wide[] = {
++		0x9b, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
++	};
++	/* nested arrays, each claiming 200 elements; 200 * 256 > 512 */
++	unsigned char deep[512];
++	fido_cred_t *c;
++	size_t i;
++
++	for (i = 0; i < sizeof(deep); i += 2) {
++		deep[i] = 0x98;
++		deep[i + 1] = 0xc8;
++	}
++
++	cbor_set_allocs(guarded_malloc, guarded_realloc, free);
++	c = alloc_cred();
++	assert(fido_cred_set_attobj(c, wide, sizeof(wide)) ==
++	    FIDO_ERR_INVALID_ARGUMENT);
++	assert(fido_cred_set_attobj(c, deep, sizeof(deep)) ==
++	    FIDO_ERR_INVALID_ARGUMENT);
++	free_cred(c);
++	cbor_set_allocs(malloc, realloc, free);
++}
++
+ /* empty containers may have no storage (PJK/libcbor#437) */
+ static void
+ empty_attstmt(void)
+@@ -3088,6 +3130,7 @@ main(void)
+ 	valid_tpm_rs256_cred(xfail);
+ 	valid_tpm_es256_cred(xfail);
+ 	attestation_object();
++	oversized_cbor();
+ 	empty_attstmt();
+ 	makecred();
+ 	entattest();
+diff --git a/src/assert.c b/src/assert.c
+index 2bab040..a6ae506 100644
+--- a/src/assert.c
++++ b/src/assert.c
+@@ -477,7 +477,7 @@ fido_get_signed_hash(int cose_alg, fido_blob_t *dgst,
+ 
+ 	fido_log_debug("%s: cose_alg=%d", __func__, cose_alg);
+ 
+-	if ((item = cbor_load(authdata_cbor->ptr, authdata_cbor->len,
++	if ((item = fido_cbor_load(authdata_cbor->ptr, authdata_cbor->len,
+ 	    &cbor)) == NULL || cbor_isa_bytestring(item) == false ||
+ 	    cbor_bytestring_is_definite(item) == false) {
+ 		fido_log_debug("%s: authdata", __func__);
+@@ -1072,7 +1072,7 @@ fido_assert_set_authdata(fido_assert_t *assert, size_t idx,
+ 	stmt = &assert->stmt[idx];
+ 	fido_assert_clean_authdata(stmt);
+ 
+-	if ((item = cbor_load(ptr, len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(ptr, len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		r = FIDO_ERR_INVALID_ARGUMENT;
+ 		goto fail;
+diff --git a/src/cbor.c b/src/cbor.c
+index 4db73db..7499c3d 100644
+--- a/src/cbor.c
++++ b/src/cbor.c
+@@ -119,6 +119,59 @@ cbor_array_iter(const cbor_item_t *item, void *arg, int(*f)(const cbor_item_t *,
+ 	return (0);
+ }
+ 
++static void
++count_array(void *arg, uint64_t n)
++{
++	uint64_t *claimed = arg;
++
++	*claimed = n > UINT64_MAX - *claimed ? UINT64_MAX : *claimed + n;
++}
++
++static void
++count_map(void *arg, uint64_t n)
++{
++	count_array(arg, n);
++	count_array(arg, n);
++}
++
++/*
++ * cbor_load() preallocates storage for definite-length arrays and maps
++ * based on the count in the header, before any element is read
++ * (PJK/libcbor#418). Every element is at least one byte, so the elements
++ * claimed by all headers in a buffer can never exceed its length. Reject
++ * input that claims more before handing it to cbor_load(). This bounds
++ * allocations by the input size without touching libcbor's allocator.
++ */
++cbor_item_t *
++fido_cbor_load(const unsigned char *ptr, size_t len,
++    struct cbor_load_result *res)
++{
++	struct cbor_callbacks		cb = cbor_empty_callbacks;
++	struct cbor_decoder_result	d;
++	uint64_t			claimed = 0;
++	size_t				off = 0;
++
++	cb.array_start = count_array;
++	cb.map_start = count_map;
++
++	while (off < len) {
++		d = cbor_stream_decode(ptr + off, len - off, &cb, &claimed);
++		if (d.status != CBOR_DECODER_FINISHED || d.read == 0)
++			break; /* let cbor_load() report the error */
++		off += d.read;
++		if (claimed > len) {
++			fido_log_debug("%s: claimed=%llu, len=%zu", __func__,
++			    (unsigned long long)claimed, len);
++			memset(res, 0, sizeof(*res));
++			res->error.code = CBOR_ERR_MALFORMATED;
++			res->error.position = off;
++			return (NULL);
++		}
++	}
++
++	return (cbor_load(ptr, len, res));
++}
++
+ int
+ cbor_parse_reply(const unsigned char *blob, size_t blob_len, void *arg,
+     int(*parser)(const cbor_item_t *, const cbor_item_t *, void *))
+@@ -139,7 +192,7 @@ cbor_parse_reply(const unsigned char *blob, size_t blob_len, void *arg,
+ 		goto fail;
+ 	}
+ 
+-	if ((item = cbor_load(blob + 1, blob_len - 1, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(blob + 1, blob_len - 1, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		r = FIDO_ERR_RX_NOT_CBOR;
+ 		goto fail;
+@@ -1137,7 +1190,7 @@ decode_attcred(const unsigned char **buf, size_t *len, int cose_alg,
+ 		return (-1);
+ 	}
+ 
+-	if ((item = cbor_load(*buf, *len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(*buf, *len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		goto fail;
+ 	}
+@@ -1292,7 +1345,7 @@ decode_cred_extensions(const unsigned char **buf, size_t *len,
+ 
+ 	fido_log_xxd(*buf, *len, "%s", __func__);
+ 
+-	if ((item = cbor_load(*buf, *len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(*buf, *len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		goto fail;
+ 	}
+@@ -1367,7 +1420,7 @@ decode_assert_extensions(const unsigned char **buf, size_t *len,
+ 
+ 	fido_log_xxd(*buf, *len, "%s", __func__);
+ 
+-	if ((item = cbor_load(*buf, *len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(*buf, *len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		goto fail;
+ 	}
+diff --git a/src/cred.c b/src/cred.c
+index 80178c7..f712668 100644
+--- a/src/cred.c
++++ b/src/cred.c
+@@ -678,7 +678,7 @@ fido_cred_set_authdata(fido_cred_t *cred, const unsigned char *ptr, size_t len)
+ 	if (ptr == NULL || len == 0)
+ 		goto fail;
+ 
+-	if ((item = cbor_load(ptr, len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(ptr, len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		goto fail;
+ 	}
+@@ -806,7 +806,7 @@ fido_cred_set_attstmt(fido_cred_t *cred, const unsigned char *ptr, size_t len)
+ 	if (ptr == NULL || len == 0)
+ 		goto fail;
+ 
+-	if ((item = cbor_load(ptr, len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(ptr, len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		goto fail;
+ 	}
+@@ -839,7 +839,7 @@ fido_cred_set_attobj(fido_cred_t *cred, const unsigned char *ptr, size_t len)
+ 	if (ptr == NULL || len == 0)
+ 		goto fail;
+ 
+-	if ((item = cbor_load(ptr, len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(ptr, len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		goto fail;
+ 	}
+diff --git a/src/extern.h b/src/extern.h
+index e478e62..3ebb47e 100644
+--- a/src/extern.h
++++ b/src/extern.h
+@@ -94,6 +94,8 @@ int cbor_bytestring_copy(const cbor_item_t *, unsigned char **, size_t *);
+ int cbor_map_iter(const cbor_item_t *, void *, int(*)(const cbor_item_t *,
+     const cbor_item_t *, void *));
+ int cbor_string_copy(const cbor_item_t *, char **);
++cbor_item_t *fido_cbor_load(const unsigned char *, size_t,
++    struct cbor_load_result *);
+ int cbor_parse_reply(const unsigned char *, size_t, void *,
+     int(*)(const cbor_item_t *, const cbor_item_t *, void *));
+ int cbor_add_uv_params(fido_dev_t *, uint8_t, const fido_blob_t *,
+diff --git a/src/largeblob.c b/src/largeblob.c
+index 7e89574..c08116e 100644
+--- a/src/largeblob.c
++++ b/src/largeblob.c
+@@ -246,7 +246,7 @@ largeblob_array_load(const uint8_t *ptr, size_t len)
+ 		return NULL;
+ 	}
+ 	len -= LARGEBLOB_DIGEST_LENGTH;
+-	if ((item = cbor_load(ptr, len, &cbor)) == NULL) {
++	if ((item = fido_cbor_load(ptr, len, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		return NULL;
+ 	}
+@@ -893,7 +893,7 @@ fido_dev_largeblob_set_array(fido_dev_t *dev, const unsigned char *cbor_ptr,
+ 		    (const void *)cbor_ptr, cbor_len);
+ 		return FIDO_ERR_INVALID_ARGUMENT;
+ 	}
+-	if ((item = cbor_load(cbor_ptr, cbor_len, &cbor_result)) == NULL) {
++	if ((item = fido_cbor_load(cbor_ptr, cbor_len, &cbor_result)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		return FIDO_ERR_INVALID_ARGUMENT;
+ 	}
+diff --git a/src/winhello.c b/src/winhello.c
+index 30c49c0..9edf4cd 100644
+--- a/src/winhello.c
++++ b/src/winhello.c
+@@ -812,7 +812,7 @@ translate_winhello_cred(fido_cred_t *cred,
+ 		fido_log_debug("%s: pbAttestationObject", __func__);
+ 		goto fail;
+ 	}
+-	if ((item = cbor_load(att->pbAttestationObject,
++	if ((item = fido_cbor_load(att->pbAttestationObject,
+ 	    att->cbAttestationObject, &cbor)) == NULL) {
+ 		fido_log_debug("%s: cbor_load", __func__);
+ 		goto fail;
+-- 
+2.55.0
+

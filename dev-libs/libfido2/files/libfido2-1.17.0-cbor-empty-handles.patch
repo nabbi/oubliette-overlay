@@ -1,0 +1,199 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Sun, 25 Oct 2026 22:11:30 -0500
+Subject: [PATCH 1/2] cbor: accept empty containers and strings without storage
+
+Since PJK/libcbor#437, cbor_new_definite_array(0), cbor_new_definite_map(0)
+and empty byte/text strings no longer allocate, so their handle is NULL.
+libfido2 treated a NULL handle as an error, so with such a libcbor:
+
+ - cbor_map_iter()/cbor_array_iter() rejected valid {} and [] (e.g. the
+   empty attStmt of "none" attestation);
+ - cbor_array_append() failed on an empty array, so the first
+   fido_dev_largeblob_set() on a fresh authenticator failed;
+ - largeblob_array_lookup() returned FIDO_ERR_INVALID_ARGUMENT for an
+   empty largeBlob array;
+ - memcpy()/memcmp() were called with a NULL pointer and length 0.
+
+Only require a handle when the container is non-empty, and skip
+zero-length copies and compares. Behaviour with older libcbor is
+unchanged. Add a regression test for an empty attStmt, alone and in a
+"none" attestation object.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ fuzz/mutator_aux.c |  6 ++++--
+ regress/cred.c     | 33 +++++++++++++++++++++++++++++++++
+ src/cbor.c         | 22 +++++++++++++---------
+ src/largeblob.c    |  2 +-
+ 4 files changed, 51 insertions(+), 12 deletions(-)
+
+diff --git a/fuzz/mutator_aux.c b/fuzz/mutator_aux.c
+index fd41b60..a09aa37 100644
+--- a/fuzz/mutator_aux.c
++++ b/fuzz/mutator_aux.c
+@@ -73,7 +73,8 @@ unpack_string(cbor_item_t *item, char *v)
+ 	    (len = cbor_bytestring_length(item)) >= MAXSTR)
+ 		return -1;
+ 
+-	memcpy(v, cbor_bytestring_handle(item), len);
++	if (len != 0)
++		memcpy(v, cbor_bytestring_handle(item), len);
+ 	v[len] = '\0';
+ 
+ 	return 0;
+@@ -98,7 +99,8 @@ unpack_blob(cbor_item_t *item, struct blob *v)
+ 	    (v->len = cbor_bytestring_length(item)) > sizeof(v->body))
+ 		return -1;
+ 
+-	memcpy(v->body, cbor_bytestring_handle(item), v->len);
++	if (v->len != 0)
++		memcpy(v->body, cbor_bytestring_handle(item), v->len);
+ 
+ 	return 0;
+ }
+diff --git a/regress/cred.c b/regress/cred.c
+index a9be954..28b6773 100644
+--- a/regress/cred.c
++++ b/regress/cred.c
+@@ -3022,6 +3022,38 @@ entattest(void)
+ 	fido_dev_free(&dev);
+ }
+ 
++/* empty containers may have no storage (PJK/libcbor#437) */
++static void
++empty_attstmt(void)
++{
++	const unsigned char empty_map[] = { 0xa0 };
++	struct cbor_load_result cbor;
++	unsigned char *attobj = NULL;
++	size_t len, alloclen = 0;
++	cbor_item_t *map;
++	fido_cred_t *c;
++
++	c = alloc_cred();
++	assert(fido_cred_set_attstmt(c, empty_map, sizeof(empty_map)) == FIDO_OK);
++	assert(fido_cred_attstmt_len(c) == sizeof(empty_map));
++	free_cred(c);
++
++	assert((map = cbor_new_definite_map(3)) != NULL);
++	push_kv(map, "fmt", cbor_build_string("none"));
++	push_kv(map, "attStmt", cbor_new_definite_map(0));
++	push_kv(map, "authData", cbor_load(authdata_tpm_es256,
++	    sizeof(authdata_tpm_es256), &cbor));
++	assert((len = cbor_serialize_alloc(map, &attobj, &alloclen)));
++	cbor_decref(&map);
++
++	c = alloc_cred();
++	assert(fido_cred_set_type(c, COSE_ES256) == FIDO_OK);
++	assert(fido_cred_set_attobj(c, attobj, len) == FIDO_OK);
++	assert(strcmp(fido_cred_fmt(c), "none") == 0);
++	free_cred(c);
++	free(attobj);
++}
++
+ int
+ main(void)
+ {
+@@ -3056,6 +3088,7 @@ main(void)
+ 	valid_tpm_rs256_cred(xfail);
+ 	valid_tpm_es256_cred(xfail);
+ 	attestation_object();
++	empty_attstmt();
+ 	makecred();
+ 	entattest();
+ 
+diff --git a/src/cbor.c b/src/cbor.c
+index fb4982b..4db73db 100644
+--- a/src/cbor.c
++++ b/src/cbor.c
+@@ -49,7 +49,7 @@ ctap_check_cbor(cbor_item_t *prev, cbor_item_t *curr)
+ 		prev_len = cbor_string_length(prev);
+ 
+ 		if (curr_len > prev_len || (curr_len == prev_len &&
+-		    memcmp(cbor_string_handle(prev), cbor_string_handle(curr),
++		    curr_len != 0 && memcmp(cbor_string_handle(prev), cbor_string_handle(curr),
+ 		    curr_len) < 0))
+ 			return (0);
+ 	}
+@@ -66,13 +66,14 @@ cbor_map_iter(const cbor_item_t *item, void *arg, int(*f)(const cbor_item_t *,
+ 	struct cbor_pair	*v;
+ 	size_t			 n;
+ 
++	if ((n = cbor_map_size(item)) == 0)
++		return (0);
++
+ 	if ((v = cbor_map_handle(item)) == NULL) {
+ 		fido_log_debug("%s: cbor_map_handle", __func__);
+ 		return (-1);
+ 	}
+ 
+-	n = cbor_map_size(item);
+-
+ 	for (size_t i = 0; i < n; i++) {
+ 		if (v[i].key == NULL || v[i].value == NULL) {
+ 			fido_log_debug("%s: key=%p, value=%p for i=%zu",
+@@ -100,13 +101,14 @@ cbor_array_iter(const cbor_item_t *item, void *arg, int(*f)(const cbor_item_t *,
+ 	cbor_item_t	**v;
+ 	size_t		  n;
+ 
++	if ((n = cbor_array_size(item)) == 0)
++		return (0);
++
+ 	if ((v = cbor_array_handle(item)) == NULL) {
+ 		fido_log_debug("%s: cbor_array_handle", __func__);
+ 		return (-1);
+ 	}
+ 
+-	n = cbor_array_size(item);
+-
+ 	for (size_t i = 0; i < n; i++)
+ 		if (v[i] == NULL || f(v[i], arg) < 0) {
+ 			fido_log_debug("%s: iterator < 0 on i=%zu,%p",
+@@ -192,7 +194,8 @@ cbor_bytestring_copy(const cbor_item_t *item, unsigned char **buf, size_t *len)
+ 		return (-1);
+ 	}
+ 
+-	memcpy(*buf, cbor_bytestring_handle(item), *len);
++	if (*len != 0)
++		memcpy(*buf, cbor_bytestring_handle(item), *len);
+ 
+ 	return (0);
+ }
+@@ -217,7 +220,8 @@ cbor_string_copy(const cbor_item_t *item, char **str)
+ 	    (*str = malloc(len + 1)) == NULL)
+ 		return (-1);
+ 
+-	memcpy(*str, cbor_string_handle(item), len);
++	if (len != 0)
++		memcpy(*str, cbor_string_handle(item), len);
+ 	(*str)[len] = '\0';
+ 
+ 	return (0);
+@@ -1794,8 +1798,8 @@ cbor_array_append(cbor_item_t **array, cbor_item_t *item)
+ 	cbor_item_t **v, *ret;
+ 	size_t n;
+ 
+-	if ((v = cbor_array_handle(*array)) == NULL ||
+-	    (n = cbor_array_size(*array)) == SIZE_MAX ||
++	if ((n = cbor_array_size(*array)) == SIZE_MAX ||
++	    ((v = cbor_array_handle(*array)) == NULL && n != 0) ||
+ 	    (ret = cbor_new_definite_array(n + 1)) == NULL)
+ 		return -1;
+ 	for (size_t i = 0; i < n; i++) {
+diff --git a/src/largeblob.c b/src/largeblob.c
+index 837acbf..7e89574 100644
+--- a/src/largeblob.c
++++ b/src/largeblob.c
+@@ -366,7 +366,7 @@ largeblob_array_lookup(fido_blob_t *out, size_t *idx, const cbor_item_t *item,
+ 	memset(&blob, 0, sizeof(blob));
+ 	if (idx != NULL)
+ 		*idx = 0;
+-	if ((v = cbor_array_handle(item)) == NULL)
++	if ((v = cbor_array_handle(item)) == NULL && cbor_array_size(item) != 0)
+ 		return FIDO_ERR_INVALID_ARGUMENT;
+ 	for (size_t i = 0; i < cbor_array_size(item); i++) {
+ 		if (largeblob_decode(&blob, v[i]) < 0 ||
+-- 
+2.55.0
+

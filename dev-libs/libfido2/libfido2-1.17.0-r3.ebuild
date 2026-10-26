@@ -12,8 +12,10 @@ SRC_URI="https://github.com/Yubico/${PN}/archive/${PV}.tar.gz -> ${P}.tar.gz"
 LICENSE="BSD-2"
 SLOT="0/1"
 KEYWORDS="~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
-IUSE="hidapi nfc smartcard static-libs test fuzz"
-REQUIRED_USE="fuzz? ( nfc )"
+IUSE="+cbor-hardening hidapi nfc smartcard static-libs test fuzz"
+# fuzz builds exist to reproduce and triage the libcbor allocation issue,
+# which cbor-hardening would mask
+REQUIRED_USE="fuzz? ( nfc !cbor-hardening )"
 RESTRICT="!test? ( test )"
 
 DEPEND="
@@ -36,6 +38,8 @@ BDEPEND="
 PATCHES=(
 	"${FILESDIR}"/${PN}-1.12.0-cmakelists.patch
 	"${FILESDIR}"/${PN}-1.17.0-fuzz-export-fido_dev_is_winhello.patch
+	# PJK/libcbor#437: accept empty containers/strings without storage
+	"${FILESDIR}"/${PN}-1.17.0-cbor-empty-handles.patch
 )
 
 pkg_pretend() {
@@ -45,6 +49,15 @@ pkg_pretend() {
 	"
 
 	check_extra_config
+}
+
+src_prepare() {
+	# PJK/libcbor#418: reject impossible array/map sizes before cbor_load()
+	use cbor-hardening && PATCHES+=(
+		"${FILESDIR}"/${PN}-1.17.0-cbor-length-precheck.patch
+	)
+
+	cmake_src_prepare
 }
 
 src_configure() {
@@ -84,6 +97,12 @@ src_install() {
 
 pkg_postinst() {
 	udev_reload
+
+	if use fuzz; then
+		ewarn "${PN} was built with USE=fuzz (FIDO_FUZZ). This build is for fuzzing"
+		ewarn "only: device I/O checks are relaxed and tools such as fido2-token"
+		ewarn "abort. Do not use it with real authenticators."
+	fi
 }
 
 pkg_postrm() {

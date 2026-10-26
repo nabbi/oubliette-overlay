@@ -6,6 +6,7 @@
 		<name>Gentoo Base System</name>
 	</maintainer>
 	<use>
+		<flag name="cbor-hardening">Reject CBOR array/map headers that claim more elements than the input holds, before libcbor allocates for them (PJK/libcbor#418)</flag>
 		<flag name="fuzz">Include fuzzer library</flag>
 		<flag name="nfc">Enable experimental NFC support</flag>
 		<flag name="hidapi">Enable HID API support</flag>
