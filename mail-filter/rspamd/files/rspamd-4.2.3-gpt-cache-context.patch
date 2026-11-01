@@ -1,0 +1,56 @@
+gpt: key the verdict cache on the context snippet too
+
+The cache key is the prompt and the text part's digest only, so a message
+whose text was seen before reuses that verdict even when its context
+(llm_context, search_context, context_augment: sender history,
+attachments) differs. Add a hash of the snippet when there is one.
+
+--- a/src/plugins/lua/gpt.lua	2026-11-01 10:00:54.784198919 -0600
++++ b/src/plugins/lua/gpt.lua	2026-11-01 10:00:54.785151850 -0600
+@@ -697,7 +697,7 @@
+ -- Make cache specific to all settings to avoid conflicts
+ local env_digest = nil
+ 
+-local function redis_cache_key(sel_part)
++local function redis_cache_key(sel_part, context_snippet)
+   if not sel_part then
+     return nil
+   end
+@@ -709,8 +709,15 @@
+     digest:update(settings.url)
+     env_digest = digest:hex():sub(1, 4)
+   end
+-  return string.format('%s_%s', env_digest,
++  local key = string.format('%s_%s', env_digest,
+     sel_part:get_mimepart():get_digest():sub(1, 24))
++  if context_snippet and #context_snippet > 0 then
++    -- The same text with a different context (sender history,
++    -- attachments, search results) is a different question
++    local hasher = require "rspamd_cryptobox_hash"
++    key = string.format('%s_%s', key, hasher.create(context_snippet):hex():sub(1, 8))
++  end
++  return key
+ end
+ 
+ local function process_categories(task, categories)
+@@ -782,7 +789,7 @@
+     task:get_mempool():set_variable('gpt_result', gpt_mp_json)
+   end
+ 
+-  local cache_key = redis_cache_key(sel_part)
++  local cache_key = task:cache_get('gpt_cache_key') or redis_cache_key(sel_part)
+   if cache_context and cache_key then
+     lua_cache.cache_set(task, cache_key, result, cache_context)
+   end
+@@ -880,7 +887,10 @@
+ end
+ 
+ local function check_llm_cached(task, content, sel_part, context_snippet)
+-  local cache_key = redis_cache_key(sel_part)
++  local cache_key = redis_cache_key(sel_part, context_snippet)
++  if cache_key then
++    task:cache_set('gpt_cache_key', cache_key)
++  end
+ 
+   if not cache_key or not cache_context then
+     check_llm_uncached(task, content, sel_part, context_snippet)

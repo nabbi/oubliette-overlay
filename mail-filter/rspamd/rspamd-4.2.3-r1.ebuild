@@ -70,6 +70,8 @@ PATCHES=(
 	"${FILESDIR}/${PN}-3.12-cmake-lua-version.patch"
 	"${FILESDIR}/${PN}-4.2.3-unbundle-lua.patch"
 	"${FILESDIR}/${PN}-3.12-unbundle-snowball.patch"
+	# gpt: a verdict is cached per text and context, not per text alone
+	"${FILESDIR}/${PN}-4.2.3-gpt-cache-context.patch"
 )
 
 src_prepare() {
