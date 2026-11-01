@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+
+	<longdescription>
+		Standalone Electron build of thsmi's Sieve editor. Connects to a
+		ManageSieve (RFC 5804) server to list, edit, validate and activate
+		server-side Sieve (RFC 5228) mail filter scripts, with both a text
+		editor and a graphical rule builder. Can import accounts from a
+		Thunderbird profile.
+	</longdescription>
+
+	<upstream>
+		<remote-id type="github">thsmi/sieve</remote-id>
+		<bugs-to>https://github.com/thsmi/sieve/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
