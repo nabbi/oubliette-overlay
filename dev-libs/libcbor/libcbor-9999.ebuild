@@ -64,7 +64,9 @@ src_compile() {
 
 	if use doc; then
 		mkdir -p doc/build || die
-		emake -C doc -j1 html man
+		# separate runs: both targets share build/doctrees
+		emake -C doc html
+		emake -C doc man
 	fi
 }
 
