@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+
+	<longdescription>
+		Taken from ::guru (Pavel Sobolev's ebuild) so that a host with only
+		::gentoo and this overlay can install dev-python/parsedmarc.
+	</longdescription>
+
+	<upstream>
+		<remote-id type="github">maxmind/MaxMind-DB-Reader-python</remote-id>
+		<remote-id type="pypi">maxminddb</remote-id>
+		<bugs-to>https://github.com/maxmind/MaxMind-DB-Reader-python/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
