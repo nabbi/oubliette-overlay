@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+
+	<longdescription>
+		Parses DMARC aggregate (rua) and failure (ruf) reports and SMTP TLS
+		(RFC 8460) reports, from files, IMAP, Maildir or mbox, and writes
+		JSON/CSV or sends them to Splunk, syslog, a webhook, PostgreSQL,
+		OpenSearch or S3. The Elasticsearch (before 9), Kafka, GELF, Azure
+		Log Analytics, Gmail and Microsoft Graph integrations are not
+		packaged.
+	</longdescription>
+
+	<upstream>
+		<remote-id type="github">domainaware/parsedmarc</remote-id>
+		<remote-id type="pypi">parsedmarc</remote-id>
+		<bugs-to>https://github.com/domainaware/parsedmarc/issues</bugs-to>
+		<doc>https://domainaware.github.io/parsedmarc/</doc>
+	</upstream>
+</pkgmetadata>
