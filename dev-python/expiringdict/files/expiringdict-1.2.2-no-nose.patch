@@ -1,0 +1,38 @@
+Drop nose and mock from the tests: nose does not run on Python 3.12+, and
+mock is unittest.mock. pytest.raises takes the same callable form as
+nose's assert_raises.
+
+diff -ru a/tests/expiringdict_extended_test.py b/tests/expiringdict_extended_test.py
+--- a/tests/expiringdict_extended_test.py
++++ b/tests/expiringdict_extended_test.py
+@@ -1,4 +1,7 @@
+-from nose.tools import eq_
++
++def eq_(a, b, msg=None):
++    assert a == b, msg or '%r != %r' % (a, b)
++
+ 
+ from expiringdict import ExpiringDict
+ import dill
+diff -ru a/tests/expiringdict_test.py b/tests/expiringdict_test.py
+--- a/tests/expiringdict_test.py
++++ b/tests/expiringdict_test.py
+@@ -1,7 +1,16 @@
+ from time import sleep
+ 
+-from mock import Mock, patch
+-from nose.tools import assert_raises, eq_, ok_
++from unittest.mock import Mock, patch
++
++from pytest import raises as assert_raises
++
++
++def eq_(a, b, msg=None):
++    assert a == b, msg or '%r != %r' % (a, b)
++
++
++def ok_(expr, msg=None):
++    assert expr, msg
+ 
+ from expiringdict import ExpiringDict
+ 
