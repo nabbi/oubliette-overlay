@@ -1,0 +1,12 @@
+# /etc/conf.d/mta-sts
+
+# The daemon's configuration
+#MTASTS_CONFIG="/etc/mta-sts-daemon.yml"
+
+# It runs as this user and group, never as root
+#MTASTS_USER="mta-sts"
+#MTASTS_GROUP="mta-sts"
+
+# More options to mta-sts-daemon, such as "-v debug"; it logs to syslog
+# through logger, tagged mta-sts
+#MTASTS_OPTS=""

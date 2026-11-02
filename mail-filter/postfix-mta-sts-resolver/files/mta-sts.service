@@ -1,0 +1,28 @@
+[Unit]
+Description=Postfix MTA-STS policy resolver (socketmap)
+Documentation=https://github.com/Snawoot/postfix-mta-sts-resolver
+After=network-online.target
+Wants=network-online.target
+Before=postfix.service
+
+[Service]
+Type=notify
+User=mta-sts
+Group=mta-sts
+ExecStart=/usr/bin/mta-sts-daemon -c /etc/mta-sts-daemon.yml
+Restart=on-failure
+TimeoutStopSec=30
+StateDirectory=mta-sts
+StateDirectoryMode=0750
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

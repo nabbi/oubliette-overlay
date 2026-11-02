@@ -1,0 +1,45 @@
+# /etc/mta-sts-daemon.yml: postfix-mta-sts-resolver
+# https://github.com/Snawoot/postfix-mta-sts-resolver/blob/master/config_examples/
+#
+# Postfix (main.cf) asks it for the TLS policy of each destination:
+#   smtp_tls_policy_maps = socketmap:inet:127.0.0.1:8461:postfix
+# A stopped daemon makes Postfix defer outbound mail.
+
+host: 127.0.0.1
+port: 8461
+# A unix socket instead (host and port are then ignored); the directory must
+# be writable by the mta-sts user, and the socket reachable by postfix
+#path: /run/mta-sts/mta-sts.sock
+#mode: 0666
+reuse_port: true
+shutdown_timeout: 20
+cache_grace: 60
+
+# Policies are cached so that a domain's MTA-STS policy is still enforced
+# while its policy host is unreachable. The internal cache is lost at each
+# restart; sqlite (USE=sqlite) and redis (USE=redis) persist.
+cache:
+  type: internal
+  options:
+    cache_size: 10000
+#cache:
+#  type: sqlite
+#  options:
+#    filename: /var/lib/mta-sts/cache.db
+#cache:
+#  type: redis
+#  options:
+#    url: "redis://127.0.0.1/0"
+
+# Refresh the cached policies before they expire (needs a persistent cache)
+proactive_policy_fetching:
+  enabled: false
+  interval: 86400
+  concurrency_limit: 100
+  grace_ratio: 2.0
+
+default_zone:
+  # "testing" policies are reported as such, not enforced
+  strict_testing: false
+  timeout: 4
+  require_sni: true

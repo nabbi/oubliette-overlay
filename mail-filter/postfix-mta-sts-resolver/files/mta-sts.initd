@@ -1,0 +1,29 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+description="Postfix MTA-STS policy resolver (socketmap)"
+
+: ${MTASTS_CONFIG:=/etc/mta-sts-daemon.yml}
+: ${MTASTS_USER:=mta-sts}
+: ${MTASTS_GROUP:=mta-sts}
+
+command="/usr/bin/mta-sts-daemon"
+command_args="-c ${MTASTS_CONFIG} ${MTASTS_OPTS}"
+command_user="${MTASTS_USER}:${MTASTS_GROUP}"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+required_files="${MTASTS_CONFIG}"
+retry="TERM/30/KILL/5"
+
+# It logs to stderr. No facility.level here: start-stop-daemon (openrc
+# 0.63) splits the logger command at dots as well as spaces, so this is
+# the user facility, tagged with the service name
+output_logger="logger -t ${RC_SVCNAME}"
+error_logger="logger -t ${RC_SVCNAME} -p err"
+
+depend() {
+	need net
+	use dns logger
+	before postfix
+}
