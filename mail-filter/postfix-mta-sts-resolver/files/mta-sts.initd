@@ -16,11 +16,13 @@ pidfile="/run/${RC_SVCNAME}.pid"
 required_files="${MTASTS_CONFIG}"
 retry="TERM/30/KILL/5"
 
-# It logs to stderr. No facility.level here: start-stop-daemon (openrc
-# 0.63) splits the logger command at dots as well as spaces, so this is
-# the user facility, tagged with the service name
-output_logger="logger -t ${RC_SVCNAME}"
-error_logger="logger -t ${RC_SVCNAME} -p err"
+# It logs every level to stderr (each line says its own: INFO, WARNING,
+# ERROR), so stderr is not the errors and goes to syslog as info. No
+# facility.level here: start-stop-daemon (openrc 0.63) splits the logger
+# command at dots as well as spaces, so this is the user facility, tagged
+# with the service name
+output_logger="logger -t ${RC_SVCNAME} -p info"
+error_logger="logger -t ${RC_SVCNAME} -p info"
 
 depend() {
 	need net
