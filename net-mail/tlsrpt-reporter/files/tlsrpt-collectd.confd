@@ -1,0 +1,12 @@
+# /etc/conf.d/tlsrpt-collectd
+
+# Configuration file, shared with tlsrpt-reportd.
+#TLSRPT_CONFIG="/etc/tlsrpt-reporter/tlsrpt-reporter.cfg"
+
+# Group that owns the directory of the socket named by socketname in
+# TLSRPT_CONFIG. The directory is setgid, so the socket gets this group
+# too: make it the group your MTA's delivery agents run as.
+TLSRPT_SOCKET_GROUP="@GROUP@"
+
+# Extra command line options, see tlsrpt-collectd(1).
+#TLSRPT_COLLECTD_OPTS="--log_level info"

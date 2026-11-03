@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM 'https://www.gentoo.org/dtd/metadata.dtd'>
+<pkgmetadata>
+	<maintainer type="person">
+		<email>mschiff@gentoo.org</email>
+		<name>Marc Schiffbauer</name>
+	</maintainer>
+	<use>
+		<flag name="postfix">Put the collector socket under the Postfix queue directory, where <pkg>mail-mta/postfix</pkg> built with USE=tlsrpt can reach it, owned by the postfix group</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">sys4/tlsrpt-reporter</remote-id>
+		<bugs-to>https://github.com/sys4/tlsrpt-reporter/issues</bugs-to>
+	</upstream>
+</pkgmetadata>

@@ -1,0 +1,23 @@
+[Unit]
+Description=TLSRPT collector, receives TLS handshake results from the MTA
+After=local-fs.target systemd-tmpfiles-setup.service
+Before=postfix.service
+
+[Service]
+ExecStart=/usr/bin/tlsrpt-collectd --config_file /etc/tlsrpt-reporter/tlsrpt-reporter.cfg
+User=tlsrpt-reporter
+Group=tlsrpt-reporter
+Restart=on-failure
+RestartSec=5
+PrivateDevices=true
+PrivateTmp=true
+ProtectSystem=true
+ProtectHome=true
+LogsDirectory=tlsrpt-reporter
+LogsDirectoryMode=0751
+StateDirectory=tlsrpt-reporter
+StateDirectoryMode=0751
+ConfigurationDirectory=tlsrpt-reporter
+
+[Install]
+WantedBy=multi-user.target

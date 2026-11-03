@@ -1,0 +1,32 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+description="Builds the daily TLSRPT reports and sends them to the domains"
+
+: "${TLSRPT_CONFIG:=/etc/tlsrpt-reporter/tlsrpt-reporter.cfg}"
+
+command="/usr/bin/tlsrpt-reportd"
+command_args="--config_file ${TLSRPT_CONFIG} ${TLSRPT_REPORTD_OPTS}"
+command_user="tlsrpt-reporter:tlsrpt-reporter"
+supervisor="supervise-daemon"
+respawn_delay=30
+respawn_max=5
+respawn_period=600
+required_files="${TLSRPT_CONFIG}"
+
+depend() {
+	need localmount
+	use logger net dns mta tlsrpt-collectd
+}
+
+start_pre() {
+	if grep -qi '^[^#]*EXAMPLE\.COM' "${TLSRPT_CONFIG}"; then
+		eerror "Set organization_name, contact_info and sender_address in"
+		eerror "${TLSRPT_CONFIG} first: they go out in every report."
+		return 1
+	fi
+
+	checkpath -d -m 0751 -o tlsrpt-reporter:tlsrpt-reporter \
+		/var/lib/tlsrpt-reporter /var/log/tlsrpt-reporter
+}

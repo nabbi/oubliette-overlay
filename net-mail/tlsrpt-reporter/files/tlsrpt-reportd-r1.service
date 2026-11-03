@@ -1,0 +1,25 @@
+[Unit]
+Description=TLSRPT report generator, sends the daily reports to the domains
+Wants=network-online.target
+After=network-online.target tlsrpt-collectd.service
+
+[Service]
+ExecStart=/usr/bin/tlsrpt-reportd --config_file /etc/tlsrpt-reporter/tlsrpt-reporter.cfg
+User=tlsrpt-reporter
+Group=tlsrpt-reporter
+Restart=on-failure
+RestartSec=30
+# No NoNewPrivileges=: reports go out through sendmail, and Postfix's
+# sendmail hands them to the setgid postdrop.
+PrivateDevices=true
+PrivateTmp=true
+ProtectSystem=true
+ProtectHome=true
+LogsDirectory=tlsrpt-reporter
+LogsDirectoryMode=0751
+StateDirectory=tlsrpt-reporter
+StateDirectoryMode=0751
+ConfigurationDirectory=tlsrpt-reporter
+
+[Install]
+WantedBy=multi-user.target

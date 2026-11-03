@@ -1,0 +1,11 @@
+/var/log/tlsrpt-reporter/*.log {
+	su tlsrpt-reporter tlsrpt-reporter
+	weekly
+	rotate 8
+	compress
+	delaycompress
+	missingok
+	notifempty
+	# the daemons keep the file open and do not reopen it
+	copytruncate
+}

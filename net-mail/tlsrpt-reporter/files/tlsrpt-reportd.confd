@@ -1,0 +1,7 @@
+# /etc/conf.d/tlsrpt-reportd
+
+# Configuration file, shared with tlsrpt-collectd.
+#TLSRPT_CONFIG="/etc/tlsrpt-reporter/tlsrpt-reporter.cfg"
+
+# Extra command line options, see tlsrpt-reportd(1).
+#TLSRPT_REPORTD_OPTS="--log_level info"

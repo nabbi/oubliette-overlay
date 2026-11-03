@@ -1,0 +1,64 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+description="Collects TLS handshake results from the MTA for TLSRPT"
+
+: "${TLSRPT_CONFIG:=/etc/tlsrpt-reporter/tlsrpt-reporter.cfg}"
+: "${TLSRPT_SOCKET_GROUP:=tlsrpt-reporter}"
+
+command="/usr/bin/tlsrpt-collectd"
+command_args="--config_file ${TLSRPT_CONFIG} ${TLSRPT_COLLECTD_OPTS}"
+command_user="tlsrpt-reporter:tlsrpt-reporter"
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=5
+respawn_period=60
+required_files="${TLSRPT_CONFIG}"
+
+depend() {
+	need localmount
+	use logger
+	# The socket has to be there when the MTA starts sending.
+	before mta
+}
+
+# The value of a key in the [tlsrpt_collectd] section of the config.
+_cfg() {
+	sed -n -e '/^\[tlsrpt_collectd\]/,/^\[/{' \
+		-e "s/^[[:space:]]*$1[[:space:]]*[=:][[:space:]]*//p" -e '}' \
+		"${TLSRPT_CONFIG}" | tail -n 1
+}
+
+start_pre() {
+	local socket
+	socket=$(_cfg socketname)
+	if [ -z "${socket}" ]; then
+		eerror "No socketname in the [tlsrpt_collectd] section of ${TLSRPT_CONFIG}"
+		return 1
+	fi
+
+	checkpath -d -m 0751 -o tlsrpt-reporter:tlsrpt-reporter \
+		/var/lib/tlsrpt-reporter /var/log/tlsrpt-reporter || return 1
+	# setgid, so the socket is created in the MTA's group and the
+	# MTA, not other local users, can write to it.
+	checkpath -d -m 2750 -o "tlsrpt-reporter:${TLSRPT_SOCKET_GROUP}" \
+		"${socket%/*}" || return 1
+	# left behind by a crash; start_post waits for the new one
+	rm -f "${socket}"
+}
+
+# Return once the socket is there, so an MTA started after us does not
+# send its first reports into the void.
+start_post() {
+	local socket i=0
+	socket=$(_cfg socketname)
+	while [ ! -S "${socket}" ]; do
+		if [ ${i} -ge 50 ]; then
+			ewarn "${socket} has not appeared, see /var/log/tlsrpt-reporter/tlsrpt-collectd.log"
+			return 0
+		fi
+		sleep 0.1
+		i=$((i + 1))
+	done
+}
