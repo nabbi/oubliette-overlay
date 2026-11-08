@@ -16,6 +16,6 @@
 		_preYYYYMMDD of the commit date) pin master commits.
 	</longdescription>
 	<upstream>
-		<remote-id type="github">SteveGilvarry/zm-api</remote-id>
+		<remote-id type="github">ZoneMinder/zm-api</remote-id>
 	</upstream>
 </pkgmetadata>

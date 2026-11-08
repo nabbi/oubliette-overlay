@@ -735,7 +735,7 @@ SWAGGER_UI_VER="5.32.6"
 inherit cargo systemd
 
 DESCRIPTION="ZoneMinder REST API v3 and daemon supervisor (Rust)"
-HOMEPAGE="https://github.com/SteveGilvarry/zm-api"
+HOMEPAGE="https://github.com/ZoneMinder/zm-api"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
@@ -781,14 +781,16 @@ BDEPEND="
 
 QA_FLAGS_IGNORED="usr/bin/zm-api.*"
 
-# No patches on master. Both that the 3.0.0_alpha1 snapshot still carries are
-# merged upstream (checked 2026-11-08 against zm-api master 03bf7b6):
-#   db-socket (#217, merged 2026-10-25, a0376ab): localhost through the
-#     MariaDB/MySQL socket, as ZoneMinder does
-#   public-prefix (our #223, merged 2026-10-25, 7237108; follow-up #233):
-#     APP_SERVER__PUBLIC_PREFIX, so API v3 and its docs are reached under /zm
-# The snapshot pins a0b0c53 (2026-10-23), before both merges, so it keeps them.
-PATCHES=()
+# This snapshot pins 9e296bf (2026-10-24), before #217 and #223 were merged
+# upstream (2026-10-25), so it carries both, as the 2026-10-23 one does:
+PATCHES=(
+	# localhost goes through the MariaDB/MySQL socket, as ZoneMinder does,
+	# not TCP as zmuser@127.0.0.1 (#215); upstream a0376ab
+	"${FILESDIR}"/${PN}-3.0.0_alpha1-db-socket-pr217.patch
+	# APP_SERVER__PUBLIC_PREFIX, so API v3 and its docs are reached under /zm;
+	# upstream 7237108, needs #217 first
+	"${FILESDIR}"/${PN}-3.0.0_alpha1-public-prefix.patch
+)
 
 src_unpack() {
 	if [[ ${PV} == 9999 ]]; then

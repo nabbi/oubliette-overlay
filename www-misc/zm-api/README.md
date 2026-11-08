@@ -1,6 +1,6 @@
 # www-misc/zm-api
 
-[zm-api](https://github.com/SteveGilvarry/zm-api) is ZoneMinder's REST API v3,
+[zm-api](https://github.com/ZoneMinder/zm-api) is ZoneMinder's REST API v3,
 written in Rust and meant to replace API v2 eventually. It runs as a service on
 `127.0.0.1:8080` next to API v2. `www-misc/zoneminder[apiv3]` pulls it in and
 turns on the proxy block in the web server examples.

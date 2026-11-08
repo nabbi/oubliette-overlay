@@ -18,14 +18,14 @@ SWAGGER_UI_VER="5.32.6"
 inherit cargo systemd
 
 DESCRIPTION="ZoneMinder REST API v3 and daemon supervisor (Rust)"
-HOMEPAGE="https://github.com/SteveGilvarry/zm-api"
+HOMEPAGE="https://github.com/ZoneMinder/zm-api"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
-	EGIT_REPO_URI="https://github.com/SteveGilvarry/zm-api.git"
+	EGIT_REPO_URI="https://github.com/ZoneMinder/zm-api.git"
 else
 	SRC_URI="
-		https://github.com/SteveGilvarry/zm-api/archive/${ZM_API_COMMIT}.tar.gz -> ${P}.tar.gz
+		https://github.com/ZoneMinder/zm-api/archive/${ZM_API_COMMIT}.tar.gz -> ${P}.tar.gz
 		${CARGO_CRATE_URIS}
 	"
 	S="${WORKDIR}/zm-api-${ZM_API_COMMIT}"
@@ -68,7 +68,9 @@ QA_FLAGS_IGNORED="usr/bin/zm-api.*"
 #     MariaDB/MySQL socket, as ZoneMinder does
 #   public-prefix (our #223, merged 2026-10-25, 7237108; follow-up #233):
 #     APP_SERVER__PUBLIC_PREFIX, so API v3 and its docs are reached under /zm
-# The snapshot pins a0b0c53 (2026-10-23), before both merges, so it keeps them.
+# The snapshots pin commits before both merges, so they keep them. The repo
+# moved to ZoneMinder/zm-api; SteveGilvarry/zm-api stopped at 9e296bf and has
+# neither fix.
 PATCHES=()
 
 src_unpack() {

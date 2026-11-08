@@ -735,7 +735,7 @@ SWAGGER_UI_VER="5.32.6"
 inherit cargo systemd
 
 DESCRIPTION="ZoneMinder REST API v3 and daemon supervisor (Rust)"
-HOMEPAGE="https://github.com/SteveGilvarry/zm-api"
+HOMEPAGE="https://github.com/ZoneMinder/zm-api"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
