@@ -3,19 +3,24 @@
 
 EAPI=8
 
-inherit go-module systemd
-
-# master after v0.9.0. Carries 71cf1f39: ssh-tpm-keygen honours "n" at the
-# overwrite prompt (v0.9.0 overwrites the key anyway).
-EGIT_COMMIT="440f7fbb420793634da33d1a52eca1ed12a56154"
+VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/foxboron.asc
+inherit go-env go-module systemd verify-sig
 
 DESCRIPTION="ssh-agent compatible agent for TPM 2.0 sealed SSH keys"
 HOMEPAGE="https://github.com/Foxboron/ssh-tpm-agent"
+# The release's .gpg is an inline-signed message that contains the tarball.
 SRC_URI="
-	https://github.com/Foxboron/ssh-tpm-agent/archive/${EGIT_COMMIT}.tar.gz -> ${P}.tar.gz
-	https://github.com/nabbi/oubliette-overlay/releases/download/${P}/${P}-deps.tar.xz
+	!verify-sig? (
+		https://github.com/Foxboron/${PN}/releases/download/v${PV}/${PN}-v${PV}.tar.gz
+			-> ${P}.tar.gz
+	)
+	verify-sig? (
+		https://github.com/Foxboron/${PN}/releases/download/v${PV}/${PN}-v${PV}.tar.gz.gpg
+			-> ${P}.tar.gz.gpg
+	)
+	https://github.com/nabbi/ssh-tpm-agent/releases/download/v${PV}/${P}-deps.tar.xz
 "
-S="${WORKDIR}/${PN}-${EGIT_COMMIT}"
+S="${WORKDIR}/${PN}-v${PV}"
 
 LICENSE="MIT"
 # Go dependencies
@@ -29,9 +34,30 @@ RDEPEND="
 BDEPEND="
 	>=dev-lang/go-1.25
 	dev-ruby/asciidoctor
+	verify-sig? ( sec-keys/openpgp-keys-foxboron )
 "
 
+PATCHES=(
+	# upstream 71cf1f39: v0.9.0 overwrites the key even when you answer "n"
+	"${FILESDIR}"/${P}-keygen-overwrite-prompt.patch
+)
+
 PROGS=( ssh-tpm-add ssh-tpm-agent ssh-tpm-hostkeys ssh-tpm-keygen )
+
+src_unpack() {
+	if use verify-sig; then
+		# unpack only what the signature covers: the message, not the file
+		verify-sig_verify_message "${DISTDIR}/${P}.tar.gz.gpg" "${WORKDIR}/${P}.tar.gz"
+		cd "${WORKDIR}" || die
+		unpack "./${P}.tar.gz" "${P}-deps.tar.xz"
+		rm "${P}.tar.gz" || die
+		cd "${S}" || die
+		ego mod verify
+		go-env_set_compile_environment
+	else
+		go-module_src_unpack
+	fi
+}
 
 src_compile() {
 	local prog
