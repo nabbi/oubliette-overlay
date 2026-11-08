@@ -15,9 +15,15 @@ KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ppc ~ppc64 ~x86"
 
 RESTRICT="strip"
 
-DEPEND="
+# meson.build asks pkg-config for glib-2.0 and libev; a stage3 without glib
+# stopped at configure ("Dependency "glib-2.0" not found", 2026-11-08), which
+# broke the nginx path of www-misc/zoneminder (it pulls multiwatch).
+RDEPEND="
+	dev-libs/glib:2
 	dev-libs/libev
 "
+DEPEND="${RDEPEND}"
+BDEPEND="virtual/pkgconfig"
 
 src_configure() {
 	meson_src_configure
