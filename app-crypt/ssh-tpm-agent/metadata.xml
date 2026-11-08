@@ -4,9 +4,15 @@
 	<maintainer type="person">
 		<email>nic@boet.cc</email>
 	</maintainer>
+	<longdescription>
+		Built from the nabbi fork of Foxboron/ssh-tpm-agent: upstream master
+		plus hardening fixes that are not upstream. Fork releases are tagged
+		v&lt;upstream version&gt;-nabbi&lt;N&gt;, packaged here as
+		&lt;upstream version&gt;_p&lt;N&gt;.
+	</longdescription>
 
 	<upstream>
-		<remote-id type="github">Foxboron/ssh-tpm-agent</remote-id>
-		<bugs-to>https://github.com/Foxboron/ssh-tpm-agent/issues</bugs-to>
+		<remote-id type="github">nabbi/ssh-tpm-agent</remote-id>
+		<bugs-to>https://github.com/nabbi/ssh-tpm-agent/issues</bugs-to>
 	</upstream>
 </pkgmetadata>

@@ -3,24 +3,28 @@
 
 EAPI=8
 
-VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/foxboron.asc
-inherit go-env go-module systemd verify-sig
+inherit go-module systemd
+
+# Built from the nabbi fork: upstream master plus hardening fixes that are
+# not upstream. Fork tag v<upstream version>-nabbi<N> is version
+# <upstream version>_p<N> here; the fork's CI (projg2/golang-dist-action)
+# attaches the Go deps tarball to the release of each tag.
+MY_PV="${PV/_rc/-rc}"
+MY_PV="${MY_PV/_p/-nabbi}"
+MY_P="${PN}-${MY_PV}"
 
 DESCRIPTION="ssh-agent compatible agent for TPM 2.0 sealed SSH keys"
-HOMEPAGE="https://github.com/Foxboron/ssh-tpm-agent"
-# The release's .gpg is an inline-signed message that contains the tarball.
-SRC_URI="
-	!verify-sig? (
-		https://github.com/Foxboron/${PN}/releases/download/v${PV}/${PN}-v${PV}.tar.gz
-			-> ${P}.tar.gz
-	)
-	verify-sig? (
-		https://github.com/Foxboron/${PN}/releases/download/v${PV}/${PN}-v${PV}.tar.gz.gpg
-			-> ${P}.tar.gz.gpg
-	)
-	https://github.com/nabbi/ssh-tpm-agent/releases/download/v${PV}/${P}-deps.tar.xz
+HOMEPAGE="
+	https://github.com/nabbi/ssh-tpm-agent
+	https://github.com/Foxboron/ssh-tpm-agent
 "
-S="${WORKDIR}/${PN}-v${PV}"
+SRC_URI="
+	https://github.com/nabbi/${PN}/archive/refs/tags/v${MY_PV}.tar.gz
+		-> ${P}.tar.gz
+	https://github.com/nabbi/${PN}/releases/download/v${MY_PV}/${MY_P}-deps.tar.xz
+		-> ${P}-deps.tar.xz
+"
+S="${WORKDIR}/${MY_P}"
 
 LICENSE="MIT"
 # Go dependencies
@@ -34,33 +38,9 @@ RDEPEND="
 BDEPEND="
 	>=dev-lang/go-1.25
 	dev-ruby/asciidoctor
-	verify-sig? ( sec-keys/openpgp-keys-foxboron )
 "
 
-PATCHES=(
-	# upstream 71cf1f39: v0.9.0 overwrites the key even when you answer "n"
-	"${FILESDIR}"/${P}-keygen-overwrite-prompt.patch
-	# upstream PR #148 (open, fixes #133): -p passed the old and new
-	# passphrase to ChangeAuth swapped
-	"${FILESDIR}"/${P}-keygen-change-passphrase.patch
-)
-
 PROGS=( ssh-tpm-add ssh-tpm-agent ssh-tpm-hostkeys ssh-tpm-keygen )
-
-src_unpack() {
-	if use verify-sig; then
-		# unpack only what the signature covers: the message, not the file
-		verify-sig_verify_message "${DISTDIR}/${P}.tar.gz.gpg" "${WORKDIR}/${P}.tar.gz"
-		cd "${WORKDIR}" || die
-		unpack "./${P}.tar.gz" "${P}-deps.tar.xz"
-		rm "${P}.tar.gz" || die
-		cd "${S}" || die
-		ego mod verify
-		go-env_set_compile_environment
-	else
-		go-module_src_unpack
-	fi
-}
 
 src_compile() {
 	local prog
@@ -71,7 +51,7 @@ src_compile() {
 	local page
 	for page in man/*.adoc; do
 		asciidoctor -b manpage \
-			-a mansource="ssh-tpm-agent ${PV}" -a manversion="${PV}" \
+			-a mansource="ssh-tpm-agent ${MY_PV}" -a manversion="${MY_PV}" \
 			"${page}" || die "asciidoctor failed on ${page}"
 	done
 }
