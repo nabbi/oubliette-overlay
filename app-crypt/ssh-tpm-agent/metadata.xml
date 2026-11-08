@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+
+	<upstream>
+		<remote-id type="github">Foxboron/ssh-tpm-agent</remote-id>
+		<bugs-to>https://github.com/Foxboron/ssh-tpm-agent/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
