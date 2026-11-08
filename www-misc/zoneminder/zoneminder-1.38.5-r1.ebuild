@@ -149,7 +149,8 @@ pkg_setup() {
 	export MY_WEB_USER MY_WEB_GROUP MY_WEB_INITD
 }
 
-# CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above).
+# CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above);
+# upstream PR #5495, drop the patch once it is merged.
 PATCHES=(
 	"${FILESDIR}/${PN}-1.38.5-mariadb-connector.patch"
 )

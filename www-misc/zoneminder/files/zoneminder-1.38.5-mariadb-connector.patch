@@ -4,7 +4,7 @@ libmariadb.so and /usr/include/mariadb instead, so configure stops with
 "ZoneMinder requires mysqlclient but it was not found on your system". This
 patch also accepts those names; systems with libmysqlclient keep it.
 
-Upstream: ZoneMinder PR from zm-holodeck fix/mariadb-connector (B128), 2026-11-08;
+Upstream: ZoneMinder PR #5495 (issue #5494), filed 2026-11-08 from zm-holodeck (B128);
 applies to 1.38.5, the 1.39 snapshots and master. Drop it once upstream merges.
 
 CMake looked only for libmysqlclient and include/mysql/mysql.h, the names
