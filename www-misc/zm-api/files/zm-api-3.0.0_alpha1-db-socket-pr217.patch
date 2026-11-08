@@ -1,0 +1,335 @@
+From e2aeb2f652de3608e0b92c5a9496807ac71c297c Mon Sep 17 00:00:00 2001
+From: Isaac Connor <connortechnology@gmail.com>
+Date: Fri, 23 Oct 2026 19:41:16 -0400
+Subject: [PATCH] fix(db): connect to localhost through the Unix socket, as
+ ZoneMinder does
+
+ZoneMinder's install creates 'zmuser'@'localhost', which MariaDB and
+MySQL match only for Unix socket connections. zm-api always built a TCP
+URL, so ZM_DB_HOST=localhost (the packaged default) became TCP to
+127.0.0.1, a different account, and startup failed with error 1130.
+ZoneMinder's PHP, Perl and C++ use libmysqlclient, for which localhost
+means the socket, so only zm-api was refused.
+
+- db.socket (APP_DB__SOCKET) connects through a socket; sqlx then ignores
+  host and port.
+- ZM_DB_HOST=localhost:/path/to/socket sets it. zmconf already parsed
+  that form but threw the path away.
+- With host = "localhost" and no socket configured, the first standard
+  MariaDB/MySQL socket on disk is used, as libmysqlclient does. With none
+  on disk TCP is still tried, so a database published on localhost from
+  a container keeps working.
+- The migrator's zm.conf URL follows the same rule.
+
+Fixes #215
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ settings/base.toml      |   5 ++
+ src/bin/migrator.rs     |   3 +-
+ src/configure/db.rs     | 154 +++++++++++++++++++++++++++++++++++++++-
+ src/configure/zmconf.rs |   9 +++
+ 4 files changed, 168 insertions(+), 3 deletions(-)
+
+diff --git a/settings/base.toml b/settings/base.toml
+index a0bf81a..6631bc6 100644
+--- a/settings/base.toml
++++ b/settings/base.toml
+@@ -89,6 +89,11 @@ auth_rate_limit_burst = 10
+ # These placeholder values trigger zm.conf fallback
+ host = "localhost"
+ port = 3306
++# Unix socket, instead of TCP. Unset with host = "localhost", the standard
++# MariaDB/MySQL socket is used when one exists, as libmysqlclient (and so
++# ZoneMinder) does: a 'zmuser'@'localhost' grant matches socket connections
++# only. ZM_DB_HOST=localhost:/path/to/socket in zm.conf sets it too.
++# socket = "/run/mysqld/mysqld.sock"
+ username = "username"
+ password = "password"
+ database_name = "database_name"
+diff --git a/src/bin/migrator.rs b/src/bin/migrator.rs
+index 11303e4..2567ee0 100644
+--- a/src/bin/migrator.rs
++++ b/src/bin/migrator.rs
+@@ -35,12 +35,13 @@ fn database_url(args: &[String]) -> String {
+ fn zmconf_url() -> Option<String> {
+     let c = zm_api::configure::zmconf::ZmConfig::load();
+     let (user, name) = (c.db_user()?, c.db_name()?);
+-    Some(zm_api::configure::db::DatabaseConfig::create_url(
++    Some(zm_api::configure::db::DatabaseConfig::url_for_host(
+         user,
+         c.db_pass().unwrap_or_default(),
+         c.db_host().unwrap_or("localhost"),
+         c.db_port().unwrap_or(3306),
+         name,
++        c.db_socket(),
+     ))
+ }
+ 
+diff --git a/src/configure/db.rs b/src/configure/db.rs
+index 53ae897..a4f695f 100644
+--- a/src/configure/db.rs
++++ b/src/configure/db.rs
+@@ -28,6 +28,12 @@ pub struct DatabaseConfig {
+     pub port: u16,
+     #[serde(default = "default_host")]
+     pub host: String,
++    /// Unix socket to connect through instead of TCP (APP_DB__SOCKET).
++    ///
++    /// Unset with `host = "localhost"`, the standard MariaDB/MySQL socket is
++    /// used when one exists; see [`resolve_socket`].
++    #[serde(default)]
++    pub socket: Option<String>,
+     #[serde(default = "default_max_connections")]
+     pub max_connections: u32,
+     #[serde(default = "default_min_connections")]
+@@ -88,6 +94,48 @@ fn default_database_name() -> String {
+     "zm".to_string()
+ }
+ 
++/// Where MariaDB and MySQL put their socket: Debian/Ubuntu (and the /var/run
++/// symlink to it), the Red Hat family, and the upstream tarball default.
++const DEFAULT_SOCKETS: &[&str] = &[
++    "/run/mysqld/mysqld.sock",
++    "/var/run/mysqld/mysqld.sock",
++    "/var/lib/mysql/mysql.sock",
++    "/tmp/mysql.sock",
++];
++
++/// The Unix socket a connection to `host` should go through, if any.
++///
++/// An explicit socket always wins. Otherwise "localhost" means the socket,
++/// as it does for libmysqlclient and so for ZoneMinder's PHP, Perl and C++:
++/// MariaDB grants `'zmuser'@'localhost'` match socket connections only, so
++/// opening TCP to 127.0.0.1 with the same credentials is refused (error 1130,
++/// #215).
++/// With no socket on disk (a database in another container published on
++/// localhost) TCP is still tried.
++pub fn resolve_socket(
++    host: &str,
++    configured: Option<&str>,
++    exists: impl Fn(&str) -> bool,
++) -> Option<String> {
++    if let Some(path) = configured.filter(|p| !p.is_empty()) {
++        return Some(path.to_string());
++    }
++    if host != "localhost" {
++        return None;
++    }
++    DEFAULT_SOCKETS
++        .iter()
++        .find(|p| exists(p))
++        .map(|p| p.to_string())
++}
++
++fn socket_exists(path: &str) -> bool {
++    use std::os::unix::fs::FileTypeExt;
++    std::fs::metadata(path)
++        .map(|m| m.file_type().is_socket())
++        .unwrap_or(false)
++}
++
+ /// Placeholder values that trigger zm.conf fallback
+ const PLACEHOLDER_VALUES: &[&str] = &[
+     "username",
+@@ -122,6 +170,13 @@ impl DatabaseConfig {
+                 info!("Using port from ZM_DB_HOST: {}", port);
+                 self.port = port;
+             }
++            // Or for a socket: ZM_DB_HOST=localhost:/path/to/socket
++            if self.socket.is_none() {
++                if let Some(socket) = zmconf.db_socket() {
++                    info!("Using socket from ZM_DB_HOST: {}", socket);
++                    self.socket = Some(socket.to_string());
++                }
++            }
+         }
+ 
+         // Apply database name
+@@ -156,12 +211,38 @@ impl DatabaseConfig {
+ 
+     /// Get the database connection URL
+     pub fn get_url(&self) -> String {
++        let socket = resolve_socket(&self.host, self.socket.as_deref(), socket_exists);
++        if let Some(path) = &socket {
++            info!("Connecting to the database through {}", path);
++        }
+         Self::create_url(
+             &self.username,
+             &self.password,
+             &self.host,
+             self.port,
+             &self.database_name,
++            socket.as_deref(),
++        )
++    }
++
++    /// The URL for a host, resolving "localhost" to its socket like
++    /// [`get_url`](Self::get_url). For callers without a `DatabaseConfig`.
++    pub fn url_for_host(
++        username: &str,
++        password: &str,
++        host: &str,
++        port: u16,
++        database_name: &str,
++        socket: Option<&str>,
++    ) -> String {
++        let socket = resolve_socket(host, socket, socket_exists);
++        Self::create_url(
++            username,
++            password,
++            host,
++            port,
++            database_name,
++            socket.as_deref(),
+         )
+     }
+ 
+@@ -172,12 +253,15 @@ impl DatabaseConfig {
+     /// `?` or `#` (and the `/etc/zm/zm.conf` fallback can supply anything).
+     /// Interpolated raw, an `@` in the password would split the authority and
+     /// the URL parser would misread the host. See REVIEW_FIXES_PLAN §5.3.
++    ///
++    /// With `socket`, sqlx connects through it and ignores host and port.
+     pub fn create_url(
+         username: &str,
+         password: &str,
+         host: &str,
+         port: u16,
+         database_name: &str,
++        socket: Option<&str>,
+     ) -> String {
+         let user = urlencoding::encode(username);
+         let pass = urlencoding::encode(password);
+@@ -185,7 +269,13 @@ impl DatabaseConfig {
+         // writes DATETIME columns in the server's local time, so a UTC NOW()
+         // makes every "older than N" comparison off by the UTC offset (#98).
+         // SYSTEM follows the server, the same clock zmc and the Perl use.
+-        format!("mysql://{user}:{pass}@{host}:{port}/{database_name}?timezone=SYSTEM")
++        let mut url =
++            format!("mysql://{user}:{pass}@{host}:{port}/{database_name}?timezone=SYSTEM");
++        if let Some(path) = socket {
++            url.push_str("&socket=");
++            url.push_str(&urlencoding::encode(path));
++        }
++        url
+     }
+ }
+ 
+@@ -200,6 +290,7 @@ mod tests {
+             password: "testpass".to_string(),
+             host: "dbhost".to_string(),
+             port: 3307,
++            socket: None,
+             database_name: "testdb".to_string(),
+             max_connections: 10,
+             min_connections: default_min_connections(),
+@@ -220,7 +311,8 @@ mod tests {
+     fn create_url_percent_encodes_special_chars() {
+         // A password with `@` and `/` must be encoded, and the result must parse
+         // back to the original host/password (REVIEW_FIXES_PLAN §5.3).
+-        let url = DatabaseConfig::create_url("zm@user", "p@ss/w0rd#x", "10.0.0.5", 3306, "zm");
++        let url =
++            DatabaseConfig::create_url("zm@user", "p@ss/w0rd#x", "10.0.0.5", 3306, "zm", None);
+         assert_eq!(
+             url,
+             "mysql://zm%40user:p%40ss%2Fw0rd%23x@10.0.0.5:3306/zm?timezone=SYSTEM"
+@@ -237,6 +329,63 @@ mod tests {
+         );
+     }
+ 
++    #[test]
++    fn create_url_with_socket() {
++        let url = DatabaseConfig::create_url(
++            "zmuser",
++            "pw",
++            "localhost",
++            3306,
++            "zm",
++            Some("/run/mysqld/mysqld.sock"),
++        );
++        assert_eq!(
++            url,
++            "mysql://zmuser:pw@localhost:3306/zm?timezone=SYSTEM&socket=%2Frun%2Fmysqld%2Fmysqld.sock"
++        );
++        let parsed = url::Url::parse(&url).expect("URL must parse");
++        let socket = parsed
++            .query_pairs()
++            .find(|(k, _)| k == "socket")
++            .map(|(_, v)| v.into_owned());
++        assert_eq!(socket.as_deref(), Some("/run/mysqld/mysqld.sock"));
++    }
++
++    #[test]
++    fn localhost_resolves_to_the_first_socket_present() {
++        let only_redhat = |p: &str| p == "/var/lib/mysql/mysql.sock";
++        assert_eq!(
++            resolve_socket("localhost", None, only_redhat).as_deref(),
++            Some("/var/lib/mysql/mysql.sock")
++        );
++        let both = |p: &str| p == "/run/mysqld/mysqld.sock" || p == "/var/lib/mysql/mysql.sock";
++        assert_eq!(
++            resolve_socket("localhost", None, both).as_deref(),
++            Some("/run/mysqld/mysqld.sock")
++        );
++    }
++
++    #[test]
++    fn localhost_without_a_socket_falls_back_to_tcp() {
++        assert_eq!(resolve_socket("localhost", None, |_| false), None);
++    }
++
++    #[test]
++    fn other_hosts_use_tcp_even_with_a_local_socket() {
++        assert_eq!(resolve_socket("127.0.0.1", None, |_| true), None);
++        assert_eq!(resolve_socket("db.example.net", None, |_| true), None);
++    }
++
++    #[test]
++    fn configured_socket_wins() {
++        assert_eq!(
++            resolve_socket("db.example.net", Some("/srv/db.sock"), |_| false).as_deref(),
++            Some("/srv/db.sock")
++        );
++        // An empty APP_DB__SOCKET means unset.
++        assert_eq!(resolve_socket("127.0.0.1", Some(""), |_| true), None);
++    }
++
+     #[test]
+     fn test_is_placeholder() {
+         let config = DatabaseConfig {
+@@ -244,6 +393,7 @@ mod tests {
+             password: "password".to_string(),
+             host: "localhost".to_string(),
+             port: 3306,
++            socket: None,
+             database_name: "database_name".to_string(),
+             max_connections: 5,
+             min_connections: default_min_connections(),
+diff --git a/src/configure/zmconf.rs b/src/configure/zmconf.rs
+index 9dadcab..0c3991c 100644
+--- a/src/configure/zmconf.rs
++++ b/src/configure/zmconf.rs
+@@ -160,6 +160,14 @@ impl ZmConfig {
+         })
+     }
+ 
++    /// Get the Unix socket path from ZM_DB_HOST ("localhost:/path/to/socket")
++    ///
++    /// Returns None for "hostname[:port]".
++    pub fn db_socket(&self) -> Option<&str> {
++        self.get("ZM_DB_HOST")
++            .and_then(|host| host.find(":/").map(|idx| &host[idx + 1..]))
++    }
++
+     /// Get database port from ZM_DB_HOST if specified
+     ///
+     /// Returns None if no port is specified (use MySQL default 3306)
+@@ -295,6 +303,7 @@ ZM_DB_PASS=zmpass
+ 
+         assert_eq!(config.db_host(), Some("localhost"));
+         assert_eq!(config.db_port(), None);
++        assert_eq!(config.db_socket(), Some("/var/run/mysqld/mysqld.sock"));
+     }
+ 
+     #[test]

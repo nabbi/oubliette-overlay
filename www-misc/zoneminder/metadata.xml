@@ -8,14 +8,26 @@
 			https://bugs.gentoo.org/666607
 		</description>
 	</maintainer>
+	<longdescription>
+		ZoneMinder video surveillance. API v2 is served at /zm/api by exactly
+		one of apiv2-cake (upstream's CakePHP 2 API, the default) or apiv2-php
+		(zm-php-api, a CakePHP-free replacement answering the same requests).
+		apiv3 adds www-misc/zm-api, the Rust API v3 meant to replace API v2 in
+		the long run, as a service next to it. These three flags, and mqtt,
+		exist from 1.38 on; 1.36 serves CakePHP only.
+		www-misc/zoneminder/README.md in the overlay shows how to choose a series.
+	</longdescription>
 	<use>
-		<flag name="curl">Enable using net-misc/curl for streaming from cameras</flag>
-		<flag name="gcrypt">...</flag>
-		<flag name="mariadb">Build against <pkg>dev-db/mariadb-connector-c</pkg> and drive the database from Perl with <pkg>dev-perl/DBD-MariaDB</pkg>, instead of <pkg>dev-db/mysql-connector-c</pkg> with <pkg>dev-perl/DBD-mysql</pkg> (master only: 1.38 has no DBD::MariaDB support). Either client library works with a MariaDB or MySQL server</flag>
-		<flag name="mqtt">Enable MQTT event publishing via app-misc/mosquitto</flag>
-		<flag name="apache2">Use www-servers/apache2 as web server (and user:group)</flag>
-		<flag name="nginx">Use www-servers/nginx as web server (and user:group)</flag>
-		<flag name="vlc">Enable using media-libs/vlc for streaming from cameras</flag>
+		<flag name="apiv2-cake">Serve API v2 at /zm/api with upstream's CakePHP 2 API (default; exclusive with apiv2-php; 1.38 and later)</flag>
+		<flag name="apiv2-php">Serve API v2 at /zm/api with zm-php-api (https://github.com/nabbi/zm-php-api), a CakePHP-free API answering the same requests, layered over web/api in place of CakePHP (exclusive with apiv2-cake; 1.38 and later)</flag>
+		<flag name="apiv3">Also install <pkg>www-misc/zm-api</pkg>, the Rust API v3 at /zm/api/v3 that is meant to replace API v2, as a service on 127.0.0.1:8080 next to API v2, and enable the /zm/api/v3 proxy block in the web server examples (1.38 and later)</flag>
+		<flag name="curl">Enable using <pkg>net-misc/curl</pkg> for streaming from cameras</flag>
+		<flag name="mariadb">Build against <pkg>dev-db/mariadb-connector-c</pkg> and drive the database from Perl with <pkg>dev-perl/DBD-MariaDB</pkg>, instead of <pkg>dev-db/mysql-connector-c</pkg> with <pkg>dev-perl/DBD-mysql</pkg> (9999 and the 1.39 snapshots only: 1.38 has no DBD::MariaDB support). Either client library works with a MariaDB or MySQL server</flag>
+		<flag name="gcrypt">Link <pkg>dev-libs/libgcrypt</pkg> for RTSP authentication (1.36 only; 1.38 and later do not use it, so the flag only adds the dependency)</flag>
+		<flag name="mqtt">Enable MQTT event publishing via <pkg>app-misc/mosquitto</pkg> (1.38 and later)</flag>
+		<flag name="apache2">Use <pkg>www-servers/apache</pkg> as web server (and its user:group); exclusive with nginx</flag>
+		<flag name="nginx">Use <pkg>www-servers/nginx</pkg> with fcgiwrap and spawn-fcgi as web server (and its user:group); exclusive with apache2</flag>
+		<flag name="vlc">Enable using <pkg>media-video/vlc</pkg> for streaming from cameras</flag>
 	</use>
 	<upstream>
 		<remote-id type="github">ZoneMinder/ZoneMinder</remote-id>

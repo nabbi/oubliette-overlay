@@ -1,0 +1,7 @@
+# zm-api runs as ZoneMinder's web user (ZM_WEB_USER/ZM_WEB_GROUP in
+# /etc/zm/zm.conf). Set these to override.
+#ZM_API_USER=
+#ZM_API_GROUP=
+
+# Settings for zm-api itself go in /etc/zm-api/zm-api.env
+ZM_API_ENV=/etc/zm-api/zm-api.env

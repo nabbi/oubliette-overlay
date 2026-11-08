@@ -23,16 +23,13 @@ else
 	MY_CRUD_V="14292374ccf1328f2d5db20897bd06f99ba4d938"
 	MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
 	MY_RTSP_V="055d81fe1293429e496b19104a9ed3360755a440"
-	MY_CXXURL_V="eaf46c0207df24853a238d4499e7f4426d9d234c"
 
 	SRC_URI="
 		https://github.com/ZoneMinder/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
 		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_V}.tar.gz -> Crud-${MY_CRUD_V}.tar.gz
 		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> \
 			CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
-		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz
-		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.tar.gz -> CxxUrl-${MY_CXXURL_V}.tar.gz"
-
+		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz"
 	KEYWORDS="~amd64"
 fi
 
@@ -57,7 +54,6 @@ nginx? (
 
 DEPEND="
 app-eselect/eselect-php
-dev-cpp/nlohmann_json
 dev-lang/perl:=
 dev-lang/php:*[curl,gd,inifile,intl,pdo,mysql,mysqli,sockets,sysvipc]
 dev-libs/libpcre
@@ -108,7 +104,7 @@ RDEPEND="${DEPEND}"
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
 
 PATCHES=(
-	# "${FILESDIR}/${PN}-1.34.17_dont_gz_man.patch"
+	"${FILESDIR}/${PN}-1.34.17_dont_gz_man.patch"
 )
 
 pkg_setup() {
@@ -145,9 +141,6 @@ src_prepare() {
 
 		rmdir "${S}/dep/RtspServer" || die
 		mv "${WORKDIR}/RtspServer-${MY_RTSP_V}" "${S}/dep/RtspServer" || die
-
-		rmdir "${S}/dep/CxxUrl" || die
-		mv "${WORKDIR}/CxxUrl-${MY_CXXURL_V}" "${S}/dep/CxxUrl" || die
 	fi
 }
 
@@ -177,8 +170,6 @@ src_configure() {
 		-DZM_NO_X10=OFF
 		-DZM_NO_CURL="$(usex curl OFF ON)"
 		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
-		-DZM_JWT_BACKEND=jwt_cpp
-		-DZM_CRYPTO_BACKEND=openssl
 		-DZM_NO_RTSPSERVER=OFF
 	)
 
@@ -186,19 +177,8 @@ src_configure() {
 
 }
 
-src_compile() {
-	cmake_src_compile
-}
-
 src_install() {
 	cmake_src_install
-
-	rm -rf "${D}/usr/cmake"
-
-	# decompress manpages installed by upstream
-	if [[ -d "${D}/usr/share/man" ]]; then
-		find "${D}/usr/share/man" -type f -name "*.gz" -exec gunzip {} \;
-	fi
 
 	# the log directory, can contain passwords - limit access
 	keepdir /var/log/zm

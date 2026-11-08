@@ -1,0 +1,46 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+description="ZoneMinder API v3 (zm-api)"
+command=/usr/bin/zm-api
+command_background=yes
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/zm-api/${RC_SVCNAME}.log"
+error_log="/var/log/zm-api/${RC_SVCNAME}.log"
+directory=/usr/share/zoneminder
+retry="TERM/50/KILL/5"
+
+depend() {
+	need net
+	after mysql mariadb
+	before zoneminder
+}
+
+start_pre() {
+	local zmconf=/etc/zm/zm.conf
+	: "${ZM_API_USER:=$(sed -n 's/^ZM_WEB_USER=//p' "${zmconf}" 2>/dev/null)}"
+	: "${ZM_API_GROUP:=$(sed -n 's/^ZM_WEB_GROUP=//p' "${zmconf}" 2>/dev/null)}"
+	if [ -z "${ZM_API_USER}" ] || [ -z "${ZM_API_GROUP}" ]; then
+		eerror "set ZM_API_USER/ZM_API_GROUP in /etc/conf.d/${RC_SVCNAME} (none in ${zmconf})"
+		return 1
+	fi
+	command_user="${ZM_API_USER}:${ZM_API_GROUP}"
+
+	if [ ! -r "${ZM_API_ENV:=/etc/zm-api/zm-api.env}" ]; then
+		eerror "${ZM_API_ENV} missing"
+		return 1
+	fi
+	set -a
+	. "${ZM_API_ENV}"
+	set +a
+
+	if [ ! -f "${APP_SECRET__PRIVATE_ACCESS_KEY}" ]; then
+		eerror "no JWT keys; run: emerge --config www-misc/zm-api"
+		return 1
+	fi
+
+	checkpath -d -m 0750 -o "${command_user}" /var/lib/zm-api /var/log/zm-api
+	# ZoneMinder's socket directory belongs to zoneminder; create, never re-own
+	[ -d /run/zm ] || checkpath -d -m 0755 -o "${command_user}" /run/zm
+}

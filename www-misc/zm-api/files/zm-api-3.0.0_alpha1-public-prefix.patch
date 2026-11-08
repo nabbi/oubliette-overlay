@@ -1,0 +1,198 @@
+From 916ab1fc575b07f90183f8fd43be85d3f1e37a54 Mon Sep 17 00:00:00 2001
+From: Nic Boet <nic@boet.cc>
+Date: Fri, 23 Oct 2026 22:35:57 -0500
+Subject: [PATCH] Add server.public_prefix for URLs written behind a proxy path
+
+A reverse proxy can publish zm-api under a path, e.g. /zm/api/v3 next to
+the rest of ZoneMinder, and strip it before passing requests on. Requests
+then work, but URLs zm-api writes into responses still start at the site
+root: live HLS master playlists, signed media links, the live-start
+response, search result URLs, and Swagger UI's document URL and "try it
+out" target. A client following them leaves the proxied path.
+
+server.public_prefix (APP_SERVER__PUBLIC_PREFIX), empty by default, is
+prepended to those URLs only. Routing, media grants and the zm-web
+fallback keep the paths zm-api serves. With a prefix set, the OpenAPI
+document gets it as its server URL and Swagger UI fetches the document
+through it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/configure/server.rs     | 44 +++++++++++++++++++++++++++++++++++++
+ src/dto/response/search.rs  |  2 +-
+ src/handlers/live.rs        |  2 +-
+ src/handlers/media_links.rs |  8 +++++--
+ src/routes/mod.rs           | 12 +++++++++-
+ src/server/state.rs         |  3 ++-
+ 6 files changed, 65 insertions(+), 6 deletions(-)
+
+diff --git a/src/configure/server.rs b/src/configure/server.rs
+index 7e63d62..c2905e9 100644
+--- a/src/configure/server.rs
++++ b/src/configure/server.rs
+@@ -1,5 +1,6 @@
+ use std::net::{AddrParseError, SocketAddr};
+ use std::path::PathBuf;
++use std::sync::OnceLock;
+ 
+ use serde::Deserialize;
+ 
+@@ -24,6 +25,39 @@ pub struct ServerConfig {
+     /// HTTP middleware tuning (body limits, rate limiting).
+     #[serde(default)]
+     pub middleware: MiddlewareConfig,
++    /// Path the reverse proxy serves zm-api under, e.g. `/zm` when it maps
++    /// `/zm/api/v3/` to `/api/v3/` so the API sits with the rest of ZoneMinder.
++    /// Routes do not change; only URLs zm-api writes into responses get it:
++    /// stream and media links, search results, Swagger UI's document and the
++    /// OpenAPI server. Empty (the default) means the site root.
++    #[serde(default)]
++    pub public_prefix: String,
++}
++
++static PUBLIC_PREFIX: OnceLock<String> = OnceLock::new();
++
++/// Record `ServerConfig::public_prefix` once at startup.
++pub fn set_public_prefix(prefix: &str) {
++    let _ = PUBLIC_PREFIX.set(normalize_prefix(prefix));
++}
++
++/// The prefix in effect: empty, or `/`-led with no trailing `/`.
++pub fn public_prefix() -> &'static str {
++    PUBLIC_PREFIX.get().map(String::as_str).unwrap_or("")
++}
++
++/// `path`, as zm-api routes it, the way a client behind the proxy reaches it.
++pub fn public_path(path: &str) -> String {
++    format!("{}{path}", public_prefix())
++}
++
++fn normalize_prefix(prefix: &str) -> String {
++    let p = prefix.trim().trim_end_matches('/');
++    if p.is_empty() || p.starts_with('/') {
++        p.to_string()
++    } else {
++        format!("/{p}")
++    }
+ }
+ 
+ /// Accept either a comma-separated string or a sequence. TOML users write an
+@@ -254,10 +288,20 @@ pub mod tests {
+             acme: None,
+             allowed_origins: Vec::new(),
+             middleware: MiddlewareConfig::default(),
++            public_prefix: String::new(),
+         };
+         assert_eq!(config.get_http_addr(), "http://127.0.0.1:1024");
+     }
+ 
++    #[test]
++    fn public_prefix_is_normalized() {
++        assert_eq!(normalize_prefix(""), "");
++        assert_eq!(normalize_prefix("/"), "");
++        assert_eq!(normalize_prefix("/zm"), "/zm");
++        assert_eq!(normalize_prefix("/zm/"), "/zm");
++        assert_eq!(normalize_prefix(" zm "), "/zm");
++    }
++
+     #[test]
+     pub fn middleware_config_defaults() {
+         let mw = MiddlewareConfig::default();
+diff --git a/src/dto/response/search.rs b/src/dto/response/search.rs
+index 792764a..7282171 100644
+--- a/src/dto/response/search.rs
++++ b/src/dto/response/search.rs
+@@ -22,7 +22,7 @@ pub struct SearchCitation {
+ 
+ impl From<Hit> for SearchCitation {
+     fn from(h: Hit) -> Self {
+-        let url = format!("/api/v3/events/{}", h.event_id);
++        let url = crate::configure::server::public_path(&format!("/api/v3/events/{}", h.event_id));
+         Self {
+             event_id: h.event_id,
+             ts: h.ts,
+diff --git a/src/handlers/live.rs b/src/handlers/live.rs
+index 885d6a1..d6625ea 100644
+--- a/src/handlers/live.rs
++++ b/src/handlers/live.rs
+@@ -186,7 +186,7 @@ pub async fn start_live_stream(
+             _ => AppError::BadRequestError(format!("Failed to start live stream: {}", e)),
+         })?;
+ 
+-    let base_url = format!("/api/v3/live/{}", monitor_id);
++    let base_url = crate::configure::server::public_path(&format!("/api/v3/live/{}", monitor_id));
+ 
+     Ok(Json(StartLiveResponse {
+         monitor_id,
+diff --git a/src/handlers/media_links.rs b/src/handlers/media_links.rs
+index 910e628..cf74005 100644
+--- a/src/handlers/media_links.rs
++++ b/src/handlers/media_links.rs
+@@ -80,7 +80,9 @@ pub async fn create_live_link(
+         MediaResource::Monitor(monitor_id),
+         claims.uid,
+         &req,
+-        format!("/api/v3/live/{monitor_id}/hls/master.m3u8"),
++        crate::configure::server::public_path(&format!(
++            "/api/v3/live/{monitor_id}/hls/master.m3u8"
++        )),
+     )?))
+ }
+ 
+@@ -125,6 +127,8 @@ pub async fn create_event_link(
+         },
+         claims.uid,
+         &req,
+-        format!("/api/v3/events/{event_id}/stream/playlist.m3u8"),
++        crate::configure::server::public_path(&format!(
++            "/api/v3/events/{event_id}/stream/playlist.m3u8"
++        )),
+     )?))
+ }
+diff --git a/src/routes/mod.rs b/src/routes/mod.rs
+index a430658..e259998 100644
+--- a/src/routes/mod.rs
++++ b/src/routes/mod.rs
+@@ -613,10 +613,20 @@ pub fn create_router_app(state: AppState) -> Router {
+     let mut openapi = ApiDoc::openapi();
+     #[cfg(feature = "onvif-discovery")]
+     openapi.merge(crate::handlers::discovery::DiscoveryApiDoc::openapi());
++    // Behind a proxy prefix, Swagger UI must fetch the document, and send
++    // "try it out" requests, through that prefix.
++    let prefix = crate::configure::server::public_prefix();
++    let mut swagger = SwaggerUi::new("/swagger-ui");
++    if !prefix.is_empty() {
++        openapi.servers = Some(vec![utoipa::openapi::Server::new(prefix)]);
++        swagger = swagger.config(utoipa_swagger_ui::Config::from(format!(
++            "{prefix}/api-docs/openapi.json"
++        )));
++    }
+ 
+     // Regular JSON API endpoints — safe to gzip/brotli compress.
+     let api = Router::new()
+-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", openapi))
++        .merge(swagger.url("/api-docs/openapi.json", openapi))
+         .merge(server_routes)
+         .merge(auth_routes)
+         .merge(monitors_routes)
+diff --git a/src/server/state.rs b/src/server/state.rs
+index 30a3001..56c28dd 100644
+--- a/src/server/state.rs
++++ b/src/server/state.rs
+@@ -50,6 +50,7 @@ pub struct AppState {
+ 
+ impl AppState {
+     pub async fn new(mut config: AppConfig) -> AppResult<Self> {
++        crate::configure::server::set_public_prefix(&config.server.public_prefix);
+         let db = Arc::new(DatabaseClient::build_from_config(&config).await?);
+ 
+         // zm-next is on only where it is installed: `enabled = "auto"` (the
+@@ -111,7 +112,7 @@ impl AppState {
+             tracing::info!("HLS streaming enabled, initializing session manager");
+             let manager = Arc::new(HlsSessionManager::new(
+                 config.streaming.hls.clone(),
+-                "/api/v3/live", // Changed to use /api/v3/live/ prefix
++                &crate::configure::server::public_path("/api/v3/live"),
+             ));
+             // Start the background segment-cleanup loop (previously never
+             // started — its handle was dropped on the floor). See §3.1.

@@ -15,6 +15,30 @@ Alias /zm/cache "/var/cache/zoneminder"
     Require all granted
 </Directory>
 
+# BEGIN api/v3
+# API v3: www-misc/zm-api on 127.0.0.1:8080, uncommented by USE=apiv3. Needs
+# mod_proxy, mod_proxy_http and mod_proxy_wstunnel (APACHE2_OPTS -D PROXY),
+# and mod_headers. zm-api serves /api/v3, /api-docs and /swagger-ui; these map
+# them under /zm (the API document also as /zm/api-docs/v3/), and
+# APP_SERVER__PUBLIC_PREFIX=/zm (zm-api.env) puts /zm in the links it writes.
+# /zm/api-docs/ itself, and v2/ (USE=apiv2-php), are static files under /zm.
+# zm-api keys its login rate limit on the first X-Forwarded-For address, so
+# drop the client's before mod_proxy adds the peer.
+#<IfModule proxy_http_module>
+#    ProxyPreserveHost On
+#    ProxyPass        /zm/api/v3/ http://127.0.0.1:8080/api/v3/ upgrade=websocket
+#    ProxyPassReverse /zm/api/v3/ http://127.0.0.1:8080/api/v3/
+#    ProxyPass        /zm/api-docs/openapi.json http://127.0.0.1:8080/api-docs/openapi.json
+#    ProxyPass        /zm/api-docs/v3/openapi.json http://127.0.0.1:8080/api-docs/openapi.json
+#    RedirectMatch    ^/zm/api-docs/v3/$ /zm/swagger-ui/
+#    ProxyPass        /zm/swagger-ui http://127.0.0.1:8080/swagger-ui
+#    ProxyPassReverse /zm/swagger-ui http://127.0.0.1:8080/swagger-ui
+#    <LocationMatch "^/zm/(api/v3/|api-docs/(v3/)?openapi\.json|swagger-ui)">
+#        RequestHeader unset X-Forwarded-For
+#    </LocationMatch>
+#</IfModule>
+# END api/v3
+
 ScriptAlias /zm/cgi-bin "/usr/libexec/zoneminder/cgi-bin"
 Alias /zoneminder "%ZM_WEBDIR%"
 Alias /zm "%ZM_WEBDIR%"

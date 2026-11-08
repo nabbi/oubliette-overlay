@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+		<name>nic</name>
+	</maintainer>
+	<longdescription>
+		ZoneMinder API v3, written in Rust: the API meant to replace ZoneMinder's
+		API v2 (/zm/api, CakePHP or zm-php-api) in the long run. Until then it
+		serves /zm/api/v3 next to API v2, on the same instance and database. It runs
+		passive by default, so ZoneMinder's own daemons (zmdc.pl) stay in
+		control; zm-api-takeover hands daemon control to it. Pulled in by
+		www-misc/zoneminder[apiv3]. Upstream does not tag yet: 9999 builds
+		master's head, and dated snapshots (Cargo.toml version plus
+		_preYYYYMMDD of the commit date) pin master commits.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">SteveGilvarry/zm-api</remote-id>
+	</upstream>
+</pkgmetadata>

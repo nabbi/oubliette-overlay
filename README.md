@@ -6,6 +6,10 @@
 
 **Oubliette** is a personal, unofficial Portage overlay containing forgotten or patched ebuilds that are maintained here for convenience.
 
+Packages with their own notes:
+
+* [www-misc/zoneminder](www-misc/zoneminder/README.md) — ZoneMinder: releases, live branches and master snapshots; API v2 as CakePHP (`apiv2-cake`) or [zm-php-api](https://github.com/nabbi/zm-php-api) (`apiv2-php`), optional API v3 (`apiv3`, `www-misc/zm-api`).
+
 Related repositories:
 
 * [oubliette-patches](https://github.com/nabbi/oubliette-patches) — supplemental patches used by some ebuilds.

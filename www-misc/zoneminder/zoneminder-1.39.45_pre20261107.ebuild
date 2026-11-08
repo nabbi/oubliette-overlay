@@ -10,40 +10,68 @@ HOMEPAGE="https://www.zoneminder.com/"
 
 MY_PV_MM=$(ver_cut 1-2)
 MY_PV_P=$(ver_cut 3-)
+# USE=apiv2-php: the API v2 at /zm/api is zm-php-api, layered over web/api
+# before CMake runs (its tools/zm-overlay.sh). Live ebuilds take its main
+# branch; the others the tarball of release v${ZM_PHP_API_PV} (unpacks to
+# zm-php-api-${ZM_PHP_API_PV}/).
+ZM_PHP_API_URI="https://github.com/nabbi/zm-php-api"
+ZM_PHP_API_PV="2.0.0-rc.1"
+
 if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/ZoneMinder/zoneminder"
-	if [[ "${MY_PV_MM}" == 1.36 ]]; then
+	# <series>.9999 follows release-<series>, 9999 follows master
+	if [[ ${PV} != 9999 ]]; then
 		EGIT_BRANCH="release-${MY_PV_MM}"
 	fi
 else
+	# Snapshot ebuilds (<version.txt>_pre<commit date>, scripts/snapshot.sh)
+	# take an untagged upstream commit, MY_ZM_COMMIT; releases take the tag.
+	MY_ZM_COMMIT="8556830515d793de1bf22752937bc256ab61eeaa"
+
 	# Portage normally handels the pinned submodule releases fine,
 	# however upstream had multiple regression in accidently touching,
 	# so we re-pin here to avoid breaking our gentoo builds
 	MY_CRUD_V="14292374ccf1328f2d5db20897bd06f99ba4d938"
 	MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
-	MY_RTSP_V="a071599575f60a6f1f424e1f9b408dad7da734a8"
+	MY_RTSP_V="a8781ec608d0252d4752b64fe2b199b35bcc1695"
 	MY_CXXURL_V="eaf46c0207df24853a238d4499e7f4426d9d234c"
 
-	SRC_URI="
-		https://github.com/ZoneMinder/${PN}/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
-		https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_V}.tar.gz -> Crud-${MY_CRUD_V}.tar.gz
-		https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> \
-			CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
-		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz
-		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.tar.gz -> CxxUrl-${MY_CXXURL_V}.tar.gz"
+	if [[ -n ${MY_ZM_COMMIT} ]]; then
+		MY_ZM_URI="https://github.com/ZoneMinder/${PN}/archive/${MY_ZM_COMMIT}.tar.gz"
+		S="${WORKDIR}/${PN}-${MY_ZM_COMMIT}"
+	else
+		MY_ZM_URI="https://github.com/ZoneMinder/${PN}/archive/refs/tags/${PV}.tar.gz"
+	fi
 
-	KEYWORDS="~amd64"
+	SRC_URI="
+		${MY_ZM_URI} -> ${P}.tar.gz
+		apiv2-cake? (
+			https://github.com/FriendsOfCake/crud/archive/${MY_CRUD_V}.tar.gz -> Crud-${MY_CRUD_V}.tar.gz
+			https://github.com/ZoneMinder/CakePHP-Enum-Behavior/archive/${MY_CAKEPHP_V}.tar.gz -> \
+				CakePHP-Enum-Behavior-${MY_CAKEPHP_V}.tar.gz
+		)
+		https://github.com/ZoneMinder/RtspServer/archive/${MY_RTSP_V}.tar.gz -> RtspServer-${MY_RTSP_V}.tar.gz
+		https://github.com/chmike/CxxUrl/archive/${MY_CXXURL_V}.tar.gz -> CxxUrl-${MY_CXXURL_V}.tar.gz
+		apiv2-php? (
+			${ZM_PHP_API_URI}/releases/download/v${ZM_PHP_API_PV}/zm-php-api-${ZM_PHP_API_PV}.tar.gz
+		)"
+
 fi
 
 LICENSE="GPL-2"
 SLOT="0"
 # first webserver in the list is the default, users will need to disable to select others
 IUSE_WEB_SERVER="apache2 nginx"
-IUSE="curl gcrypt +mmap mqtt vlc +${IUSE_WEB_SERVER}"
+# API v2 at /zm/api: upstream's CakePHP, or zm-php-api in its place
+IUSE_API_V2="apiv2-cake apiv2-php"
+IUSE="apiv3 curl gcrypt +mmap mqtt test vlc +${IUSE_WEB_SERVER} +${IUSE_API_V2}"
 REQUIRED_USE="
 	^^ ( ${IUSE_WEB_SERVER} )
+	^^ ( ${IUSE_API_V2} )
 "
+# USE=test runs zm-php-api's unit tests only (src_test)
+RESTRICT="!test? ( test )"
 
 DEPEND_WEB_SERVER="
 apache2? ( www-servers/apache )
@@ -56,8 +84,11 @@ nginx? (
 "
 
 # Database client. The C++ daemons link the MySQL client library and the Perl
-# scripts drive the database through DBD::mysql (1.38 has no DBD::MariaDB
-# support; that arrived on master with upstream ddb5c9321, 2026-08-20).
+# scripts need a DBI driver; both are chosen together.
+#   default      dev-db/mysql-connector-c + dev-perl/DBD-mysql
+#   USE=mariadb  dev-db/mariadb-connector-c + dev-perl/DBD-MariaDB (master
+#                only: ZoneMinder's Perl prefers DBD::MariaDB when it is
+#                installed since upstream ddb5c9321, 2026-08-20, not in 1.38)
 # Workarounds, with their reasons:
 # - dev-perl/DBD-mysql[mysql(+)]: DBD::mysql 5 builds only against the MySQL 8
 #   client library; with USE=mariadb it fails in dbdimp.c (Gentoo bug 931628,
@@ -66,14 +97,28 @@ nginx? (
 #   this client library; it is what dev-db/mariadb itself prefers.
 # - dev-db/mysql-connector-c is named here rather than reached through
 #   DBD-mysql: ZoneMinder's CMake links it directly.
-# - files/${PN}-1.38.5-mariadb-connector.patch (PATCHES below) lets CMake also
-#   find dev-db/mariadb-connector-c (libmariadb.so, /usr/include/mariadb) on a
-#   system that has both; the Perl side still needs DBD::mysql, so there is no
-#   USE=mariadb on 1.38.
-DEPEND_DB="
-dev-db/mysql-connector-c:=
-dev-perl/DBD-mysql[mysql(+)]
-"
+# - dev-db/mariadb-connector-c installs libmariadb.so and /usr/include/mariadb
+#   only; ZoneMinder's CMake finds those with
+#   files/${PN}-1.38.5-mariadb-connector.patch (PATCHES below) until upstream
+#   merges PR #5495 (issue #5494). On 1.38 the patch only matters when both libraries are present.
+if [[ ${PV} == 9999 || ${MY_PV_MM} == 1.39 ]]; then
+	IUSE+=" mariadb"
+	DEPEND_DB="
+	!mariadb? (
+		dev-db/mysql-connector-c:=
+		dev-perl/DBD-mysql[mysql(+)]
+	)
+	mariadb? (
+		dev-db/mariadb-connector-c:=
+		dev-perl/DBD-MariaDB
+	)
+	"
+else
+	DEPEND_DB="
+	dev-db/mysql-connector-c:=
+	dev-perl/DBD-mysql[mysql(+)]
+	"
+fi
 
 DEPEND="
 app-eselect/eselect-php
@@ -123,9 +168,19 @@ ${DEPEND_DB}
 "
 # webserver is a build time depend; we need the user/group to already exist
 
-RDEPEND="${DEPEND}"
+RDEPEND="
+	${DEPEND}
+	apiv3? ( www-misc/zm-api )
+"
+BDEPEND="test? ( apiv2-php? ( dev-lang/php:*[cli] ) )"
 
 MY_ZM_WEBDIR=/usr/share/zoneminder/www
+# where src_unpack puts zm-php-api: the live checkout, or the release tarball's directory
+if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
+	ZM_PHP_API_S="${WORKDIR}/zm-php-api"
+else
+	ZM_PHP_API_S="${WORKDIR}/zm-php-api-${ZM_PHP_API_PV}"
+fi
 
 pkg_setup() {
 	if use nginx ; then
@@ -149,6 +204,19 @@ pkg_setup() {
 	export MY_WEB_USER MY_WEB_GROUP MY_WEB_INITD
 }
 
+src_unpack() {
+	if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
+		git-r3_src_unpack
+		if use apiv2-php; then
+			local repo="${ZM_PHP_API_REPO_URI:-${ZM_PHP_API_URI}.git}"
+			git-r3_fetch "${repo}" "refs/heads/${ZM_PHP_API_BRANCH:-main}" zm-php-api
+			git-r3_checkout "${repo}" "${ZM_PHP_API_S}" zm-php-api
+		fi
+	else
+		default
+	fi
+}
+
 # CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above);
 # upstream PR #5495, drop the patch once it is merged.
 PATCHES=(
@@ -158,12 +226,32 @@ PATCHES=(
 src_prepare() {
 	cmake_src_prepare
 
-	if ! [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
-		rmdir "${S}/web/api/app/Plugin/Crud" || die
-		mv "${WORKDIR}/crud-${MY_CRUD_V}" "${S}/web/api/app/Plugin/Crud" || die
+	# Master (9999, 1.39 snapshots): our security fixes that upstream has not
+	# merged yet, in order (scripts/security-patches.sh). The set is empty
+	# when everything is merged (2026-11-08: all 19 were, checked against
+	# master 855683051); eapply dies on an empty directory, so apply only
+	# when there is something to apply.
+	if [[ ${PV} == 9999 || ${MY_PV_MM} == 1.39 ]]; then
+		if compgen -G "${FILESDIR}/master-security/*.patch" >/dev/null; then
+			eapply "${FILESDIR}"/master-security
+		fi
+	fi
 
-		rmdir "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
-		mv "${WORKDIR}/CakePHP-Enum-Behavior-${MY_CAKEPHP_V}" "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
+	if use apiv2-php; then
+		# Replaces web/api (CakePHP and its plugins) and CakePHP's CMake hooks.
+		# Web server configurations stay as they are: api/app/webroot/index.php
+		# forwards to the new front controller.
+		"${ZM_PHP_API_S}"/tools/zm-overlay.sh "${S}" || die "zm-php-api overlay failed"
+	fi
+
+	if ! [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
+		if use apiv2-cake; then
+			rmdir "${S}/web/api/app/Plugin/Crud" || die
+			mv "${WORKDIR}/crud-${MY_CRUD_V}" "${S}/web/api/app/Plugin/Crud" || die
+
+			rmdir "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
+			mv "${WORKDIR}/CakePHP-Enum-Behavior-${MY_CAKEPHP_V}" "${S}/web/api/app/Plugin/CakePHP-Enum-Behavior" || die
+		fi
 
 		rmdir "${S}/dep/RtspServer" || die
 		mv "${WORKDIR}/RtspServer-${MY_RTSP_V}" "${S}/dep/RtspServer" || die
@@ -207,6 +295,20 @@ src_configure() {
 
 	cmake_src_configure
 
+}
+
+src_test() {
+	# ZoneMinder's own suite needs -DBUILD_TEST_SUITE and hardware; only
+	# zm-php-api's DB-free unit tests run here, against this tree's web/includes.
+	if use apiv2-php; then
+		ZM_SRC="${S}" "${ZM_PHP_API_S}"/tests/run.sh || die "zm-php-api tests failed"
+	fi
+}
+
+# Uncomment the /api/v3 proxy block between the BEGIN/END markers: "#code"
+# and "#    code" lose the "#", prose comments ("# text") stay
+zm_enable_api_v3() {
+	sed -i -e '/# BEGIN api\/v3/,/# END api\/v3/s/^\(\s*\)#\([^ ]\|    \)/\1\2/' "$1" || die
 }
 
 src_install() {
@@ -257,12 +359,15 @@ src_install() {
 	if use apache2; then
 		cp "${FILESDIR}"/zoneminder_vhost.include "${T}"/zoneminder_vhost.include || die
 		sed -i "${T}"/zoneminder_vhost.include -e "s:%ZM_WEBDIR%:${MY_ZM_WEBDIR}:g" || die
+		use apiv3 && zm_enable_api_v3 "${T}"/zoneminder_vhost.include
 		dodoc "${FILESDIR}"/zoneminder_vhost.conf "${T}"/zoneminder_vhost.include
 	fi
 
 	# nginx conf files
 	if use nginx; then
-		dodoc "${FILESDIR}"/zoneminder.nginx.conf
+		cp "${FILESDIR}"/zoneminder.nginx.conf "${T}"/zoneminder.nginx.conf || die
+		use apiv3 && zm_enable_api_v3 "${T}"/zoneminder.nginx.conf
+		dodoc "${T}"/zoneminder.nginx.conf
 		dodoc "${FILESDIR}"/zoneminder.php-fpm.conf
 		dodoc "${FILESDIR}"/zoneminder.nginx.fastcgi_params
 		newconfd "${FILESDIR}"/spawn-fcgi.zoneminder.confd spawn-fcgi.zoneminder
@@ -275,10 +380,71 @@ src_install() {
 
 	README_GENTOO_SUFFIX="-r1"
 	readme.gentoo_create_doc
+
+	if use apiv2-php; then
+		newdoc "${ZM_PHP_API_S}"/README.md zm-php-api-README.md
+		newdoc "${ZM_PHP_API_S}"/docs/install.md zm-php-api-install.md
+		newdoc "${ZM_PHP_API_S}"/SECURITY.md zm-php-api-SECURITY.md
+		# API v2 reference (OpenAPI + a Redoc page), served at /zm/api-docs/v2/
+		insinto "${MY_ZM_WEBDIR}"/api-docs/v2
+		doins "${ZM_PHP_API_S}"/docs/openapi/{index.html,openapi.json}
+	fi
+	if use apiv2-php || use apiv3; then
+		zm_api_docs_index > "${T}"/api-docs-index.html || die
+		insinto "${MY_ZM_WEBDIR}"/api-docs
+		newins "${T}"/api-docs-index.html index.html
+	fi
+}
+
+# /zm/api-docs/: links to the API references this build serves
+zm_api_docs_index() {
+	cat <<-EOF
+	<!doctype html>
+	<html lang="en">
+	<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ZoneMinder API docs</title></head>
+	<body>
+	<h1>ZoneMinder API documentation</h1>
+	<ul>
+	EOF
+	use apiv2-php && cat <<-EOF
+	<li><a href="v2/">API v2</a> at <code>/zm/api</code> (zm-php-api, CakePHP compatible):
+	 <a href="v2/openapi.json">OpenAPI document</a></li>
+	EOF
+	use apiv3 && cat <<-EOF
+	<li><a href="v3/">API v3</a> at <code>/zm/api/v3</code> (zm-api), in Swagger UI:
+	 <a href="v3/openapi.json">OpenAPI document</a></li>
+	EOF
+	cat <<-EOF
+	</ul>
+	</body>
+	</html>
+	EOF
 }
 
 pkg_postinst() {
 	readme.gentoo_print_elog
+
+	if use apiv2-php; then
+		local api=${EROOT}${MY_ZM_WEBDIR}/api
+		elog "API v2 (apiversion $(sed -n "s/.*const API_VERSION = '\([^']*\)'.*/\1/p" \
+			"${api}"/src/Controller/HostController.php 2>/dev/null)) at /zm/api is served by"
+		elog "zm-php-api $(cat "${api}"/VERSION 2>/dev/null), in place of CakePHP. Existing web server"
+		elog "configurations keep working; see /usr/share/doc/${PF}/zm-php-api-install.md"
+		elog "for routing /zm/api to api/dispatch.php directly."
+	fi
+
+	if use apiv3; then
+		elog "API v3 (www-misc/zm-api) runs next to API v2 as its own service on 127.0.0.1:8080."
+		elog "The web server example under /usr/share/doc/${PF} has the /zm/api/v3 proxy"
+		elog "block enabled; a copy already in /etc needs it added by hand."
+		elog "Then follow the zm-api install notes (emerge --config www-misc/zm-api, zm-api-db bridge)."
+	fi
+
+	if use apiv2-php || use apiv3; then
+		elog "API documentation: https://<this host>/zm/api-docs/ (the /zm/api-docs block of the"
+		elog "web server example)."
+	fi
 
 	if [[ -z "${REPLACING_VERSIONS}" ]]; then
 		elog "Fresh installs of zoneminder require a few additional steps. Please read the README.gentoo"
