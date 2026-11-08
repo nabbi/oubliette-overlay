@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Make sure a golang-dist fork has the Go deps tarball for an upstream tag,
+# before bumping an ebuild that fetches it (run this before pkgdev manifest).
+#
+#   scripts/golang-dist-deps <owner/fork> <tag>
+#   scripts/golang-dist-deps nabbi/ssh-tpm-agent v0.10.0
+#
+# If the fork has no release for the tag yet, this starts the fork's mirror
+# workflow (projg2/golang-dist-mirror-action, manual only), which copies new
+# upstream tags into the fork; each copied tag runs golang-dist-action, which
+# attaches <name>-<version>-deps.tar.xz to a release of that tag. Then it
+# waits for that file.
+#
+# Needs: gh, logged in with access to the fork; the fork's PUSH_TOKEN secret.
+# Forks: nabbi/ssh-tpm-agent (app-crypt/ssh-tpm-agent).
+
+set -euo pipefail
+
+usage() {
+	echo "usage: ${0##*/} <owner/fork> <tag>" >&2
+	exit 2
+}
+
+[[ $# -eq 2 ]] || usage
+repo=$1 tag=$2
+[[ ${repo} == */* && -n ${tag} ]] || usage
+
+name=${repo#*/}
+version=${tag#v}
+asset="${name}-${version}-deps.tar.xz"
+url="https://github.com/${repo}/releases/download/${tag}/${asset}"
+timeout=${GOLANG_DIST_TIMEOUT:-900}
+
+has_asset() {
+	gh release view "${tag}" -R "${repo}" --json assets \
+		--jq '.assets[].name' 2>/dev/null | grep -qxF "${asset}"
+}
+
+if has_asset; then
+	echo "already there: ${url}"
+	exit 0
+fi
+
+if ! gh api "repos/${repo}/git/ref/tags/${tag}" >/dev/null 2>&1; then
+	echo "${repo} has no tag ${tag}: running the mirror workflow"
+	started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+	gh workflow run mirror.yml -R "${repo}"
+
+	# gh workflow run doesn't print the run it started: find it
+	run=""
+	for _ in {1..30}; do
+		run=$(gh run list -R "${repo}" --workflow mirror.yml \
+			--event workflow_dispatch --limit 5 \
+			--json databaseId,createdAt \
+			--jq "map(select(.createdAt >= \"${started}\")) | .[0].databaseId // empty")
+		[[ -n ${run} ]] && break
+		sleep 2
+	done
+	[[ -n ${run} ]] || { echo "the mirror run didn't start" >&2; exit 1; }
+
+	if ! gh run watch "${run}" -R "${repo}" --exit-status >/dev/null; then
+		echo "the mirror run failed (PUSH_TOKEN missing or expired?):" >&2
+		gh run view "${run}" -R "${repo}" --log-failed | tail -n 20 >&2
+		exit 1
+	fi
+
+	if ! gh api "repos/${repo}/git/ref/tags/${tag}" >/dev/null 2>&1; then
+		echo "the mirror ran, but ${repo} still has no tag ${tag}. Does upstream have it?" >&2
+		exit 1
+	fi
+fi
+
+echo "waiting for ${asset} on release ${tag} (golang-dist-action)"
+deadline=$((SECONDS + timeout))
+until has_asset; do
+	if (( SECONDS >= deadline )); then
+		echo "no ${asset} after ${timeout}s. The tag's runs:" >&2
+		gh run list -R "${repo}" --branch "${tag}" --limit 3 >&2 || true
+		exit 1
+	fi
+	sleep 15
+done
+
+echo "ready: ${url}"
