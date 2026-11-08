@@ -66,7 +66,13 @@ SLOT="0"
 IUSE_WEB_SERVER="apache2 nginx"
 # API v2 at /zm/api: upstream's CakePHP, or zm-php-api in its place
 IUSE_API_V2="apiv2-cake apiv2-php"
-IUSE="apiv3 curl gcrypt +mmap mqtt test vlc +${IUSE_WEB_SERVER} +${IUSE_API_V2}"
+IUSE="apiv3 curl gcrypt +mmap mqtt test +${IUSE_WEB_SERVER} +${IUSE_API_V2}"
+# libvlc capture: 1.38 only. Master removed it (upstream b0645ae51,
+# 2026-10-10) and its CMake no longer reads ZM_NO_LIBVLC.
+if ! [[ ${PV} == 9999 || ${MY_PV_MM} == 1.39 ]]; then
+	IUSE+=" vlc"
+	DEPEND_VLC="vlc? ( media-video/vlc[live] )"
+fi
 REQUIRED_USE="
 	^^ ( ${IUSE_WEB_SERVER} )
 	^^ ( ${IUSE_API_V2} )
@@ -163,7 +169,7 @@ gcrypt? ( dev-libs/libgcrypt:0= )
 dev-libs/openssl:=
 mmap? ( dev-perl/Sys-Mmap )
 mqtt? ( app-misc/mosquitto )
-vlc? ( media-video/vlc[live] )
+${DEPEND_VLC}
 ${DEPEND_WEB_SERVER}
 ${DEPEND_DB}
 "
@@ -287,12 +293,14 @@ src_configure() {
 		-DZM_NO_MMAP="$(usex mmap OFF ON)"
 		-DZM_NO_X10=OFF
 		-DZM_NO_CURL="$(usex curl OFF ON)"
-		-DZM_NO_LIBVLC="$(usex vlc OFF ON)"
 		-DZM_NO_MQTT="$(usex mqtt OFF ON)"
 		-DZM_JWT_BACKEND=jwt_cpp
 		-DZM_CRYPTO_BACKEND=openssl
 		-DZM_NO_RTSPSERVER=OFF
 	)
+	if in_iuse vlc; then
+		mycmakeargs+=( -DZM_NO_LIBVLC="$(usex vlc OFF ON)" )
+	fi
 
 	cmake_src_configure
 
