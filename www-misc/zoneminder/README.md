@@ -183,10 +183,10 @@ printf '%s\n' dev-perl/Data-Entropy dev-perl/Data-Float > /etc/portage/package.a
 Name the snapshot instead of the series:
 
 ```shell
-echo '=www-misc/zoneminder-1.39.41_pre20261023::oubliette **' > /etc/portage/package.accept_keywords/zoneminder
+echo '=www-misc/zoneminder-1.39.45_pre20261107::oubliette **' > /etc/portage/package.accept_keywords/zoneminder
 ```
 
-Or keep the series line and mask what comes after it: `>www-misc/zoneminder-1.39.41_pre20261023` in `/etc/portage/package.mask/zoneminder`.
+Or keep the series line and mask what comes after it: `>www-misc/zoneminder-1.39.45_pre20261107` in `/etc/portage/package.mask/zoneminder`.
 
 ### API v3
 
@@ -202,7 +202,7 @@ Or zm-api master's head at each rebuild, which also fetches its crates at build 
 echo '=www-misc/zm-api-9999::oubliette **' >> /etc/portage/package.accept_keywords/zoneminder
 ```
 
-To hold zm-api at one snapshot, name it the same way as for ZoneMinder: `=www-misc/zm-api-3.0.0_alpha1_pre20261023::oubliette ~amd64`, and mask what comes after it.
+To hold zm-api at one snapshot, name it the same way as for ZoneMinder: `=www-misc/zm-api-3.0.0_alpha1_pre20261024::oubliette ~amd64`, and mask what comes after it.
 
 ## Maintaining
 
@@ -212,8 +212,8 @@ Neither upstream tags master. ZoneMinder's `version.txt` says 1.39.45 while the
 last 1.39 tag is 1.39.11, and zm-api has no tags at all. A snapshot ebuild pins
 one master commit. It is named after the upstream version at that commit and
 its commit date in UTC: `zoneminder-1.39.45_pre20261107` is ZoneMinder master
-at `855683051`, `zm-api-3.0.0_alpha1_pre20261023` is zm-api master at
-`a0b0c53` (Cargo.toml's `3.0.0-alpha.1`). `_pre` sorts a snapshot below a
+at `855683051`, `zm-api-3.0.0_alpha1_pre20261024` is zm-api master at
+`9e296bf` (Cargo.toml's `3.0.0-alpha.1`). `_pre` sorts a snapshot below a
 later tag of that version, so hosts move to the tag if one is made.
 ZoneMinder's release branches get tagged releases and `<series>.9999` live
 ebuilds instead.
