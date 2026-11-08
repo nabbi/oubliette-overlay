@@ -40,6 +40,9 @@ BDEPEND="
 PATCHES=(
 	# upstream 71cf1f39: v0.9.0 overwrites the key even when you answer "n"
 	"${FILESDIR}"/${P}-keygen-overwrite-prompt.patch
+	# upstream PR #148 (open, fixes #133): -p passed the old and new
+	# passphrase to ChangeAuth swapped
+	"${FILESDIR}"/${P}-keygen-change-passphrase.patch
 )
 
 PROGS=( ssh-tpm-add ssh-tpm-agent ssh-tpm-hostkeys ssh-tpm-keygen )
@@ -109,6 +112,4 @@ pkg_postinst() {
 	elog "Start the agent from the session (no OpenRC script):"
 	elog "  ssh-tpm-agent &"
 	elog "  export SSH_AUTH_SOCK=\"\$(ssh-tpm-agent --print-socket)\""
-	elog "Avoid 'ssh-tpm-keygen -p' (upstream #133): it swaps the old and new"
-	elog "passphrase, and failed tries count towards the TPM lockout."
 }
