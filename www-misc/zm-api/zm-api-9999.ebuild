@@ -74,7 +74,11 @@ PATCHES=()
 src_unpack() {
 	if [[ ${PV} == 9999 ]]; then
 		git-r3_src_unpack
+		# cargo.eclass as of 2026-11-07 runs cargo fetch/vendor in the
+		# current directory (WORKDIR), not ${S}
+		pushd "${S}" >/dev/null || die
 		cargo_live_src_unpack
+		popd >/dev/null || die
 	else
 		cargo_src_unpack
 	fi
