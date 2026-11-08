@@ -11,6 +11,7 @@
 	<use>
 		<flag name="curl">Enable using net-misc/curl for streaming from cameras</flag>
 		<flag name="gcrypt">...</flag>
+		<flag name="mariadb">Build against <pkg>dev-db/mariadb-connector-c</pkg> and drive the database from Perl with <pkg>dev-perl/DBD-MariaDB</pkg>, instead of <pkg>dev-db/mysql-connector-c</pkg> with <pkg>dev-perl/DBD-mysql</pkg> (master only: 1.38 has no DBD::MariaDB support). Either client library works with a MariaDB or MySQL server</flag>
 		<flag name="mqtt">Enable MQTT event publishing via app-misc/mosquitto</flag>
 		<flag name="apache2">Use www-servers/apache2 as web server (and user:group)</flag>
 		<flag name="nginx">Use www-servers/nginx as web server (and user:group)</flag>

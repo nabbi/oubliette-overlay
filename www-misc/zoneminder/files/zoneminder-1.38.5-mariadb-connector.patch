@@ -1,0 +1,70 @@
+ZoneMinder's CMake finds only libmysqlclient and include/mysql, the names MySQL
+and MariaDB's compatibility package install. dev-db/mariadb-connector-c installs
+libmariadb.so and /usr/include/mariadb instead, so configure stops with
+"ZoneMinder requires mysqlclient but it was not found on your system". This
+patch also accepts those names; systems with libmysqlclient keep it.
+
+Upstream: ZoneMinder PR from zm-holodeck fix/mariadb-connector (B128), 2026-11-08;
+applies to 1.38.5, the 1.39 snapshots and master. Drop it once upstream merges.
+
+CMake looked only for libmysqlclient and include/mysql/mysql.h, the names
+MySQL and MariaDB's compatibility package install. MariaDB Connector/C on
+its own installs libmariadb.so and include/mariadb/mysql.h (Gentoo's
+dev-db/mariadb-connector-c, Fedora's mariadb-connector-c-devel, Debian's
+libmariadb-dev without libmariadb-dev-compat), so configure stopped with
+"ZoneMinder requires mysqlclient but it was not found on your system".
+
+find_library now also accepts the name mariadb and find_path the mariadb
+include directory; zm_db.h includes mysql.h and mysqld_error.h through
+that directory instead of the mysql/ prefix. Systems with libmysqlclient
+keep it: mysqlclient is tried first in every directory, and its headers
+sit in include/mysql, which is still the first suffix searched.
+
+---
+ CMakeLists.txt | 12 +++++++++---
+ src/zm_db.h    |  6 ++++--
+ 2 files changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e28527309..a4fc48c0c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -571,12 +571,18 @@ if(NOT ZM_NO_MQTT)
+   endif (MOSQUITTOPP_FOUND)
+ endif()
+ 
+-# mysqlclient (using find_library and find_path)
+-  find_library(MYSQLCLIENT_LIBRARIES mysqlclient PATH_SUFFIXES mysql)
++# MySQL client library (using find_library and find_path). Either name works:
++# libmysqlclient (MySQL, or MariaDB Connector/C through its compatibility
++# package, headers under include/mysql) or libmariadb (MariaDB Connector/C on
++# its own, as Gentoo's dev-db/mariadb-connector-c and Fedora's
++# mariadb-connector-c-devel install it: libmariadb.so and include/mariadb/mysql.h,
++# no libmysqlclient names). mysqlclient is tried first in every directory, so a
++# system with both keeps the library it built against before.
++  find_library(MYSQLCLIENT_LIBRARIES NAMES mysqlclient mariadb PATH_SUFFIXES mysql mariadb)
+ if(MYSQLCLIENT_LIBRARIES)
+   set(HAVE_LIBMYSQLCLIENT 1)
+   list(APPEND ZM_BIN_LIBS "${MYSQLCLIENT_LIBRARIES}")
+-  find_path(MYSQLCLIENT_INCLUDE_DIR mysql.h PATH_SUFFIXES mysql)
++  find_path(MYSQLCLIENT_INCLUDE_DIR mysql.h PATH_SUFFIXES mysql mariadb)
+   if(MYSQLCLIENT_INCLUDE_DIR)
+     list(APPEND ZM_INCLUDE_DIRS "${MYSQLCLIENT_INCLUDE_DIR}")
+     set(CMAKE_REQUIRED_INCLUDES "${MYSQLCLIENT_INCLUDE_DIR}")
+diff --git a/src/zm_db.h b/src/zm_db.h
+index b90178cf8..0372f06ca 100644
+--- a/src/zm_db.h
++++ b/src/zm_db.h
+@@ -23,8 +23,10 @@
+ #include <condition_variable>
+ #include <cstdint>
+ #include <mutex>
+-#include <mysql/mysql.h>
+-#include <mysql/mysqld_error.h>
++// MYSQLCLIENT_INCLUDE_DIR (CMakeLists.txt) is on the include path: the headers'
++// directory is include/mysql for libmysqlclient and include/mariadb for libmariadb.
++#include <mysql.h>
++#include <mysqld_error.h>
+ #include <queue>
+ #include <string>
+ #include <thread>

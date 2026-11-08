@@ -40,7 +40,7 @@ LICENSE="GPL-2"
 SLOT="0"
 # first webserver in the list is the default, users will need to disable to select others
 IUSE_WEB_SERVER="apache2 nginx"
-IUSE="curl gcrypt +mmap mqtt vlc +${IUSE_WEB_SERVER}"
+IUSE="curl gcrypt mariadb +mmap mqtt vlc +${IUSE_WEB_SERVER}"
 REQUIRED_USE="
 	^^ ( ${IUSE_WEB_SERVER} )
 "
@@ -55,6 +55,34 @@ nginx? (
 )
 "
 
+# Database client. The C++ daemons link the MySQL client library and the Perl
+# scripts need a DBI driver; both are chosen together:
+#   default      dev-db/mysql-connector-c + dev-perl/DBD-mysql
+#   USE=mariadb  dev-db/mariadb-connector-c + dev-perl/DBD-MariaDB
+# Workarounds, with their reasons:
+# - dev-perl/DBD-mysql[mysql(+)]: DBD::mysql 5 builds only against the MySQL 8
+#   client library; with USE=mariadb it fails in dbdimp.c (Gentoo bug 931628,
+#   still open 2026-11). The USE dependency makes portage say so before the
+#   build instead of failing half way through. A MariaDB *server* is fine with
+#   this client library; it is what dev-db/mariadb itself prefers.
+# - dev-perl/DBD-MariaDB on USE=mariadb: ZoneMinder's Perl prefers DBD::MariaDB
+#   when it is installed (upstream ddb5c9321, master since 2026-08-20; not in
+#   1.38), so the Perl side needs no DBD::mysql there.
+# - dev-db/mariadb-connector-c installs libmariadb.so and /usr/include/mariadb
+#   only; ZoneMinder's CMake finds those with
+#   files/${PN}-1.38.5-mariadb-connector.patch (PATCHES below) until upstream
+#   merges it.
+DEPEND_DB="
+!mariadb? (
+	dev-db/mysql-connector-c:=
+	dev-perl/DBD-mysql[mysql(+)]
+)
+mariadb? (
+	dev-db/mariadb-connector-c:=
+	dev-perl/DBD-MariaDB
+)
+"
+
 DEPEND="
 app-eselect/eselect-php
 dev-cpp/nlohmann_json
@@ -66,7 +94,6 @@ dev-perl/Class-Std-Fast
 dev-perl/Data-Dump
 dev-perl/Date-Manip
 dev-perl/Data-UUID
-dev-perl/DBD-mysql
 dev-perl/DBI
 dev-perl/IO-Socket-Multicast
 dev-perl/SOAP-WSDL
@@ -100,6 +127,7 @@ mmap? ( dev-perl/Sys-Mmap )
 mqtt? ( app-misc/mosquitto )
 vlc? ( media-video/vlc[live] )
 ${DEPEND_WEB_SERVER}
+${DEPEND_DB}
 "
 # webserver is a build time depend; we need the user/group to already exist
 
@@ -128,6 +156,11 @@ pkg_setup() {
 
 	export MY_WEB_USER MY_WEB_GROUP MY_WEB_INITD
 }
+
+# CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above).
+PATCHES=(
+	"${FILESDIR}/${PN}-1.38.5-mariadb-connector.patch"
+)
 
 src_prepare() {
 	cmake_src_prepare
