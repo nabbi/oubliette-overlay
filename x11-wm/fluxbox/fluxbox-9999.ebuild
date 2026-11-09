@@ -65,6 +65,9 @@ src_prepare() {
 		-e "s~\(__fluxbox_version .@VERSION@\)~\1-${suffix}~" \
 		version.h.in || die "version sed failed"
 
+	# configure.ac uses AC_CONFIG_AUX_DIR([build-aux]), which is not
+	# tracked in git; eautomake (unlike autoreconf) won't create it
+	mkdir -p build-aux || die
 	eautoreconf
 }
 
