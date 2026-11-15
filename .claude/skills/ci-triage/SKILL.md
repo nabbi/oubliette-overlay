@@ -12,6 +12,14 @@ purely because something it *depends on* — never something in this repo —
 was masked or removed from `::gentoo`. Don't assume the failure is caused by
 the last local commit; check upstream state first.
 
+**Since 2026-11-15 `repoman.yml` is manual-only (`workflow_dispatch`).**
+Its pinned portage-3.0.30 can't parse EAPI 9, so every dep satisfied only by
+EAPI 9 ebuilds in `::gentoo` (first hit: gitea's `>=dev-lang/go-1.27.0`)
+reported a false `dependency.bad [fatal]`. Repoman is dead upstream
+(app-portage/repoman is gone from `::gentoo`, and gentoo-haskell dropped the same
+workflow in 2022). `pkgcheck` is the gating CI now. The repoman notes below
+are historical and apply only when it's run by hand.
+
 ## 1. Pull the actual failure, not just the red X
 
 ```sh
@@ -250,7 +258,7 @@ from failing to a clean `exit=0`.
 
 ## 6. After pushing
 
-- `schedule:` triggers in both workflows (`cron: "0 18 * * 1"`, weekly) are
+- `schedule:` triggers in pkgcheck.yml (`cron: "0 18 * * 1"`, weekly) are
   **auto-disabled by GitHub after 60 days with no push to the default
   branch**. Check with `gh workflow list --all` — a disabled workflow shows
   `disabled_inactivity`. **A push alone does NOT re-enable it** (this was
@@ -259,9 +267,9 @@ from failing to a clean `exit=0`.
   explicitly:
   ```sh
   gh workflow enable pkgcheck
-  gh workflow enable repoman
   ```
-- Neither workflow has a `workflow_dispatch` trigger, so there's no
+- pkgcheck.yml has no `workflow_dispatch` trigger (repoman.yml has only
+  that one, `gh workflow run repoman`), so there's no
   `gh workflow run` to force a one-off validation run either. If you need
   to confirm a fix actually goes green *now* rather than waiting for next
   Monday's schedule, push an empty commit (`git commit --allow-empty`) to

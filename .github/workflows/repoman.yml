@@ -1,13 +1,13 @@
 #copied from https://github.com/gentoo-haskell/gentoo-haskell/blob/fb0ac412f913333acce5136cc1b6b2f0ed1e5c29/.github/workflows/repoman.yml
 name: repoman
 
+# Disabled 2026-11-15: repoman is dead upstream (app-portage/repoman removed
+# from ::gentoo; gentoo-haskell dropped this same workflow in 2022) and the
+# pinned portage-3.0.30 cannot parse EAPI 9 ebuilds, so any dep satisfied only
+# by EAPI 9 in ::gentoo (e.g. >=dev-lang/go-1.26.7) is a false dependency.bad.
+# pkgcheck.yml covers unresolvable deps. Kept for manual runs only.
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  schedule:
-    - cron: "0 18 * * 1"
+  workflow_dispatch:
 
 jobs:
   build:
