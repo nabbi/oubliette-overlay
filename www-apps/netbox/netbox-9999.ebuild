@@ -28,9 +28,11 @@ HOMEPAGE="
 LICENSE="Apache-2.0"
 SLOT="0"
 IUSE="apache2 git ldap nginx s3 saml2 sentry swift"
+# swift: python-swiftclient in ::gentoo no longer supports python3_12
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
 	?? ( apache2 nginx )
+	swift? ( !python_single_target_python3_12 )
 "
 
 # Constraints follow upstream base_requirements.txt (what NetBox declares it
@@ -89,8 +91,12 @@ RDEPEND="
 		s3? ( dev-python/boto3[${PYTHON_USEDEP}] )
 		saml2? ( dev-python/python3-saml[${PYTHON_USEDEP}] )
 		sentry? ( dev-python/sentry-sdk[${PYTHON_USEDEP}] )
-		swift? ( dev-python/django-storage-swift[${PYTHON_USEDEP}] )
 	')
+	swift? (
+		$(python_gen_cond_dep '
+			dev-python/django-storage-swift[${PYTHON_USEDEP}]
+		' python3_{13..14})
+	)
 	apache2? (
 		www-servers/apache[apache2_modules_alias,apache2_modules_headers,apache2_modules_proxy,apache2_modules_proxy_http,apache2_modules_rewrite,ssl]
 	)
