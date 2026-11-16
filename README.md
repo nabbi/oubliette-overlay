@@ -10,6 +10,7 @@ Packages with their own notes:
 
 * [www-misc/zoneminder](www-misc/zoneminder/README.md) — ZoneMinder: releases, live branches and master snapshots; API v2 as CakePHP (`apiv2-cake`) or [zm-php-api](https://github.com/nabbi/zm-php-api) (`apiv2-php`), optional API v3 (`apiv3`, `www-misc/zm-api`).
 * [www-misc/zm-api](www-misc/zm-api/README.md) — ZoneMinder API v3 (Rust): master snapshots and 9999; pulled in by `zoneminder[apiv3]`.
+* [www-apps/netbox](www-apps/netbox/README.md) — NetBox 4.7.5 and 9999 in upstream's source layout, Apache or nginx vhost, the official plugins as separate `dev-python/netbox*` packages, and the dependencies ::gentoo lacks.
 
 Related repositories:
 

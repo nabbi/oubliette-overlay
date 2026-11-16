@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">netbox-community/netbox-scripts</remote-id>
+		<remote-id type="pypi">netbox-scripts</remote-id>
+	</upstream>
+</pkgmetadata>

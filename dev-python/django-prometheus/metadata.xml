@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+	<longdescription>
+		Version bump of the ::gentoo ebuild, carried here because www-apps/netbox
+		requires pins this exact version.lt;2.5.
+	</longdescription>
+	<upstream>
+		<remote-id type="pypi">django-prometheus</remote-id>
+		<remote-id type="github">django-commons/django-prometheus</remote-id>
+	</upstream>
+</pkgmetadata>

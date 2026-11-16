@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+	<longdescription>
+		NetBox installed in upstream's source-checkout layout under /opt/netbox,
+		with configuration in /etc/netbox and media, scripts, reports and
+		collected static files in /var/lib/netbox. Releases are built from the
+		PyPI sdist, which carries the pre-rendered documentation site. Plugins
+		are separate packages (dev-python/netbox-*, dev-python/netboxlabs-*).
+	</longdescription>
+	<use>
+		<flag name="apache2">Install an <pkg>www-servers/apache</pkg> reverse proxy vhost (70_netbox.conf, gated by -D NETBOX)</flag>
+		<flag name="git">Support git data sources via <pkg>dev-python/dulwich</pkg></flag>
+		<flag name="ldap">LDAP authentication via <pkg>dev-python/django-auth-ldap</pkg></flag>
+		<flag name="nginx">Install an <pkg>www-servers/nginx</pkg> reverse proxy config in /etc/netbox</flag>
+		<flag name="s3">Amazon S3 data sources and storage via <pkg>dev-python/boto3</pkg></flag>
+		<flag name="saml2">SAML2 single sign-on via <pkg>dev-python/python3-saml</pkg></flag>
+		<flag name="sentry">Error reporting via <pkg>dev-python/sentry-sdk</pkg></flag>
+		<flag name="swift">OpenStack Swift storage via <pkg>dev-python/django-storage-swift</pkg></flag>
+	</use>
+	<upstream>
+		<remote-id type="github">netbox-community/netbox</remote-id>
+		<remote-id type="pypi">netbox</remote-id>
+		<bugs-to>https://github.com/netbox-community/netbox/issues</bugs-to>
+		<doc>https://netboxlabs.com/docs/netbox/</doc>
+	</upstream>
+</pkgmetadata>

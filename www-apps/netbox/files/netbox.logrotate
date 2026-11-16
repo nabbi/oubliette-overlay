@@ -1,0 +1,9 @@
+/var/log/netbox/*.log {
+	missingok
+	notifempty
+	copytruncate
+	compress
+	delaycompress
+	weekly
+	rotate 8
+}

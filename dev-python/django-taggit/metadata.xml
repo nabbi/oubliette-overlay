@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+	<longdescription>
+		Version bump of the ::gentoo ebuild, carried here because www-apps/netbox
+		requires it (Django 6.x support).
+	</longdescription>
+	<upstream>
+		<remote-id type="pypi">django-taggit</remote-id>
+		<remote-id type="github">jazzband/django-taggit</remote-id>
+	</upstream>
+</pkgmetadata>

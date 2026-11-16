@@ -1,0 +1,19 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+description="NetBox request queue worker"
+command="/usr/bin/@EPYTHON@"
+command_args="/opt/netbox/netbox/manage.py rqworker high default low"
+command_user="netbox:netbox"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+directory="/opt/netbox/netbox"
+output_log="/var/log/netbox/${RC_SVCNAME}.log"
+error_log="/var/log/netbox/${RC_SVCNAME}.log"
+
+depend() {
+	need net
+	use postgresql redis
+	after postgresql redis netbox
+}
