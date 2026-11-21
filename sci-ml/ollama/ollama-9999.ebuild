@@ -1,13 +1,9 @@
-# Copyright 2024-2025 Gentoo Authors
+# Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-# supports ROCM/HIP >=5.5, but we define 6.1 due to the eclass
-ROCM_VERSION="6.1"
-inherit cuda rocm
-inherit cmake
-inherit flag-o-matic go-module linux-info systemd toolchain-funcs
+inherit cmake go-module systemd
 
 DESCRIPTION="Get up and running with Llama 3, Mistral, Gemma, and other language models"
 HOMEPAGE="https://ollama.com"
@@ -15,122 +11,57 @@ HOMEPAGE="https://ollama.com"
 if [[ ${PV} == *9999* ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/ollama/ollama.git"
+	LLAMA_CPP_URI="https://github.com/ggml-org/llama.cpp.git"
 else
+	# the llama.cpp tag is in the release's LLAMA_CPP_VERSION
+	LLAMA_CPP_tag=b12257
+
 	SRC_URI="
 		https://github.com/ollama/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.gh.tar.gz
 		https://github.com/gentoo-golang-dist/${PN}/releases/download/v${PV}/${P}-deps.tar.xz
+		https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMA_CPP_tag}.tar.gz
+			-> llama.cpp-${LLAMA_CPP_tag}.tar.gz
 	"
 	KEYWORDS="~amd64"
 fi
 
 LICENSE="MIT"
 SLOT="0"
-
-X86_CPU_FLAGS=(
-	sse4_2
-	avx
-	f16c
-	avx2
-	bmi2
-	fma3
-	avx512f
-	avx512vbmi
-	avx512_vnni
-	avx_vnni
-)
-CPU_FLAGS=( "${X86_CPU_FLAGS[@]/#/cpu_flags_x86_}" )
-IUSE="blas ${CPU_FLAGS[*]} cuda mkl rocm vulkan"
-# IUSE+=" opencl"
+# GPU backends are ggml's: these flags only require ggml to be built with them
+IUSE="rocm vulkan"
 
 RESTRICT="mirror test"
 
-COMMON_DEPEND="
-	blas? (
-		!mkl? (
-			virtual/blas
-		)
-		mkl? (
-			sci-libs/mkl[llvm-openmp]
-		)
-	)
-	cuda? (
-		dev-util/nvidia-cuda-toolkit:=
-	)
-	rocm? (
-		>=dev-util/hip-${ROCM_VERSION}:=
-		>=sci-libs/hipBLAS-${ROCM_VERSION}:=
-		>=sci-libs/rocBLAS-${ROCM_VERSION}:=
-	)
-"
-
 DEPEND="
-	${COMMON_DEPEND}
-	>=dev-lang/go-1.23.4
+	acct-group/ollama
+	acct-user/ollama
+	>=sci-ml/ggml-0.29.0:=[rocm?,vulkan?]
+"
+RDEPEND="
+	${DEPEND}
+	net-misc/curl:=
 "
 BDEPEND="
-	vulkan? (
-		dev-util/vulkan-headers
-		media-libs/shaderc
-	)
-"
-
-RDEPEND="
-	${COMMON_DEPEND}
-	acct-group/${PN}
-	>=acct-user/${PN}-3[cuda?]
+	>=dev-lang/go-1.26.10
+	dev-libs/stb
 "
 
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-use-GNUInstallDirs.patch"
+	"${FILESDIR}"/${PN}-0.31.1-ggml.patch
+	"${FILESDIR}"/${PN}-0.34.2-cmake.patch
 )
 
-pkg_pretend() {
-	if use amd64; then
-		if use cpu_flags_x86_f16c && use cpu_flags_x86_avx2 && use cpu_flags_x86_fma3 && ! use cpu_flags_x86_bmi2; then
-			ewarn
-			ewarn "CPU_FLAGS_X86: bmi2 not enabled."
-			ewarn "  Not building haswell runner."
-			ewarn "  Not building skylakex runner."
-			ewarn "  Not building icelake runner."
-			ewarn "  Not building alderlake runner."
-			ewarn
-			if grep bmi2 /proc/cpuinfo > /dev/null; then
-				ewarn "bmi2 found in /proc/cpuinfo"
-				ewarn
-			fi
-		fi
-	fi
-
-	# When building binpkgs you probably want to include all targets
-	if use cuda \
-		&& [[ ${MERGE_TYPE} == "buildonly" ]] \
-		&& [[ ${CUDAARCHS} != "all" || ${CUDAARCHS} != "all-major" ]]; then
-		einfo "When building binary packages, disable auto arch detection"
-		einfo 'Set CUDAARCHS="all" or CUDAARCHS="all-major"'
-	fi
-}
-
-pkg_setup() {
-	if use rocm; then
-		linux-info_pkg_setup
-		if linux-info_get_any_version && linux_config_exists; then
-			if ! linux_chkconfig_present HSA_AMD_SVM; then
-				ewarn "To use ROCm/HIP, you need to have HSA_AMD_SVM option enabled in your kernel."
-			fi
-		fi
-	fi
-}
-
 src_unpack() {
-	# Already filter lto flags for ROCM
-	# 963401
-	if use rocm; then
-		# copied from _rocm_strip_unsupported_flags
-		strip-unsupported-flags
-		export CXXFLAGS="$(test-flags-HIPCXX "${CXXFLAGS}")"
-	fi
-
-	if [[ "${PV}" == *9999* ]]; then
+	if [[ ${PV} == *9999* ]]; then
+		git-r3_src_unpack
+		# the llama.cpp tag ollama main builds against
+		LLAMA_CPP_tag=$(<"${S}/LLAMA_CPP_VERSION") || die
+		LLAMA_CPP_tag=${LLAMA_CPP_tag//[[:space:]]/}
+		[[ ${LLAMA_CPP_tag} == b[0-9]* ]] || die "bad LLAMA_CPP_VERSION: ${LLAMA_CPP_tag}"
+		einfo "llama.cpp ${LLAMA_CPP_tag}"
+		local EGIT_REPO_URI=${LLAMA_CPP_URI}
+		local EGIT_CHECKOUT_DIR="${WORKDIR}/llama.cpp-${LLAMA_CPP_tag}"
+		local EGIT_COMMIT=${LLAMA_CPP_tag}
 		git-r3_src_unpack
 		go-module_live_vendor
 	else
@@ -141,228 +72,95 @@ src_unpack() {
 src_prepare() {
 	cmake_src_prepare
 
-	sed \
-		-e "/set(GGML_CCACHE/s/ON/OFF/g" \
-		-e "/PRE_INCLUDE_REGEXES.*cu/d" \
-		-e "/PRE_INCLUDE_REGEXES.*hip/d" \
-		-i CMakeLists.txt || die "bundle headers sed failed"
+	local llama_src="${BUILD_DIR}/_deps/llama_cpp-src"
+	local llama_patch_dir="${WORKDIR}/${P}/llama/compat"
 
-	# TODO see src_unpack?
-	sed \
-		-e "s/ -O3//g" \
-		-i \
-			ml/backend/ggml/ggml/src/ggml-cpu/cpu.go \
-		|| die "-O3 sed failed"
+	mkdir -p "${BUILD_DIR}"/_deps || die
 
-	# grep -Rl -e 'lib/ollama' -e '"..", "lib"'  --include '*.go'
-	sed \
-		-e "s/\"..\", \"lib\"/\"..\", \"$(get_libdir)\"/" \
-		-e "s#\"lib/ollama\"#\"$(get_libdir)/ollama\"#" \
-		-i \
-			ml/backend/ggml/ggml/src/ggml.go \
-			ml/path.go \
-		|| die "libdir sed failed"
+	ln -s "${WORKDIR}"/llama.cpp-${LLAMA_CPP_tag} "${llama_src}" || die
 
-	if use amd64; then
-		if
-			! use cpu_flags_x86_sse4_2; then
-			sed -e "/ggml_add_cpu_backend_variant(sse42/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# SSE42)
-		fi
-		if
-			! use cpu_flags_x86_sse4_2 ||
-			! use cpu_flags_x86_avx; then
-			sed -e "/ggml_add_cpu_backend_variant(sandybridge/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# SSE42 AVX)
-		fi
-		if
-			! use cpu_flags_x86_sse4_2 ||
-			! use cpu_flags_x86_avx ||
-			! use cpu_flags_x86_f16c ||
-			! use cpu_flags_x86_avx2 ||
-			! use cpu_flags_x86_bmi2 ||
-			! use cpu_flags_x86_fma3; then
-			sed -e "/ggml_add_cpu_backend_variant(haswell/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# SSE42 AVX F16C AVX2 BMI2 FMA)
-		fi
-		if
-			! use cpu_flags_x86_sse4_2 ||
-			! use cpu_flags_x86_avx ||
-			! use cpu_flags_x86_f16c ||
-			! use cpu_flags_x86_avx2 ||
-			! use cpu_flags_x86_bmi2 ||
-			! use cpu_flags_x86_fma3 ||
-			! use cpu_flags_x86_avx512f; then
-			sed -e "/ggml_add_cpu_backend_variant(skylakex/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt ||  die
-			# SSE42 AVX F16C AVX2 BMI2 FMA AVX512)
-		fi
-		if
-			! use cpu_flags_x86_sse4_2 ||
-			! use cpu_flags_x86_avx ||
-			! use cpu_flags_x86_f16c ||
-			! use cpu_flags_x86_avx2 ||
-			! use cpu_flags_x86_bmi2 ||
-			! use cpu_flags_x86_fma3 ||
-			! use cpu_flags_x86_avx512f ||
-			! use cpu_flags_x86_avx512vbmi ||
-			! use cpu_flags_x86_avx512_vnni; then
-			sed -e "/ggml_add_cpu_backend_variant(icelake/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# SSE42 AVX F16C AVX2 BMI2 FMA AVX512 AVX512_VBMI AVX512_VNNI)
-		fi
-		if
-			! use cpu_flags_x86_sse4_2 ||
-			! use cpu_flags_x86_avx ||
-			! use cpu_flags_x86_f16c ||
-			! use cpu_flags_x86_avx2 ||
-			! use cpu_flags_x86_bmi2 ||
-			! use cpu_flags_x86_fma3 ||
-			! use cpu_flags_x86_avx_vnni; then
-			sed -e "/ggml_add_cpu_backend_variant(alderlake/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# SSE42 AVX F16C AVX2 BMI2 FMA AVX_VNNI)
-		fi
+	# Switch to the llama.cpp source directory
+	pushd "${llama_src}" > /dev/null || die
+	eapply "${llama_patch_dir}"/*.patch
 
-		# ml/backend/ggml/ggml/src/CMakeLists.txt
-	fi
-
-	if use cuda; then
-		cuda_src_prepare
-	fi
-
-	if use rocm; then
-		# --hip-version gets appended to the compile flags which isn't a known flag.
-		# This causes rocm builds to fail because -Wunused-command-line-argument is turned on.
-		# Use nuclear option to fix this.
-		# Disable -Werror's from go modules.
-		find "${S}" -name ".go" -exec sed -i "s/ -Werror / /g" {} + || die
-	fi
+	# Remove vendored
+	cmake_comment_add_subdirectory -f vendor stb
+	rm -r vendor/stb || die
+	sed -i \
+		-e "s|vendor::stb ||" \
+		tools/mtmd/CMakeLists.txt \
+		|| die
+	popd > /dev/null || die
 }
 
 src_configure() {
+	# Configure Embedded local Server
+	local llama_src="${BUILD_DIR}/_deps/llama_cpp-src"
 	local mycmakeargs=(
-		-DGGML_CCACHE="no"
-
-		# backends end up in /usr/bin otherwise
-		-DGGML_BACKEND_DL="yes"
-		-DGGML_BACKEND_DIR="${EPREFIX}/usr/$(get_libdir)/${PN}"
-
-		# -DGGML_CPU="yes"
-		-DGGML_BLAS="$(usex blas)"
-
-		# -DGGML_CUDA="$(usex cuda)"
-		# -DGGML_HIP="$(usex rocm)"
-
-		# -DGGML_METAL="yes" # apple
-		# missing from ml/backend/ggml/ggml/src/
-		# -DGGML_CANN="yes"
-		# -DGGML_MUSA="yes"
-		# -DGGML_RPC="yes"
-		# -DGGML_SYCL="yes"
-		# -DGGML_KOMPUTE="$(usex kompute)"
-		# -DGGML_OPENCL="$(usex opencl)"
-		# -DGGML_VULKAN="$(usex vulkan)"
-		"$(cmake_use_find_package vulkan Vulkan)"
+		-DCMAKE_INSTALL_PREFIX="${BUILD_DIR}"
+		-DOLLAMA_RUNNER_DIR=""
+		-DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP="${llama_src}"
+		-DOLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON
+		-DBUILD_SHARED_LIBS=ON
+		-DLLAMA_USE_SYSTEM_GGML=ON
 	)
-
-	if use blas; then
-		if use mkl; then
-			mycmakeargs+=(
-				-DGGML_BLAS_VENDOR="Intel10_64lp"
-			)
-		else
-			mycmakeargs+=(
-				-DGGML_BLAS_VENDOR="Generic"
-			)
-		fi
-	fi
-
-	if use cuda; then
-		local -x CUDAHOSTCXX CUDAHOSTLD
-		CUDAHOSTCXX="$(cuda_gccdir)"
-		CUDAHOSTLD="$(tc-getCXX)"
-
-		cuda_add_sandbox -w
-		addpredict "/dev/char/"
-
-		if [[ -n ${CUDAARCHS} ]]; then
-			einfo "Configured CUDA Architecture: ${CUDAARCHS}"
-			mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="${CUDAARCHS}" )
-
-		elif ! SANDBOX_WRITE=/dev/nvidiactl test -w /dev/nvidiactl ; then
-			ewarn
-			ewarn "Can not access the GPU at /dev/nvidiactl."
-			ewarn "User $(id -nu) is not in the group \"video\"."
-			ewarn
-
-			einfo "Fallback CUDA Architecture: all-major"
-			mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="all-major" )
-
-		else
-			local -x cuda_hardware
-			cuda_hardware=$(__nvcc_device_query 2>/dev/null | grep -oE '[0-9]{2,3}' | head -n 1)
-
-			if [[ -n ${cuda_hardware} ]]; then
-				einfo "Discovered CUDA Architecture: ${cuda_hardware}"
-				mycmakeargs+=( -DCMAKE_CUDA_ARCHITECTURES="${cuda_hardware}" )
-			else
-				eerror "Automatic detection of the CUDA device architecture failed."
-				eerror "Verify that user $(id -nu) is in the \"video\" group, or set CUDAARCHS manually in make.conf."
-			fi
-		fi
-
-	else
-		mycmakeargs+=(
-			-DCMAKE_CUDA_COMPILER="NOTFOUND"
-		)
-	fi
-
-	if use rocm; then
-		mycmakeargs+=(
-			-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
-			-DCMAKE_HIP_PLATFORM="amd"
-			# ollama doesn't honor the default cmake options
-			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
-		)
-
-		local -x HIP_PATH="${ESYSROOT}/usr"
-	else
-		mycmakeargs+=(
-			-DCMAKE_HIP_COMPILER="NOTFOUND"
-		)
-	fi
-
+	local CMAKE_USE_DIR="${S}/llama/server"
+	local BUILD_DIR="${BUILD_DIR}/llama-server-local"
 	cmake_src_configure
 }
 
 src_compile() {
-	# export version information
-	# https://github.com/gentoo/guru/pull/205
-	# https://forums.gentoo.org/viewtopic-p-8831646.html
-	local VERSION
-	if [[ "${PV}" == *9999* ]]; then
-		VERSION="$(
-			git describe --tags --first-parent --abbrev=7 --long --dirty --always \
-			| sed -e "s/^v//g"
-		)"
-	else
-		VERSION="${PVR}"
-	fi
-	local EXTRA_GOFLAGS_LD=(
-		# "-w" # disable DWARF generation
-		# "-s" # disable symbol table
-		"-X=github.com/ollama/ollama/version.Version=${VERSION}"
-		"-X=github.com/ollama/ollama/server.mode=release"
+	local SAVE_BUILD_DIR="${BUILD_DIR}"
+
+	# Compile Embedded Local Server
+	local BUILD_DIR="${BUILD_DIR}"/llama-server-local
+	local cmake_src_compile_opts=(
+		--target llama-server
+		--target llama-quantize
 	)
-	GOFLAGS+=" '-ldflags=${EXTRA_GOFLAGS_LD[*]}'"
-
-	ego build
-
 	cmake_src_compile
+
+	# Install/Stage Local Server Component
+	"${CMAKE_BINARY}" \
+		--install "${BUILD_DIR}" \
+		--prefix "${SAVE_BUILD_DIR}" \
+		--component llama-server \
+		|| die "Failed to stage server component"
+
+	# Expose CGO to Go and establish compiler optimization paths
+	export CGO_ENABLED=1
+
+	# Replicate the linker flags dynamically from your ebuild version
+	local VERSION=${PVR}
+	if [[ ${PV} == *9999* ]]; then
+		VERSION=$(git -C "${S}" describe --tags --always --abbrev=7 | sed -e "s/^v//")
+	fi
+	local mygoldflags="-X github.com/ollama/ollama/version.Version=${VERSION} \
+		-X github.com/ollama/ollama/server.mode=release"
+
+	# Call the Go build engine natively with standard Gentoo flags
+	ego build \
+		-trimpath \
+		-ldflags "${mygoldflags}" \
+		-o "${BUILD_DIR}/ollama" \
+		. || die "Go build failed"
 }
 
 src_install() {
-	dobin ollama
+	dobin "${BUILD_DIR}"/llama-server-local/ollama
+	insinto usr
+	doins -r "${BUILD_DIR}"/lib
+	local libdir="/usr/lib/ollama"
+	fperms -R +x ${libdir}
 
-	cmake_src_install
+	# Symlink system GGML libraries into Ollama's expected path
+	# Bug 983804
+	for lib in "${EPREFIX}"/usr/$(get_libdir)/libggml*.so; do
+		local libname=$(basename "${lib}")
+		dosym ../../$(get_libdir)/${libname} /usr/lib/ollama/${libname}
+	done
+
+	einstalldocs
 
 	newinitd "${FILESDIR}/ollama.init" "${PN}"
 	newconfd "${FILESDIR}/ollama.confd" "${PN}"
@@ -385,8 +183,23 @@ pkg_postinst() {
 		einfo "See available models at https://ollama.com/library"
 	fi
 
-	if use cuda ; then
-		einfo "When using cuda the user running ${PN} has to be in the video group or it won't detect devices."
-		einfo "The ebuild ensures this for user ${PN} via acct-user/${PN}[cuda]"
+	if use vulkan || use rocm; then
+		elog "GPU access: the ${PN} user needs the render group (/dev/dri/renderD*)"
+		elog "and, for ROCm, kfd (/dev/kfd); acct-user/${PN} adds neither."
+		elog "  usermod -aG render,video ${PN}"
+		elog "Vulkan is on by default when ggml[vulkan] is installed; OLLAMA_VULKAN=0"
+		elog "turns it off. Without cap_perfmon ollama cannot read the free VRAM and"
+		elog "guesses model sizes; see capabilities in /etc/conf.d/${PN}."
+		elog
+		elog "AMD APU with shared memory (Ryzen AI Max, gfx1151): the GPU may only map"
+		elog "what ttm allows. Raise it on the kernel command line for large models,"
+		elog "e.g. ttm.pages_limit=41943040 (160 GiB in 4 KiB pages). For ROCm set"
+		elog "AMDGPU_TARGETS=\"gfx1151\" for sci-ml/ggml; Vulkan (mesa radv) needs no target."
 	fi
+
+	einfo
+	einfo "Ollama binds 127.0.0.1 port 11434 by default."
+	einfo "Change the bind address with the OLLAMA_HOST environment variable."
+	einfo "See https://docs.ollama.com/faq for more info"
+	einfo
 }
