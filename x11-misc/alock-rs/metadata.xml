@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nic@boet.cc</email>
+	</maintainer>
+
+	<longdescription>
+		Rust rewrite of alock for X11. Authenticates through PAM in a helper
+		process and composites the cursor in software, so an ARGB image
+		cursor shows no stale desktop pixels after resume on NVIDIA.
+		Backgrounds are blank, an image or an animated console theme. The
+		command line is compatible with alock.
+	</longdescription>
+
+	<upstream>
+		<remote-id type="github">nabbi/alock-rs</remote-id>
+	</upstream>
+</pkgmetadata>
