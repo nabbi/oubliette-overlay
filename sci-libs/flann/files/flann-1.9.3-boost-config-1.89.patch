@@ -5,19 +5,18 @@ Subject: [PATCH] boost config
 
 Signed-off-by: Paul Zander <negril.nx+gentoo@gmail.com>
 
+Rebased onto seth-planet/flann e23f4e6.
+
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 64ead01..0e0b4dc 100644
+index 7d15bed..f9a1cda 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -108,7 +108,7 @@ endif(USE_MPI)
+@@ -120,7 +120,7 @@ endif(USE_MPI)
  
  
  if (USE_MPI AND HDF5_IS_PARALLEL)
 -    find_package(Boost COMPONENTS mpi system serialization thread REQUIRED)
 +    find_package(Boost 1.69 COMPONENTS mpi serialization thread REQUIRED CONFIG)
-     include_directories(${Boost_INCLUDE_DIRS})
      add_definitions("-DHAVE_MPI")
  endif()
--- 
-2.47.1
-
+ 

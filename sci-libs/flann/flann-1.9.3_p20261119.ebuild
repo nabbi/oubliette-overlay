@@ -6,17 +6,14 @@ EAPI=8
 inherit cmake cuda toolchain-funcs
 
 DESCRIPTION="Fast approximate nearest neighbor searches in high dimensional spaces"
-HOMEPAGE="https://github.com/flann-lib/flann"
-COMMIT="f9caaf609d8b8cb2b7104a85cf59eb92c275a25d"
-SRC_URI="
-	https://github.com/flann-lib/${PN}/archive/${COMMIT}.tar.gz
-		-> ${P}.tar.gz
-	https://github.com/negril/gentoo-overlay-vendored/raw/refs/heads/blobs/${P}-patches-r1.tar.xz
-"
+HOMEPAGE="https://github.com/seth-planet/flann"
+COMMIT="e23f4e6df5039ffe9fa48c4343c4ea71dd968c37"
+SRC_URI="https://github.com/seth-planet/${PN}/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
 S="${WORKDIR}/${PN}-${COMMIT}"
 
 LICENSE="BSD"
-SLOT="0"
+# subslot follows the soname, see flann-1.9.3-soversion.patch
+SLOT="0/1.9.3"
 KEYWORDS="~amd64"
 IUSE="cuda doc examples mpi octave openmp test"
 RESTRICT="!test? ( test )"
@@ -51,22 +48,18 @@ DEPEND="${RDEPEND}
 "
 
 PATCHES=(
-	"${FILESDIR}"/${PN}-1.9.1-build-oct-rather-than-mex-files-for-octave.patch # bug 830424
+	"${FILESDIR}"/${PN}-1.9.3-build-oct-rather-than-mex-files-for-octave.patch # bug 830424
 	"${FILESDIR}"/${PN}-1.9.2-asio-boost187.patch
-	"${FILESDIR}"/${PN}-1.9.2-boost-config-1.89.patch
+	"${FILESDIR}"/${PN}-1.9.3-boost-config-1.89.patch
 	"${FILESDIR}"/${PN}-1.9.2-system-gtest.patch
 	"${FILESDIR}"/${PN}-1.9.2-gettimeofday.patch
-	"${FILESDIR}"/${PN}-1.9.2-cuda13-thrust-includes.patch
-	"${FILESDIR}"/${PN}-1.9.2-copy-tree-leaf-points.patch
-	"${FILESDIR}"/${PN}-1.9.2-seeded-unique-random.patch
-
-	# "${FILESDIR}/${PN}-1.9.2-lz4-dependency-fix.patch" # https://github.com/flann-lib/flann/pull/523
-	# "${FILESDIR}/${PN}-1.9.2-fix-build.patch"
-	# "${FILESDIR}/${PN}-1.9.2-allow-user-CUDAARCHS.patch"
-	# "${FILESDIR}/${PN}-1.9.2-use-gtest_discover_tests.patch"
-	# "${FILESDIR}/${PN}-1.9.2-loosen-test-precision.patch"
-	# "${FILESDIR}/${PN}-1.9.2-cleanup-find_HDF5.patch"
-	# "${FILESDIR}/${PN}-1.9.2-add-USE_CPACK.patch"
+	"${FILESDIR}"/${PN}-1.9.2-latex-use-DEPENDS.patch
+	"${FILESDIR}"/${PN}-1.9.2-0004-use-gtest_discover_tests.patch
+	"${FILESDIR}"/${PN}-1.9.2-0005-loosen-test-precision.patch
+	"${FILESDIR}"/${PN}-1.9.2-0007-add-USE_CPACK.patch
+	# pending pull requests to seth-planet/flann
+	"${FILESDIR}"/${PN}-1.9.3-nnindex-opencl-virtuals.patch
+	"${FILESDIR}"/${PN}-1.9.3-soversion.patch
 )
 
 pkg_pretend() {
@@ -79,10 +72,6 @@ pkg_setup() {
 
 src_prepare() {
 	cmake_src_prepare
-
-	for patch in "${WORKDIR}/${P}-patches-r1"/*; do
-		eapply "${patch}"
-	done
 }
 
 src_configure() {
@@ -92,6 +81,7 @@ src_configure() {
 		-DBUILD_C_BINDINGS="yes"
 		-DBUILD_PYTHON_BINDINGS="no"
 		-DBUILD_CUDA_LIB="$(usex cuda)"
+		-DBUILD_OpenCL_LIB="no"
 		-DBUILD_EXAMPLES="$(usex examples)"
 		-DBUILD_DOC="$(usex doc)"
 		-DBUILD_TESTS="$(usex test)"

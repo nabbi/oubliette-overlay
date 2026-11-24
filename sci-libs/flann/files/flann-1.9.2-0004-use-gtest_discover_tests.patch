@@ -1,0 +1,40 @@
+From 279ca3e9e945b38fabf9f5ebd58df8eb60c6348e Mon Sep 17 00:00:00 2001
+From: Paul Zander <negril.nx+gentoo@gmail.com>
+Date: Sat, 25 Jan 2025 15:33:18 +0100
+Subject: [PATCH] use gtest_discover_tests
+
+Signed-off-by: Paul Zander <negril.nx+gentoo@gmail.com>
+
+diff --git a/cmake/flann_utils.cmake b/cmake/flann_utils.cmake
+index 53c9c7d..5e8a08c 100644
+--- a/cmake/flann_utils.cmake
++++ b/cmake/flann_utils.cmake
+@@ -90,9 +90,9 @@ macro(flann_add_gtest exe src)
+ 
+     # add target for running test
+     string(REPLACE "/" "_" _testname ${exe})
+-    add_test(
+-        NAME test_${_testname}
+-        COMMAND ${exe} --gtest_print_time
++    gtest_discover_tests(${_testname}
++        TEST_PREFIX test_
++        EXTRA_ARGS --gtest_print_time
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
+     )
+ endmacro(flann_add_gtest)
+@@ -105,9 +105,9 @@ macro(flann_add_cuda_gtest exe src)
+ 
+     # add target for running test
+     string(REPLACE "/" "_" _testname ${exe})
+-    add_test(
+-        NAME test_${_testname}
+-        COMMAND ${exe} --gtest_print_time
++    gtest_discover_tests(${_testname}
++        TEST_PREFIX test_
++        EXTRA_ARGS --gtest_print_time
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
+     )
+ endmacro(flann_add_cuda_gtest)
+-- 
+2.48.0
+

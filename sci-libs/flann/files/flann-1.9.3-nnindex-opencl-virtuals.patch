@@ -1,0 +1,40 @@
+nn_index.h: guard the OpenCL virtuals
+
+shouldCLKnnSearch and knnSearchCL were declared outside the guard, so
+every build gained two vtable slots ahead of freeIndex and
+buildIndexImpl, OpenCL or not. Code built against 1.9.2 headers and
+code built against these disagree on which function sits in those
+slots.
+
+NNIndex<L2<float>> vtable from g++ -fdump-lang-class:
+  1.9.2 (f9caaf6)  28 entries
+  master           30 entries, shouldCLKnnSearch and knnSearchCL
+                   at offsets 208 and 216
+  this change      28 entries, identical to 1.9.2
+
+Both callers in nn_index.h are already inside FLANN_USE_OPENCL, and so
+are the overrides in kmeans_opencl_index.h and
+hierarchical_opencl_index.h.
+
+Upstream: https://github.com/seth-planet/flann (pull request pending)
+
+diff --git a/src/cpp/flann/algorithms/nn_index.h b/src/cpp/flann/algorithms/nn_index.h
+index ea42380..b1dd5f9 100644
+--- a/src/cpp/flann/algorithms/nn_index.h
++++ b/src/cpp/flann/algorithms/nn_index.h
+@@ -785,6 +785,7 @@ public:
+ #endif /* FLANN_USE_OPENCL */
+ 
+ protected:
++#ifdef FLANN_USE_OPENCL
+     /**
+      * Are the conditions right for an OpenCL search to be faster than the
+      * regular scalar search? I imagine this will require experimentation to
+@@ -818,6 +819,7 @@ protected:
+         // unimplemented in nn_index
+         printf("in unimplemented knnSearchCL()!\n");
+     }
++#endif /* FLANN_USE_OPENCL */
+ 
+     virtual void freeIndex() = 0;
+ 

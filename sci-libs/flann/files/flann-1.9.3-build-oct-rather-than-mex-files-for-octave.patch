@@ -9,19 +9,15 @@ Subject: [PATCH] build *.oct rather than *.mex files for octave
    LOCATION
 
 Signed-off-by: Alexander Golubev <fatzer2@gmail.com>
+
+Rebased onto seth-planet/flann e23f4e6: dropped the LOCATION hunk, the
+fork already uses $<TARGET_FILE_DIR:flann_s>.
+
+diff --git a/src/matlab/CMakeLists.txt b/src/matlab/CMakeLists.txt
+index 557ffde..417b876 100755
 --- a/src/matlab/CMakeLists.txt
 +++ b/src/matlab/CMakeLists.txt
-@@ -16,9 +16,6 @@ endif()
- 
- find_program(OCT_CMD mkoctfile)
- 
--get_property(FLANN_LIB_LOCATION TARGET flann_s PROPERTY LOCATION)
--get_filename_component(FLANN_LIB_PATH ${FLANN_LIB_LOCATION} PATH)
--
- if(MEX_CMD AND MEXEXT_CMD)
- 
-     get_filename_component(MEX_REAL_CMD ${MEX_CMD} ABSOLUTE)
-@@ -48,7 +45,7 @@ if(MEX_CMD AND MEXEXT_CMD)
+@@ -48,7 +48,7 @@ if(MEX_CMD AND MEXEXT_CMD)
          ADD_CUSTOM_COMMAND(
              OUTPUT ${MEX_FILE}
              COMMAND ${MEX_REAL_CMD}
@@ -30,7 +26,7 @@ Signed-off-by: Alexander Golubev <fatzer2@gmail.com>
              DEPENDS flann_s ${CMAKE_CURRENT_SOURCE_DIR}/${MEX_NAME}.cpp
              COMMENT "Building MEX extension ${MEX_FILE}"
          )
-@@ -66,11 +63,11 @@ if(MEX_CMD AND MEXEXT_CMD)
+@@ -66,11 +66,11 @@ if(MEX_CMD AND MEXEXT_CMD)
          set(BUILD_MATLAB_BINDINGS OFF) 
      endif()
  elseif(OCT_CMD)
@@ -44,7 +40,7 @@ Signed-off-by: Alexander Golubev <fatzer2@gmail.com>
      DEPENDS flann_s ${CMAKE_CURRENT_SOURCE_DIR}/${MEX_NAME}.cpp
      COMMENT "Building MEX extension ${MEX_FILE}"
      )
-@@ -79,10 +76,21 @@ elseif(OCT_CMD)
+@@ -79,10 +79,21 @@ elseif(OCT_CMD)
  
    FILE(GLOB MATLAB_SOURCES *.m)
  
@@ -70,6 +66,3 @@ Signed-off-by: Alexander Golubev <fatzer2@gmail.com>
  else()
      message(WARNING "Cannot find MATLAB or Octave instalation. Make sure that the 'bin' directory from the MATLAB instalation or that mkoctfile is in PATH")
      set(BUILD_MATLAB_BINDINGS OFF) 
--- 
-2.34.1
-

@@ -1,0 +1,35 @@
+cmake: put the patch version in the soname
+
+46c4c37 moved to 1.9.3 for an ABI change, but FLANN_SOVERSION is
+major.minor, so 1.9.3 still installs as libflann*.so.1.9, the same
+soname as upstream 1.9.2. A distro can't tell the two apart, and
+binaries built against 1.9.2 load 1.9.3 without a rebuild.
+
+ABI differences from 1.9.2 besides the hierarchical launch signature:
+  sizeof(flann::SearchParams)  28 -> 32 (cuda_search_width), held by
+                               value in PCL's KdTreeFLANN
+  NNIndex vtable               two extra slots (see the nn_index.h
+                               guard commit)
+
+With this the soname follows the full version, and a version bump for
+an ABI change also changes the soname:
+  libflann.so.1.9.3, libflann_cpp.so.1.9.3, libflann_cuda.so.1.9.3
+
+pyflann loads libflann.so by its unversioned name, so it is
+unaffected.
+
+Upstream: https://github.com/seth-planet/flann (pull request pending)
+
+diff --git a/cmake/flann_utils.cmake b/cmake/flann_utils.cmake
+index c926bb4..2cbcb6c 100644
+--- a/cmake/flann_utils.cmake
++++ b/cmake/flann_utils.cmake
+@@ -16,7 +16,7 @@ macro(DISSECT_VERSION)
+         FLANN_VERSION_PATCH ${FLANN_VERSION})
+     string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.[0-9]+(.*)" "\\1"
+         FLANN_VERSION_CANDIDATE ${FLANN_VERSION})
+-    set(FLANN_SOVERSION "${FLANN_VERSION_MAJOR}.${FLANN_VERSION_MINOR}")
++    set(FLANN_SOVERSION "${FLANN_VERSION_MAJOR}.${FLANN_VERSION_MINOR}.${FLANN_VERSION_PATCH}")
+ endmacro(DISSECT_VERSION)
+ 
+ 

@@ -1,0 +1,38 @@
+From 91850bffcaecb072a138f88b05992effc6b0de5b Mon Sep 17 00:00:00 2001
+From: Paul Zander <negril.nx+gentoo@gmail.com>
+Date: Sat, 25 Jan 2025 16:16:05 +0100
+Subject: [PATCH] add USE_CPACK
+
+Signed-off-by: Paul Zander <negril.nx+gentoo@gmail.com>
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b9643f4..896fd08 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -59,6 +59,7 @@ option(BUILD_TESTS "Build tests" ON)
+ option(BUILD_DOC "Build documentation" ON)
+ option(USE_OPENMP "Use OpenMP multi-threading" ON)
+ option(USE_MPI "Use MPI" OFF)
++option(USE_CPACK "Use CPACK" OFF)
+ 
+ set(NVCC_COMPILER_BINDIR "" CACHE PATH  "Directory where nvcc should look for C++ compiler. This is passed to nvcc through the --compiler-bindir option.")
+ 
+@@ -209,6 +210,7 @@ install(
+ )
+ 
+ 
++if(USE_CPACK)
+ # CPACK options
+ 
+ # RPM
+@@ -244,6 +246,7 @@ SET(CPACK_PACKAGE_VERSION_MAJOR ${FLANN_VERSION_MAJOR})
+ SET(CPACK_PACKAGE_VERSION_MINOR ${FLANN_VERSION_MINOR})
+ SET(CPACK_PACKAGE_VERSION_PATCH ${FLANN_VERSION_PATCH})
+ include(CPack)
++endif()
+ 
+ 
+ message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
+-- 
+2.48.0
+

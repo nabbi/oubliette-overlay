@@ -1,0 +1,24 @@
+From 105db2b619fe73428950a4c2c0242a79982edf10 Mon Sep 17 00:00:00 2001
+From: Paul Zander <negril.nx+gentoo@gmail.com>
+Date: Mon, 6 Jan 2025 19:42:09 +0100
+Subject: [PATCH 4/4] latex: use DEPENDS for custom_target
+
+Signed-off-by: Paul Zander <negril.nx+gentoo@gmail.com>
+
+diff --git a/cmake/UseLATEX.cmake b/cmake/UseLATEX.cmake
+index 77bd709..0ea3f26 100644
+--- a/cmake/UseLATEX.cmake
++++ b/cmake/UseLATEX.cmake
+@@ -751,8 +751,8 @@ MACRO(ADD_LATEX_TARGETS)
+     ADD_CUSTOM_TARGET(${html_target}
+       ${CMAKE_COMMAND} -E chdir ${output_dir}
+       ${LATEX2HTML_CONVERTER} ${LATEX2HTML_CONVERTER_FLAGS} ${LATEX_MAIN_INPUT}
++      DEPENDS ${LATEX_MAIN_INPUT} ${LATEX_INPUTS}
+       )
+-    ADD_DEPENDENCIES(${html_target} ${LATEX_MAIN_INPUT} ${LATEX_INPUTS})
+   ENDIF (LATEX2HTML_CONVERTER)
+ 
+   ADD_CUSTOM_TARGET(${auxclean_target}
+-- 
+2.48.0
+
