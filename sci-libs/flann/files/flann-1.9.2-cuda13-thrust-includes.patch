@@ -1,3 +1,9 @@
+Include thrust/tuple.h and the other thrust headers used directly.
+CUDA 13 (CCCL 3) no longer pulls them in transitively.
+
+Bug: https://bugs.gentoo.org/982325
+Upstream: https://github.com/flann-lib/flann/issues/527
+
 diff --git a/src/cpp/flann/algorithms/kdtree_cuda_3d_index.cu b/src/cpp/flann/algorithms/kdtree_cuda_3d_index.cu
 index 6d06b65..ee7c1d6 100644
 --- a/src/cpp/flann/algorithms/kdtree_cuda_3d_index.cu
