@@ -72,7 +72,7 @@ RDEPEND="
 		dev-python/pillow[${PYTHON_USEDEP}]
 		dev-python/psycopg:0[native-extensions,${PYTHON_USEDEP}]
 		dev-python/psycopg-pool[${PYTHON_USEDEP}]
-		<dev-python/pymdown-extensions-12.2[${PYTHON_USEDEP}]
+		dev-python/pymdown-extensions[${PYTHON_USEDEP}]
 		dev-python/pyyaml[${PYTHON_USEDEP}]
 		dev-python/redis[${PYTHON_USEDEP}]
 		dev-python/requests[${PYTHON_USEDEP}]
