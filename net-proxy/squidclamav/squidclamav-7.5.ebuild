@@ -12,7 +12,7 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_BRANCH="master"
 else
 	SRC_URI="https://github.com/darold/squidclamav/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="amd64 ~arm ~x86"
+	KEYWORDS="amd64"
 fi
 
 LICENSE="GPL-3"

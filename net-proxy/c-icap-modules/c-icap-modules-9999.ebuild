@@ -14,7 +14,7 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_BRANCH="master"
 else
 	SRC_URI="https://github.com/c-icap/c-icap-modules/archive/refs/tags/C_ICAP_MODULES_${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="amd64 ~arm ~x86"
+	KEYWORDS="amd64"
 	S="${WORKDIR}/c-icap-modules-C_ICAP_MODULES_${PV}"
 fi
 
