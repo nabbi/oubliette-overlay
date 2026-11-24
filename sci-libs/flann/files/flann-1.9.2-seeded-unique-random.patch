@@ -1,0 +1,28 @@
+Shuffle UniqueRandom with the seeded rand_int().
+
+be80cef (C++17 support) switched to std::random_device, so random_seed
+no longer made kmeans or hierarchical index builds reproducible.
+
+From https://github.com/seth-planet/flann/commit/7d883c3
+
+diff --git a/src/cpp/flann/util/random.h b/src/cpp/flann/util/random.h
+index 74269b7..d47ac86 100644
+--- a/src/cpp/flann/util/random.h
++++ b/src/cpp/flann/util/random.h
+@@ -106,9 +106,13 @@ public:
+         size_ = n;
+         for (int i = 0; i < size_; ++i) vals_[i] = i;
+ 
+-        std::random_device rd;
+-        std::mt19937 g(rd());
+-        std::shuffle(vals_.begin(), vals_.end(), g);
++        // FIX: Use deterministic Fisher-Yates shuffle with FLANN's seedable rand_int()
++        // instead of non-deterministic std::random_device
++        // This ensures reproducible results and matching pivots between CUDA/OpenCL
++        for (int i = size_ - 1; i > 0; --i) {
++            int j = rand_int(i + 1);
++            std::swap(vals_[i], vals_[j]);
++        }
+ 
+         counter_ = 0;
+     }

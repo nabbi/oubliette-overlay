@@ -57,6 +57,8 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-1.9.2-system-gtest.patch
 	"${FILESDIR}"/${PN}-1.9.2-gettimeofday.patch
 	"${FILESDIR}"/${PN}-1.9.2-cuda13-thrust-includes.patch
+	"${FILESDIR}"/${PN}-1.9.2-copy-tree-leaf-points.patch
+	"${FILESDIR}"/${PN}-1.9.2-seeded-unique-random.patch
 
 	# "${FILESDIR}/${PN}-1.9.2-lz4-dependency-fix.patch" # https://github.com/flann-lib/flann/pull/523
 	# "${FILESDIR}/${PN}-1.9.2-fix-build.patch"
