@@ -1,0 +1,13 @@
+#!/bin/sh
+# Refreshes README.md's package metrics when a commit adds, removes or
+# renames ebuilds. Enable once per clone:
+#   git config core.hooksPath scripts/git-hooks
+# Counts also move when ::gentoo changes; they catch up on the next such commit.
+top=$(git rev-parse --show-toplevel)
+git diff --cached --name-only --diff-filter=ADR -- '*.ebuild' | grep -q . || exit 0
+if ! git diff --quiet -- README.md; then
+	echo "pre-commit: README.md has unstaged changes, not refreshing package metrics" >&2
+	exit 0
+fi
+"$top"/scripts/package-metrics --readme || exit 1
+git add "$top"/README.md

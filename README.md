@@ -3,13 +3,19 @@
 [![gentoo qa-reports](https://img.shields.io/badge/gentoo-QA%20check-6E56AF.svg)](https://qa-reports.gentoo.org/output/repos/oubliette.html)
 [![pkgcheck](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml/badge.svg)](https://github.com/nabbi/oubliette-overlay/actions/workflows/pkgcheck.yml)
 
-**Oubliette** is a personal, unofficial Portage overlay containing forgotten or patched ebuilds that are maintained here for convenience.
+**Oubliette** is a personal, unofficial Portage overlay of forgotten or patched ebuilds. Packages that need more explanation carry a `README.md` in their directory.
 
-Packages with their own notes:
+Why the packages are here (`scripts/package-metrics -v` lists them):
 
-* [www-misc/zoneminder](www-misc/zoneminder/README.md) — ZoneMinder: releases, live branches and master snapshots; API v2 as CakePHP (`apiv2-cake`) or [zm-php-api](https://github.com/nabbi/zm-php-api) (`apiv2-php`), optional API v3 (`apiv3`, `www-misc/zm-api`).
-* [www-misc/zm-api](www-misc/zm-api/README.md) — ZoneMinder API v3 (Rust): master snapshots and 9999; pulled in by `zoneminder[apiv3]`.
-* [www-apps/netbox](www-apps/netbox/README.md) — NetBox 4.7.5 and 9999 in upstream's source layout, Apache or nginx vhost, the official plugins as separate `dev-python/netbox*` packages, and the dependencies ::gentoo lacks.
+<!-- package-metrics -->
+| | packages |
+|---|--:|
+| not in ::gentoo | 81 |
+| newer than ::gentoo | 11 |
+| fixes on top of ::gentoo | 15 |
+| acct-group / acct-user | 16 |
+| **total** (156 ebuilds) | **123** |
+<!-- /package-metrics -->
 
 Related repositories:
 
@@ -17,8 +23,6 @@ Related repositories:
 * [oubliette-overlay-dev](https://github.com/nabbi/oubliette-overlay-dev) — experimental development sandbox.
 
 ## Install
-
-Enable via `eselect-repository`:
 
 ```shell
 eselect repository enable oubliette

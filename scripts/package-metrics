@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""Counts the overlay's packages by why they are here, against ::gentoo.
+
+  unique  not in ::gentoo at all
+  bump    in ::gentoo, and we carry a release newer than its newest
+  fix     in ::gentoo, nothing newer: we carry the same (or older) releases,
+          or a live ebuild, with our own fixes
+  acct    acct-group/acct-user, kept apart as they only serve the above
+
+Live (9999) ebuilds never count as a newer release. ::gentoo is read from
+GENTOO_REPO, else from portageq.
+
+  scripts/package-metrics          summary
+  scripts/package-metrics -v       plus one line per package
+  scripts/package-metrics --readme rewrite the summary between README.md's
+                                   package-metrics markers (the pre-commit
+                                   hook in scripts/git-hooks does this)
+"""
+import argparse
+import os
+import subprocess
+import sys
+from functools import cmp_to_key
+from pathlib import Path
+
+from portage.versions import catpkgsplit, vercmp
+
+TOP = Path(__file__).resolve().parent.parent
+README = TOP / "README.md"
+BEGIN, END = "<!-- package-metrics -->", "<!-- /package-metrics -->"
+NOT_CATEGORIES = {"metadata", "profiles", "licenses", "scripts", "eclass"}
+
+
+def gentoo_repo():
+    if "GENTOO_REPO" in os.environ:
+        return Path(os.environ["GENTOO_REPO"])
+    out = subprocess.run(["portageq", "get_repo_path", "/", "gentoo"],
+                         capture_output=True, text=True, check=True)
+    return Path(out.stdout.strip())
+
+
+def versions(pkgdir):
+    """PVRs of the ebuilds in pkgdir."""
+    cat, pn = pkgdir.parent.name, pkgdir.name
+    out = []
+    for e in pkgdir.glob("*.ebuild"):
+        split = catpkgsplit(f"{cat}/{e.stem}")
+        if split:
+            _, _, pv, rev = split
+            out.append(pv if rev == "r0" else f"{pv}-{rev}")
+    return out
+
+
+def is_live(pvr):
+    return pvr.split("-r")[0].split(".")[-1].startswith("9999")
+
+
+def newest(pvrs):
+    rel = [v for v in pvrs if not is_live(v)]
+    if not rel:
+        return None
+    b = rel[0]
+    for v in rel[1:]:
+        if vercmp(v, b) > 0:
+            b = v
+    return b
+
+
+def pv(pvr):
+    return pvr.split("-r")[0]
+
+
+def classify(pkgdir, gentoo):
+    ours = versions(pkgdir)
+    gdir = gentoo / pkgdir.parent.name / pkgdir.name
+    if pkgdir.parent.name in ("acct-group", "acct-user"):
+        return "acct", ours, []
+    if not gdir.is_dir():
+        return "unique", ours, []
+    theirs = versions(gdir)
+    a, b = newest(ours), newest(theirs)
+    if a and (b is None or vercmp(pv(a), pv(b)) > 0):
+        return "bump", ours, theirs
+    return "fix", ours, theirs
+
+
+def packages():
+    for cat in sorted(TOP.iterdir()):
+        if not cat.is_dir() or cat.name.startswith(".") or cat.name in NOT_CATEGORIES:
+            continue
+        for pkg in sorted(cat.iterdir()):
+            if pkg.is_dir() and any(pkg.glob("*.ebuild")):
+                yield pkg
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("-v", "--verbose", action="store_true",
+                    help="list every package with its class and versions")
+    ap.add_argument("--readme", action="store_true",
+                    help="write the summary into README.md instead")
+    args = ap.parse_args()
+
+    gentoo = gentoo_repo()
+    if not (gentoo / "profiles" / "repo_name").is_file():
+        sys.exit(f"no ::gentoo at {gentoo} (set GENTOO_REPO)")
+
+    rows = [(p, *classify(p, gentoo)) for p in packages()]
+    classes = ("unique", "bump", "fix", "acct")
+
+    if args.verbose:
+        for cls in classes:
+            sel = [r for r in rows if r[1] == cls]
+            if not sel:
+                continue
+            print(f"{cls}:")
+            for p, _, ours, theirs in sel:
+                name = f"{p.parent.name}/{p.name}"
+                line = f"  {name:40} {' '.join(sorted(ours, key=cmp_to_key(vercmp)))}"
+                if theirs:
+                    line += f"   (::gentoo {newest(theirs) or ' '.join(sorted(theirs, key=cmp_to_key(vercmp)))})"
+                print(line)
+            print()
+
+    if args.readme:
+        update_readme(rows)
+        return
+    real = sum(1 for r in rows if r[1] != "acct")
+    for cls in classes:
+        n = sum(1 for r in rows if r[1] == cls)
+        pct = "" if cls == "acct" else f"  {100 * n / real:5.1f}%"
+        print(f"{cls:8} {n:4}{pct}")
+    ebuilds = sum(len(r[2]) for r in rows)
+    print(f"{'total':8} {len(rows):4}  packages, {ebuilds} ebuilds")
+
+
+def update_readme(rows):
+    count = {c: sum(1 for r in rows if r[1] == c) for c in ("unique", "bump", "fix", "acct")}
+    ebuilds = sum(len(r[2]) for r in rows)
+    block = "\n".join([
+        BEGIN,
+        "| | packages |",
+        "|---|--:|",
+        f"| not in ::gentoo | {count['unique']} |",
+        f"| newer than ::gentoo | {count['bump']} |",
+        f"| fixes on top of ::gentoo | {count['fix']} |",
+        f"| acct-group / acct-user | {count['acct']} |",
+        f"| **total** ({ebuilds} ebuilds) | **{len(rows)}** |",
+        END,
+    ])
+    text = README.read_text()
+    try:
+        head, rest = text.split(BEGIN, 1)
+        _, tail = rest.split(END, 1)
+    except ValueError:
+        sys.exit(f"README.md lacks the {BEGIN} ... {END} markers")
+    new = head + block + tail
+    if new != text:
+        README.write_text(new)
+        print("README.md: package metrics updated")
+
+if __name__ == "__main__":
+    main()
