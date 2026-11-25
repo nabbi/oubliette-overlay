@@ -34,5 +34,5 @@ jobs:
       run: |
         grep -rnE '\b(emake|MAKEOPTS|make)\b.*(-j *1|--jobs[= ]1)\b' \
           --include='*.ebuild' --include='*.eclass' . \
-          | sed -E 's#^(\./)?([^:]+):([0-9]+):.*#::warning file=\2,line=\3::upstream.workaround: serial make (-j1); fix the parallel build race instead#' \
+          | sed -E 's#^(\./)?([^:]+):([0-9]+):.*#::warning file=\2,line=\3,title=upstream.workaround::\2:\3: serial make (-j1); fix the parallel build race instead#' \
           || true
