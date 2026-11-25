@@ -16,7 +16,23 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
 
+    # The action already passes --exit GentooCI; the --exit below replaces it
+    # with GentooCI plus the checks repoman used to treat as fatal (file.size,
+    # metadata.*, dependency.badindev, inherit.missing, ...). Keep it on one
+    # line: the comma list must stay a single argument.
     - name: Run pkgcheck
       uses: pkgcore/pkgcheck-action@v1
       with:
-        args: --checks=-RedundantVersionCheck --keywords=-PotentialStable
+        args: >-
+          --checks=-RedundantVersionCheck --keywords=-PotentialStable
+          --exit GentooCI,NonsolvableDepsInDev,RequiredUseUnsatisfiableInStable,RequiredUseUnsatisfiableInDev,SizeViolation,TotalSizeViolation,ExecutableFile,PkgMissingMetadataXml,PkgBadlyFormedXml,PkgInvalidXml,PkgMetadataXmlInvalidPkgRef,PkgMetadataXmlInvalidCatRef,CatMissingMetadataXml,CatBadlyFormedXml,CatInvalidXml,UnknownKeywords,UnknownUseFlags,UnknownLicense,InvalidIdepend,MismatchedPN,EmptyPackageDir,CategoryIsNotDirectory,BannedEapi,BannedEapiCommand,BannedPhaseCall,DeadEclass,MissingInherits,ReadonlyVariable,BadHomepage,DuplicateFunctionDefinition,InvalidSandboxCall,DoublePrefixInPath
+
+    # repoman's upstream.workaround has no pkgcheck equivalent. Advisory only,
+    # like it was under repoman: annotates, never fails the job.
+    - name: Flag serial make workarounds
+      if: always()
+      run: |
+        grep -rnE '\b(emake|MAKEOPTS|make)\b.*(-j *1|--jobs[= ]1)\b' \
+          --include='*.ebuild' --include='*.eclass' . \
+          | sed -E 's#^(\./)?([^:]+):([0-9]+):.*#::warning file=\2,line=\3::upstream.workaround: serial make (-j1); fix the parallel build race instead#' \
+          || true
