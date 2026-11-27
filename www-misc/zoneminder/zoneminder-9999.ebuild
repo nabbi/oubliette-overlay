@@ -106,8 +106,10 @@ nginx? (
 #   DBD-mysql: ZoneMinder's CMake links it directly.
 # - dev-db/mariadb-connector-c installs libmariadb.so and /usr/include/mariadb
 #   only; ZoneMinder's CMake finds those with
-#   files/${PN}-1.38.5-mariadb-connector.patch (PATCHES below) until upstream
-#   merges PR #5495 (issue #5494). On 1.38 the patch only matters when both libraries are present.
+#   files/${PN}-1.38.5-mariadb-connector.patch (PATCHES below) on 1.38.
+#   Master has the same change since 401f37da3 (PR #5495, 2026-11-08), so 9999
+#   and 1.39 snapshots from then on take no patch (it no longer applies there).
+#   On 1.38 the patch only matters when both libraries are present.
 if [[ ${PV} == 9999 || ${MY_PV_MM} == 1.39 ]]; then
 	IUSE+=" mariadb"
 	DEPEND_DB="
@@ -131,7 +133,7 @@ DEPEND="
 app-eselect/eselect-php
 dev-cpp/nlohmann_json
 dev-lang/perl:=
-dev-lang/php:*[curl,gd,inifile,intl,pdo,mysql,mysqli,sockets,sysvipc]
+>=dev-lang/php-8.0:*[curl,gd,inifile,intl,pdo,mysql,mysqli,sockets,sysvipc]
 dev-libs/libpcre2
 dev-perl/Archive-Zip
 dev-perl/Class-Std-Fast
@@ -152,12 +154,13 @@ dev-perl/HTTP-Lite
 dev-perl/MIME-Lite
 dev-perl/MIME-tools
 dev-perl/X10
+dev-perl/XML-LibXML
 dev-perl/DateTime
 dev-perl/Device-SerialPort
 dev-php/pecl-apcu:*
 sys-auth/polkit
 virtual/zlib
->=media-video/ffmpeg-5[x264,x265,jpeg2k]
+>=media-video/ffmpeg-5:=[x264,x265,jpeg2k]
 virtual/httpd-php:*
 media-libs/libjpeg-turbo:0
 virtual/perl-ExtUtils-MakeMaker
@@ -224,11 +227,13 @@ src_unpack() {
 	fi
 }
 
-# CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above);
-# upstream PR #5495, drop the patch once it is merged.
-PATCHES=(
-	"${FILESDIR}/${PN}-1.38.5-mariadb-connector.patch"
-)
+# CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above).
+# Merged on master as 401f37da3 (PR #5495); 1.38 still needs the patch.
+if [[ ${PV} != 9999 && ${MY_PV_MM} != 1.39 ]]; then
+	PATCHES=(
+		"${FILESDIR}/${PN}-1.38.5-mariadb-connector.patch"
+	)
+fi
 
 src_prepare() {
 	cmake_src_prepare
@@ -465,7 +470,6 @@ pkg_postinst() {
 		elog ""
 		elog "There are optional features/enhancements that can be added"
 		optfeature_header "Onvif Access"
-		optfeature "Verbose responses from camera" dev-perl/XML-LibXML
 		optfeature "Event monitoring" dev-perl/SOAP-Lite
 		optfeature_header "Email"
 		optfeature "Older email package (if new one isn't working)" dev-perl/MIME-tools

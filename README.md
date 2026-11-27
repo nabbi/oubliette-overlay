@@ -11,10 +11,10 @@ Why the packages are here (`scripts/package-metrics -v` lists them):
 | | packages |
 |---|--:|
 | not in ::gentoo | 81 |
-| newer than ::gentoo | 11 |
-| fixes on top of ::gentoo | 15 |
+| newer than ::gentoo | 10 |
+| fixes on top of ::gentoo | 16 |
 | acct-group / acct-user | 16 |
-| **total** (156 ebuilds) | **123** |
+| **total** (157 ebuilds) | **123** |
 <!-- /package-metrics -->
 
 Related repositories:
