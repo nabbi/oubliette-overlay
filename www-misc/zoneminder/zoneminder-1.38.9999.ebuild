@@ -15,7 +15,7 @@ MY_PV_P=$(ver_cut 3-)
 # branch; the others the tarball of release v${ZM_PHP_API_PV} (unpacks to
 # zm-php-api-${ZM_PHP_API_PV}/).
 ZM_PHP_API_URI="https://github.com/nabbi/zm-php-api"
-ZM_PHP_API_PV="2.0.0-rc.1"
+ZM_PHP_API_PV="2.0.0-rc.2"
 
 if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
 	inherit git-r3

@@ -90,7 +90,7 @@ picks '1.36, live (1.36.9999)' zoneminder-1.36.9999
 picks 'master, live (9999)' zoneminder-9999
 picks '1.39 snapshots (master)' "$SMASTER"
 picks '1.38, live (1.38.9999)' zoneminder-1.38.9999
-picks '1.38 release (default)' zoneminder-1.38.5-r2
+picks '1.38 release (default)' zoneminder-1.38.5-r3
 # full tree, as on a host that never had zoneminder
 full() {
 	if emerge -pq --autounmask=n "$@" > "$SB/resolve.log" 2>&1; then
@@ -107,15 +107,15 @@ for v in zoneminder-1.36.38-r1 zoneminder-1.36.9999; do full "=www-misc/$v"; don
 rm -f "$SB/etc/portage/package.accept_keywords/zoneminder-1.36"
 series '1.38 release (default)'
 full www-misc/zoneminder
-emerge -pv --nodeps www-misc/zoneminder 2>&1 | grep -q 'zoneminder-1.38.5-r2::oubliette .*USE="[^"]*apiv2-cake[^"]*-apiv2-php' \
-	&& ok "default: 1.38.5-r2::oubliette, apiv2-cake, -apiv2-php" || bad "default resolution"
+emerge -pv --nodeps www-misc/zoneminder 2>&1 | grep -q 'zoneminder-1.38.5-r3::oubliette .*USE="[^"]*apiv2-cake[^"]*-apiv2-php' \
+	&& ok "default: 1.38.5-r3::oubliette, apiv2-cake, -apiv2-php" || bad "default resolution"
 USE="apiv2-cake apiv2-php" emerge -pv --nodeps www-misc/zoneminder 2>&1 | grep -q 'unmet requirements' \
 	&& ok "both v2 flags rejected" || bad "both v2 flags accepted"
 # the guide's first API v3 block: zm-api snapshots
 series 'API v3'
 echo 'www-misc/zoneminder apiv3' > "$SB/etc/portage/package.use/zoneminder"
-full '=www-misc/zoneminder-1.38.5-r2'
-grep -q "www-misc/$SZMAPI" "$SB/resolve.log" && ok "1.38.5-r2 apiv3 pulls $SZMAPI" || bad "r2 apiv3 does not pull the zm-api snapshot"
+full '=www-misc/zoneminder-1.38.5-r3'
+grep -q "www-misc/$SZMAPI" "$SB/resolve.log" && ok "1.38.5-r3 apiv3 pulls $SZMAPI" || bad "r3 apiv3 does not pull the zm-api snapshot"
 printf '%s\n' '=www-misc/zoneminder-1.38.9999::oubliette **' "=www-misc/$SMASTER::oubliette **" >> "$SB/etc/portage/package.accept_keywords/zoneminder"
 full '=www-misc/zoneminder-1.38.9999'
 full "=www-misc/$SMASTER"
@@ -182,8 +182,8 @@ phase() {
 	rm -rf "$SB/tmp/portage"
 }
 
-phase www-misc/zoneminder/zoneminder-1.38.5-r2.ebuild "apiv2-cake -apiv2-php" cake
-phase www-misc/zoneminder/zoneminder-1.38.5-r2.ebuild "apiv2-php -apiv2-cake" php
+phase www-misc/zoneminder/zoneminder-1.38.5-r3.ebuild "apiv2-cake -apiv2-php" cake
+phase www-misc/zoneminder/zoneminder-1.38.5-r3.ebuild "apiv2-php -apiv2-cake" php
 phase www-misc/zoneminder/zoneminder-9999.ebuild "apiv2-cake -apiv2-php" cake
 phase www-misc/zoneminder/zoneminder-9999.ebuild "apiv2-php -apiv2-cake" php
 # 1.36 has no apiv2-* flags: CakePHP only
@@ -196,7 +196,7 @@ done
 echo "== /api/v3 proxy block in the web server examples (USE=apiv3)"
 # the ebuild's own helper, run on copies of the synced files
 fd=$R/www-misc/zoneminder/files
-for pf in zoneminder-1.38.5-r2 zoneminder-1.38.9999 "$SMASTER" zoneminder-9999; do
+for pf in zoneminder-1.38.5-r3 zoneminder-1.38.9999 "$SMASTER" zoneminder-9999; do
 	t=$SB/apiv3-$pf; mkdir -p "$t"
 	cp "$fd/zoneminder.nginx.conf" "$fd/zoneminder_vhost.include" "$t/"
 	(die() { exit 1; }; eval "$(sed -n '/^zm_enable_api_v3()/,/^}/p' "$R/www-misc/zoneminder/$pf.ebuild")"

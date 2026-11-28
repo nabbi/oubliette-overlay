@@ -15,7 +15,7 @@ MY_PV_P=$(ver_cut 3-)
 # branch; the others the tarball of release v${ZM_PHP_API_PV} (unpacks to
 # zm-php-api-${ZM_PHP_API_PV}/).
 ZM_PHP_API_URI="https://github.com/nabbi/zm-php-api"
-ZM_PHP_API_PV="2.0.0-rc.1"
+ZM_PHP_API_PV="2.0.0-rc.2"
 
 if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
 	inherit git-r3
@@ -27,14 +27,14 @@ if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
 else
 	# Snapshot ebuilds (<version.txt>_pre<commit date>, scripts/snapshot.sh)
 	# take an untagged upstream commit, MY_ZM_COMMIT; releases take the tag.
-	MY_ZM_COMMIT=""
+	MY_ZM_COMMIT="be2585c89b6ed8dfb06039cf05ec14c0d88a7f5a"
 
 	# Portage normally handels the pinned submodule releases fine,
 	# however upstream had multiple regression in accidently touching,
 	# so we re-pin here to avoid breaking our gentoo builds
 	MY_CRUD_V="14292374ccf1328f2d5db20897bd06f99ba4d938"
 	MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
-	MY_RTSP_V="a071599575f60a6f1f424e1f9b408dad7da734a8"
+	MY_RTSP_V="a8781ec608d0252d4752b64fe2b199b35bcc1695"
 	MY_CXXURL_V="eaf46c0207df24853a238d4499e7f4426d9d234c"
 
 	if [[ -n ${MY_ZM_COMMIT} ]]; then
@@ -57,7 +57,6 @@ else
 			${ZM_PHP_API_URI}/releases/download/v${ZM_PHP_API_PV}/zm-php-api-${ZM_PHP_API_PV}.tar.gz
 		)"
 
-	KEYWORDS="~amd64"
 fi
 
 LICENSE="GPL-2"
@@ -106,8 +105,10 @@ nginx? (
 #   DBD-mysql: ZoneMinder's CMake links it directly.
 # - dev-db/mariadb-connector-c installs libmariadb.so and /usr/include/mariadb
 #   only; ZoneMinder's CMake finds those with
-#   files/${PN}-1.38.5-mariadb-connector.patch (PATCHES below) until upstream
-#   merges PR #5495 (issue #5494). On 1.38 the patch only matters when both libraries are present.
+#   files/${PN}-1.38.5-mariadb-connector.patch (PATCHES below) on 1.38.
+#   Master has the same change since 401f37da3 (PR #5495, 2026-11-08), so 9999
+#   and 1.39 snapshots from then on take no patch (it no longer applies there).
+#   On 1.38 the patch only matters when both libraries are present.
 if [[ ${PV} == 9999 || ${MY_PV_MM} == 1.39 ]]; then
 	IUSE+=" mariadb"
 	DEPEND_DB="
@@ -131,7 +132,7 @@ DEPEND="
 app-eselect/eselect-php
 dev-cpp/nlohmann_json
 dev-lang/perl:=
-dev-lang/php:*[curl,gd,inifile,intl,pdo,mysql,mysqli,sockets,sysvipc]
+>=dev-lang/php-8.0:*[curl,gd,inifile,intl,pdo,mysql,mysqli,sockets,sysvipc]
 dev-libs/libpcre2
 dev-perl/Archive-Zip
 dev-perl/Class-Std-Fast
@@ -152,12 +153,13 @@ dev-perl/HTTP-Lite
 dev-perl/MIME-Lite
 dev-perl/MIME-tools
 dev-perl/X10
+dev-perl/XML-LibXML
 dev-perl/DateTime
 dev-perl/Device-SerialPort
 dev-php/pecl-apcu:*
 sys-auth/polkit
 virtual/zlib
->=media-video/ffmpeg-5[x264,x265,jpeg2k]
+>=media-video/ffmpeg-5:=[x264,x265,jpeg2k]
 virtual/httpd-php:*
 media-libs/libjpeg-turbo:0
 virtual/perl-ExtUtils-MakeMaker
@@ -224,11 +226,13 @@ src_unpack() {
 	fi
 }
 
-# CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above);
-# upstream PR #5495, drop the patch once it is merged.
-PATCHES=(
-	"${FILESDIR}/${PN}-1.38.5-mariadb-connector.patch"
-)
+# CMake: find MariaDB Connector/C by its own names (see DEPEND_DB above).
+# Merged on master as 401f37da3 (PR #5495); 1.38 still needs the patch.
+if [[ ${PV} != 9999 && ${MY_PV_MM} != 1.39 ]]; then
+	PATCHES=(
+		"${FILESDIR}/${PN}-1.38.5-mariadb-connector.patch"
+	)
+fi
 
 src_prepare() {
 	cmake_src_prepare
@@ -465,7 +469,6 @@ pkg_postinst() {
 		elog ""
 		elog "There are optional features/enhancements that can be added"
 		optfeature_header "Onvif Access"
-		optfeature "Verbose responses from camera" dev-perl/XML-LibXML
 		optfeature "Event monitoring" dev-perl/SOAP-Lite
 		optfeature_header "Email"
 		optfeature "Older email package (if new one isn't working)" dev-perl/MIME-tools

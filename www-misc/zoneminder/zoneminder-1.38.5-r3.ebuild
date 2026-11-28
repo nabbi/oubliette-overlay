@@ -15,7 +15,7 @@ MY_PV_P=$(ver_cut 3-)
 # branch; the others the tarball of release v${ZM_PHP_API_PV} (unpacks to
 # zm-php-api-${ZM_PHP_API_PV}/).
 ZM_PHP_API_URI="https://github.com/nabbi/zm-php-api"
-ZM_PHP_API_PV="2.0.0-rc.1"
+ZM_PHP_API_PV="2.0.0-rc.2"
 
 if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
 	inherit git-r3
@@ -27,14 +27,14 @@ if [[ ${PV} == 9999 || ${MY_PV_P} == 9999 ]]; then
 else
 	# Snapshot ebuilds (<version.txt>_pre<commit date>, scripts/snapshot.sh)
 	# take an untagged upstream commit, MY_ZM_COMMIT; releases take the tag.
-	MY_ZM_COMMIT="8556830515d793de1bf22752937bc256ab61eeaa"
+	MY_ZM_COMMIT=""
 
 	# Portage normally handels the pinned submodule releases fine,
 	# however upstream had multiple regression in accidently touching,
 	# so we re-pin here to avoid breaking our gentoo builds
 	MY_CRUD_V="14292374ccf1328f2d5db20897bd06f99ba4d938"
 	MY_CAKEPHP_V="ea90c0cd7f6e24333a90885e563b5d30b793db29"
-	MY_RTSP_V="a8781ec608d0252d4752b64fe2b199b35bcc1695"
+	MY_RTSP_V="a071599575f60a6f1f424e1f9b408dad7da734a8"
 	MY_CXXURL_V="eaf46c0207df24853a238d4499e7f4426d9d234c"
 
 	if [[ -n ${MY_ZM_COMMIT} ]]; then
@@ -57,6 +57,7 @@ else
 			${ZM_PHP_API_URI}/releases/download/v${ZM_PHP_API_PV}/zm-php-api-${ZM_PHP_API_PV}.tar.gz
 		)"
 
+	KEYWORDS="~amd64"
 fi
 
 LICENSE="GPL-2"
